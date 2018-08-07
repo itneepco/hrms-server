@@ -1,6 +1,7 @@
 
 const Sequelize = require('sequelize');
 const db = require('../config/db');
+const levaveTypeModel = require('./leaveType.model')
 
 const leaveLedger = db.define('leaveLedger', {
     emp_code: {
@@ -27,6 +28,8 @@ const leaveLedger = db.define('leaveLedger', {
     underscored: true,
     tableName:'leave_ledger'
     }
-);
+)
+
+leaveLedger.belongsTo(levaveTypeModel)
 
 module.exports = leaveLedger
