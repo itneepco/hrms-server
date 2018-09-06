@@ -2,9 +2,30 @@
 const router = require('express').Router({mergeParams:true})
 const holidayModel = require('../../model/holiday.model')
 
+router.route('/calendar')
+.get((req, res) => {
+    holidayModel.findAll({order: [
+        ['day', 'ASC']
+    ]})
+    .then(result=>res.status(200).json(result))
+    .catch(err=>{
+        console.log(err)
+        res.status(500).json({message:'Opps! Some error happened!!'})
+    })
+})
+
 router.route('/')
 .get((req,res)=>{
-    holidayModel.findAll({where: {project_id: req.params.id}})
+    let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
+    let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
+    let offset = pageIndex * limit
+
+    holidayModel.findAndCountAll({ 
+        where: { project_id: req.params.id },
+        order: [['day', 'DESC']],
+        limit: parseInt(req.query.pageSize),
+        offset: offset
+    })
     .then(result=>res.status(200).json(result))
     .catch(err=>{
         console.log(err)

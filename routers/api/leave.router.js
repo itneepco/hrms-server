@@ -57,8 +57,6 @@ router.route('/ledger/:id')
             })
     })
 
-
-
     .delete((req, res) => {
 
         ledgerModel.destroy({
@@ -95,18 +93,11 @@ router.route('/ledger/:id')
 
 router.route('/status/:emp_code/:year_param')
     .get((req, res) => {
-
-
-        // let ledg = Object.assign({},
-        //     totalCredit(req.params.emp_code, req.params.year_param),
-        //     totalDebit(req.params.emp_code, req.params.year_param)
-        //    )
-
         getTotalDebitCredit(req.params.emp_code, req.params.year_param)
-            .then(
-                val => {
-                    console.log("Total", JSON.stringify(val[0]), JSON.stringify(val[1]))
-                    res.status(200).json({})
+            .then(result=>{
+                                                        
+                    res.status(200).json(result)
+                
                 }
             )
             .catch(error => {
@@ -119,9 +110,8 @@ router.route('/status/:emp_code/:year_param')
 router.route('/ledger/employee/:emp_code')
     .get((req, res) => {
         let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
-        let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 30
+        let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
         let offset = pageIndex * limit
-
         ledgerModel.findAndCountAll({
             where: { emp_code: req.params.emp_code },
             include: [{ model: leaveTypeModel }],
@@ -154,10 +144,7 @@ function findLedger(lid, res) {
         })
 }
 
-module.exports = router
-
-
-function totalCredit(emp_code, cal_year) {
+function totalCredit(emp_code, cal_year,levae_type) {
 
     return ledgerModel.findAll({
         attributes: [[Sequelize.fn('SUM', Sequelize.col('no_of_days')), 'total_credit']],
@@ -165,12 +152,11 @@ function totalCredit(emp_code, cal_year) {
             emp_code: emp_code,
             cal_year: cal_year,
             db_cr_flag: 'C',
-            leave_type_id: 1
+            leave_type_id: levae_type
         }
 
     })
         .then(result => {
-            // console.log(result)
             return result
         })
         .catch(err => {
@@ -179,19 +165,18 @@ function totalCredit(emp_code, cal_year) {
         })
 }
 
-function totalDebit(emp_code, cal_year) {
+function totalDebit(emp_code, cal_year,levae_type) {
     return ledgerModel.findAll({
         attributes: [[Sequelize.fn('SUM', Sequelize.col('no_of_days')), 'total_debit']],
         where: {
             emp_code: emp_code,
             cal_year: cal_year,
             db_cr_flag: 'D',
-            leave_type_id: 1
+            leave_type_id:levae_type
         }
 
     })
         .then(result => {
-            // console.log(result)
             return result
         })
         .catch(err => {
@@ -200,10 +185,36 @@ function totalDebit(emp_code, cal_year) {
         })
 }
 
-function getTotalDebitCredit(emp_codee, cal_year) {
-    let total_credit = totalCredit(emp_codee, cal_year)
-    let total_debit = totalDebit(emp_codee, cal_year)
+function getTotalDebitCredit(emp_codee, cal_year,leave_type) {
 
-    return Promise.all([total_credit, total_debit])
-    // console.log("Total credit", total_credit,"Total debit", total_debit)
+    let total_credit_cl = totalCredit(emp_codee, cal_year,1)
+    let total_debit_cl = totalDebit(emp_codee, cal_year,1)
+
+    let total_credit_rh = totalCredit(emp_codee, cal_year,2)
+    let total_debit_rh = totalDebit(emp_codee, cal_year,2)
+
+    return Promise.all([total_credit_cl, total_debit_cl,total_credit_rh, total_debit_rh])
+    .then(val => {
+       
+         let leaveRegister = Object.assign({},{
+            cl : JSON.parse(JSON.stringify(val[0][0])).total_credit-JSON.parse(JSON.stringify(val[1][0])).total_debit
+         
+        },
+        {
+            rh : JSON.parse(JSON.stringify(val[2][0])).total_credit-JSON.parse(JSON.stringify(val[3][0])).total_debit
+            
+        }
+        
+    )
+    return leaveRegister
+    }
+    
+)
+    .catch(err=>{
+        console.log(err)
+    })
+    
+   
 }
+
+module.exports = router

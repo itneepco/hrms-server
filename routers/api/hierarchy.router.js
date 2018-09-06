@@ -1,3 +1,5 @@
+
+
 const router = require('express').Router()
 const hierarchyModel = require('../../model/hierarchy.model')
 const employeeModel = require('../../model/employee.model')
@@ -141,14 +143,73 @@ router.route('/:id')
 				res.status(500).json({ message: 'Opps! Some error happened!!' })
 			})
 
-		// hierarchyModel.destroy({ where: { id: req.params.id } })
-		// 	.then(result => res.status(200).json(result))
-		// 	.catch(err => {
-		// 		console.log(err)
-		// 		res.status(500).json({ message: 'Opps! Some error happened!!' })
-		// 	}
-		// 	)
+		
 	})
 
+
+	router.route('/parents/:empCode')
+	.get(async(req,res)=>{
+		
+		try{
+			let firstParent,secondParent
+			let result =[]
+			firstParent = await getParent(req.params.empCode)
+			if(firstParent){
+				
+				secondParent= await getParent(firstParent.emp_code)
+				if (secondParent){
+					result =[firstParent,secondParent]
+				}
+				else{
+					result=[firstParent]
+				}
+			}
+			
+			
+			return res.status(200).json(result)
+		}
+		catch(err){
+			console.log(err)
+			return null
+		}
+		
+
+})
+
+function getParent(empCode){
+
+	return new Promise((resolve,reject)=>{
+	
+		hierarchyModel.findOne({
+			where:{emp_code:empCode},
+				include:[{
+					model:employeeModel,
+					as:"parent",
+					include:[{model:designationModel}]
+				}]
+	        })
+			.then(emp=>{
+				if(!emp) reject
+				if(emp && emp.parent){
+					parent = {
+					emp_code: emp.parent.emp_code,
+					first_name: emp.parent.first_name,						
+					last_name: emp.parent.last_name,						
+					designation: emp.parent.designation.name
+
+					}
+		       }else{
+			    parent = null
+		    }
+		
+           resolve(parent)
+	  	
+	})
+	.catch(err => {
+		console.log(err)
+		reject
+	})
+})
+}
 
 module.exports = router
