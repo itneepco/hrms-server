@@ -10,35 +10,43 @@ const WorkflowActionModel = require('../../model/workflowAction.model')
 const Sequelize = require('sequelize');
 
 router.get('/employee/:empCode', (req, res) => {
+  let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
+  let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
+  let offset = pageIndex * limit
 
-  leaveAppModel.findAll({
-      where: { emp_code: req.params.empCode },
-      include: [
-        {
-          model: leaveAppHistModel,
-          include: [
-            { 
-              model: EmployeeModel,
-              as: "officer",
-              attributes: ['emp_code', 'first_name', 'last_name'],
-              order: [['updated_at', 'ASC']] 
-            }, 
-            { model: WorkflowActionModel }
-          ]
-        },
-        {
-          model: leaveDayModel,
-          include: { model: LeaveTypeModel }
-        }
-      ]
-    })
+  console.log(limit)
+
+  leaveAppModel.findAndCountAll({
+    where: { emp_code: req.params.empCode },
+    distinct: true,
+    order: [['updated_at', 'DESC']],
+    limit: limit,
+    offset: offset,
+    include: [
+      {
+        model: leaveAppHistModel,
+        include: [
+          {
+            model: EmployeeModel,
+            as: "officer",
+            attributes: ['emp_code', 'first_name', 'last_name'],
+          },
+          { model: WorkflowActionModel }
+        ]
+      },
+      {
+        model: leaveDayModel,
+        include: { model: LeaveTypeModel }
+      }
+    ]
+  })
     .then(results => {
       if (!results) return res.status(200).json(null)
-
-      let application = results.map(result => {
+      console.log(results)  
+      let application = results.rows.map(result => {
         return Object.assign(
           {},
-          { 
+          {
             id: result.id,
             emp_code: result.emp_code,
             purpose: result.purpose,
@@ -50,7 +58,8 @@ router.get('/employee/:empCode', (req, res) => {
                 id: hist.id,
                 officer: hist.officer,
                 workflowAction: hist.workflowAction,
-                updated_at: hist.updated_at  
+                updated_at: hist.updated_at,
+                isCurrent: hist.isCurrent
               })
             }),
             leaveDays: result.leaveDays.map(leaveDay => {
@@ -64,8 +73,11 @@ router.get('/employee/:empCode', (req, res) => {
           }
         )
       })
-
-      res.status(200).json(application)
+      let data = {
+        rows: application,
+        count: results.count
+      }
+      res.status(200).json(data)
     })
     .catch(err => {
       console.log(err)
@@ -93,7 +105,8 @@ router.route('/')
           {
             leave_application_id: result.id,
             officer_emp_code: officer_emp_code,
-            workflow_action_id: 1
+            workflow_action_id: 1,
+            isCurrent: 1
           }
         )
 
@@ -103,7 +116,7 @@ router.route('/')
 
         leaveDayModel.bulkCreate(leave_days)
 
-        res.status(200).json({message: "Created successfully"})
+        res.status(200).json({ message: "Created successfully" })
       })
       .catch(err => {
         console.log(err)
@@ -111,56 +124,75 @@ router.route('/')
       })
   })
 
-router.route('/apply/:id')
+router.route('/application/:officerEmpCode')
   .get((req, res) => {
 
-    ledgerModel.findOne(
-      {
-        where: { id: req.params.id },
-        include: [{ model: leaveTypeModel }]
-      })
-      .then(result => {
-        res.status(200).json(result)
-      })
-      .catch(err => {
-        console.log(err)
-        res.status(500).json({ message: 'Oops! Some error happend' })
-      })
-  })
-
-  .delete((req, res) => {
-
-    ledgerModel.destroy({
-      where: { id: req.params.id }
+   
+    leaveAppModel.findAll({
+      order: [['updated_at', 'DESC']],
+      include: [
+        {
+          model: leaveAppHistModel,
+          where: { 
+            officer_emp_code: req.params.officerEmpCode,
+            isCurrent: 1 
+          },
+          include: [
+            {
+              model: EmployeeModel,
+              as: "officer",
+              attributes: ['emp_code', 'first_name', 'last_name'],
+            },
+            { model: WorkflowActionModel }
+          ]
+        },
+        {
+          model: leaveDayModel,
+          include: { model: LeaveTypeModel }
+        }
+      ]
     })
-      .then(result => res.status(200).json(result))
-      .catch(err => {
-        console.log(err)
-        res.status(500).json({ message: 'Opps! Some error happened!!' })
-      }
-      )
-  })
-
-  .put((req, res) => {
-    ledgerModel.update(
-      {
-        emp_code: req.params.emp_code,
-        cal_year: req.body.cal_year,
-        db_cr_flag: req.body.db_cr_flag,
-        no_of_days: req.body.no_of_days,
-        leave_type_id: req.body.leave_type_id,
-        remarks: req.body.remarks
-      },
-      { where: { id: req.params.id } })
-      .then(() => {
-        findLedger(req.params.id, res)
+      .then(results => {
+        if (!results) return res.status(200).json(null)
+  
+        let application = results.map(result => {
+          return Object.assign(
+            {},
+            {
+              id: result.id,
+              emp_code: result.emp_code,
+              purpose: result.purpose,
+              address: result.address,
+              contact_no: result.contact_no,
+              created_at: result.created_at,
+              history: result.leaveApplicationHists.map(hist => {
+                return Object.assign({}, {
+                  id: hist.id,
+                  officer: hist.officer,
+                  workflowAction: hist.workflowAction,
+                  updated_at: hist.updated_at,
+                  isCurrent: hist.isCurrent
+                })
+              }),
+              leaveDays: result.leaveDays.map(leaveDay => {
+                return Object.assign({}, {
+                  id: leaveDay.id,
+                  leaveType: leaveDay.leaveType,
+                  from_date: leaveDay.from_date,
+                  to_date: leaveDay.to_date
+                })
+              })
+            }
+          )
+        })
+  
+        res.status(200).json(application)
       })
       .catch(err => {
         console.log(err)
         res.status(500).json({ message: 'Opps! Some error happened!!' })
-      }
-      )
-  })
+      })
 
+  })
 
 module.exports = router

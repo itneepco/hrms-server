@@ -23,7 +23,7 @@ router.route('/')
     holidayModel.findAndCountAll({ 
         where: { project_id: req.params.id },
         order: [['day', 'DESC']],
-        limit: parseInt(req.query.pageSize),
+        limit: limit,
         offset: offset
     })
     .then(result=>res.status(200).json(result))
