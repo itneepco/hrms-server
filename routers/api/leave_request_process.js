@@ -1,4 +1,3 @@
-
 const router = require('express').Router()
 const leaveAppModel = require('../../model/leaveApplication.model')
 const leaveDayModel = require('../../model/leaveDay.model')
@@ -9,19 +8,14 @@ const WorkflowActionModel = require('../../model/workflowAction.model')
 
 const Sequelize = require('sequelize');
 
-router.get('/employee/:empCode', (req, res) => {
+router.route('/:officerEmpCode')
+.get((req, res) => {
   let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
   let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
   let offset = pageIndex * limit
-
-  console.log(limit)
-
+ 
   leaveAppModel.findAndCountAll({
-    where: { emp_code: req.params.empCode },
-    distinct: true,
     order: [['updated_at', 'DESC']],
-    limit: limit,
-    offset: offset,
     include: [
       {
         model: EmployeeModel,
@@ -30,6 +24,10 @@ router.get('/employee/:empCode', (req, res) => {
       },
       {
         model: leaveAppHistModel,
+        where: { 
+          officer_emp_code: req.params.officerEmpCode,
+          isCurrent: 1 
+        },
         include: [
           {
             model: EmployeeModel,
@@ -47,7 +45,8 @@ router.get('/employee/:empCode', (req, res) => {
   })
     .then(results => {
       if (!results) return res.status(200).json(null)
-      let application = results.rows.map(result => {
+
+      let leave_request = results.rows.map(result => {
         return Object.assign(
           {},
           {
@@ -79,8 +78,9 @@ router.get('/employee/:empCode', (req, res) => {
           }
         )
       })
+
       let data = {
-        rows: application,
+        rows: leave_request,
         count: results.count
       }
       res.status(200).json(data)
@@ -89,45 +89,7 @@ router.get('/employee/:empCode', (req, res) => {
       console.log(err)
       res.status(500).json({ message: 'Opps! Some error happened!!' })
     })
+
 })
-
-router.route('/')
-  .post((req, res) => {
-    let officer_emp_code = req.body.officer_emp_code
-    let leave_days = req.body.leave_days
-
-    leaveAppModel.build(
-      {
-        emp_code: req.body.emp_code,
-        purpose: req.body.purpose,
-        address: req.body.address,
-        contact_no: req.body.contact_no,
-      })
-      .save()
-      .then(result => {
-        console.log(result)
-
-        leaveAppHistModel.create(
-          {
-            leave_application_id: result.id,
-            officer_emp_code: officer_emp_code,
-            workflow_action_id: 1,
-            isCurrent: 1
-          }
-        )
-
-        leave_days = leave_days.map(leaveDay => {
-          return Object.assign(leaveDay, { leave_application_id: result.id })
-        });
-
-        leaveDayModel.bulkCreate(leave_days)
-
-        res.status(200).json({ message: "Created successfully" })
-      })
-      .catch(err => {
-        console.log(err)
-        res.status(500).json({ message: 'Opps! Some error occured!!' })
-      })
-  })
 
 module.exports = router

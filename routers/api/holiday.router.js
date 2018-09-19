@@ -4,9 +4,10 @@ const holidayModel = require('../../model/holiday.model')
 
 router.route('/calendar')
 .get((req, res) => {
-    holidayModel.findAll({order: [
-        ['day', 'ASC']
-    ]})
+    holidayModel.findAll({
+        where: { project_id: req.params.id },
+        order: [['day', 'ASC']]
+    })
     .then(result=>res.status(200).json(result))
     .catch(err=>{
         console.log(err)
