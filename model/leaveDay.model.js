@@ -2,14 +2,12 @@
 const Sequelize = require('sequelize');
 const db = require('../config/db');
 
-const LeaveTypeModel = require('../model/leaveType.model');
-
 const leaveDay = db.define('leaveDay', {
     leave_application_id: {
         type: Sequelize.INTEGER
     },
-    leave_type_id: {
-        type: Sequelize.INTEGER
+    leave_type: {
+        type: Sequelize.STRING
     },
     from_date:{
         type:Sequelize.DATEONLY
@@ -24,7 +22,5 @@ const leaveDay = db.define('leaveDay', {
     tableName:'leave_days'
     }
 )
-
-leaveDay.belongsTo(LeaveTypeModel)
 
 module.exports = leaveDay

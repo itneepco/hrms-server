@@ -3,9 +3,8 @@ const router = require('express').Router()
 const leaveAppModel = require('../../model/leaveApplication.model')
 const leaveDayModel = require('../../model/leaveDay.model')
 const leaveAppHistModel = require('../../model/leaveApplicationHist.model')
-const LeaveTypeModel = require('../../model/leaveType.model');
 const EmployeeModel = require('../../model/employee.model');
-const WorkflowActionModel = require('../../model/workflowAction.model')
+const codes = require('../../global/codes');
 
 const Sequelize = require('sequelize');
 
@@ -35,13 +34,11 @@ router.get('/employee/:empCode', (req, res) => {
             model: EmployeeModel,
             as: "officer",
             attributes: ['emp_code', 'first_name', 'last_name'],
-          },
-          { model: WorkflowActionModel }
+          }
         ]
       },
       {
-        model: leaveDayModel,
-        include: { model: LeaveTypeModel }
+        model: leaveDayModel
       }
     ]
   })
@@ -63,15 +60,16 @@ router.get('/employee/:empCode', (req, res) => {
               return Object.assign({}, {
                 id: hist.id,
                 officer: hist.officer,
-                workflowAction: hist.workflowAction,
+                workflow_action: hist.workflow_action,
                 updated_at: hist.updated_at,
-                isCurrent: hist.isCurrent
+                isCurrent: hist.isCurrent,
+                remarks: hist.remarks
               })
             }),
             leaveDays: result.leaveDays.map(leaveDay => {
               return Object.assign({}, {
                 id: leaveDay.id,
-                leaveType: leaveDay.leaveType,
+                leave_type: leaveDay.leave_type,
                 from_date: leaveDay.from_date,
                 to_date: leaveDay.to_date
               })
@@ -111,7 +109,7 @@ router.route('/')
           {
             leave_application_id: result.id,
             officer_emp_code: officer_emp_code,
-            workflow_action_id: 1,
+            workflow_action: codes.LEAVE_APPLIED,
             isCurrent: 1
           }
         )

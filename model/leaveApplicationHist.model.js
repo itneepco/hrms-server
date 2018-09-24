@@ -3,7 +3,6 @@ const Sequelize = require('sequelize');
 const db = require('../config/db');
 
 const employeeModel = require('./employee.model');
-const workflowActionModel = require('../model/workflowAction.model');
 const leaveApplication = require('../model/leaveApplication.model');
 
 const leaveApplicationHist = db.define('leaveApplicationHist', {
@@ -13,11 +12,14 @@ const leaveApplicationHist = db.define('leaveApplicationHist', {
     officer_emp_code: {
         type: Sequelize.STRING
     },
-    workflow_action_id: {
-        type: Sequelize.INTEGER
+    workflow_action: {
+        type: Sequelize.STRING
     },
     isCurrent: {
         type: Sequelize.BOOLEAN
+    },
+    remarks: {
+        type: Sequelize.STRING
     }
 }, {
         underscored: true,
@@ -26,7 +28,5 @@ const leaveApplicationHist = db.define('leaveApplicationHist', {
 )
 
 leaveApplicationHist.belongsTo(employeeModel, { as: "officer", foreignKey: 'officer_emp_code', targetKey: 'emp_code' })
-leaveApplicationHist.belongsTo(workflowActionModel)
-// leaveApplicationHist.belongsTo(leaveApplication)
 
 module.exports = leaveApplicationHist
