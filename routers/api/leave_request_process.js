@@ -8,7 +8,7 @@ const WorkflowActionModel = require('../../model/workflowAction.model')
 
 const Sequelize = require('sequelize');
 
-router.route('/:officerEmpCode')
+router.route('/officer/:officerEmpCode')
 .get((req, res) => {
   let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
   let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
