@@ -174,10 +174,12 @@ function getTotalDebitCredit(emp_codee, cal_year) {
         {
           balance: JSON.parse(JSON.stringify(val[0][0])).total_credit - JSON.parse(JSON.stringify(val[1][0])).total_debit,
           leave_code: codes.CL_CODE,
+          leave_type: "CL"
         },
         {
           balance: JSON.parse(JSON.stringify(val[2][0])).total_credit - JSON.parse(JSON.stringify(val[3][0])).total_debit,
           leave_code: codes.RH_CODE,
+          leave_type: "RH"
         }
       ];
 

@@ -9,23 +9,22 @@ const leaveLedger = db.define('leaveLedger', {
     cal_year: {
         type: Sequelize.INTEGER
     },
-    db_cr_flag:{
-        type:Sequelize.CHAR
+    db_cr_flag: {
+        type: Sequelize.CHAR
     },
-    no_of_days:{
+    no_of_days: {
         type: Sequelize.INTEGER
     },
-    leave_type:{
-        type:Sequelize.STRING
+    leave_type: {
+        type: Sequelize.STRING
     },
-    remarks:{
-        type:Sequelize.STRING
+    remarks: {
+        type: Sequelize.STRING
     }
-        
+
 }, {
-       
-    underscored: true,
-    tableName:'leave_ledger'
+        underscored: true,
+        tableName: 'leave_ledger'
     }
 )
 
