@@ -32,6 +32,7 @@ router.route('/officer/:addresseeEmpCode')
 
     leaveAppModel.findAndCountAll({
       order: [['updated_at', 'DESC']],
+      distinct: true,
       where: {
         addressee: req.params.addresseeEmpCode,
       },
@@ -126,6 +127,7 @@ router.route('/officer/:addresseeEmpCode')
 
     leaveAppModel.findAndCountAll({
       order: [['updated_at', 'DESC']],
+      distinct: true,
       include: [
         {
           model: EmployeeModel,
@@ -139,10 +141,16 @@ router.route('/officer/:addresseeEmpCode')
         },
         {
           model: leaveAppHistModel,
+          as: "leaveProcessor",
           where: {
             officer_emp_code: req.params.addresseeEmpCode,
-            workflow_action: Codes.LEAVE_RECOMMENDED
+            workflow_action: {
+              [Op.or]: [Codes.LEAVE_RECOMMENDED, Codes.LEAVE_APPROVED, Codes.LEAVE_NOT_RECOMMENDED]
+            }
           },
+        },
+        {
+          model: leaveAppHistModel,
           include: [
             {
               model: EmployeeModel,
@@ -151,6 +159,7 @@ router.route('/officer/:addresseeEmpCode')
             }
           ]
         },
+        
         { model: leaveDetailModel }
       ]
     })
