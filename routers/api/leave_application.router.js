@@ -28,6 +28,11 @@ router.get('/employee/:empCode', (req, res) => {
         attributes: ['first_name', 'last_name'],
       },
       {
+        model: EmployeeModel,
+        as: "addresseeOfficer",
+        attributes: ['first_name', 'last_name'],
+      },
+      {
         model: leaveAppHistModel,
         include: [
           {
@@ -43,6 +48,7 @@ router.get('/employee/:empCode', (req, res) => {
   .then(results => {
     if (!results) return res.status(200).json(null)
     let application = results.rows.map(result => {
+      let addressee = result.addresseeOfficer
       return Object.assign(
         {},
         {
@@ -53,7 +59,7 @@ router.get('/employee/:empCode', (req, res) => {
           purpose: result.purpose,
           address: result.address,
           contact_no: result.contact_no,
-          addressee: result.addressee,
+          addressee: addressee ? addressee.first_name + " " + addressee.last_name : "",
           status: result.status,
           prefix_from: result.prefix_from,
           prefix_to: result.prefix_to,
@@ -96,7 +102,6 @@ router.get('/employee/:empCode', (req, res) => {
 
 router.route('/')
   .post((req, res) => {
-    let officer_emp_code = req.body.officer_emp_code
     let leaveDetails = req.body.leave_details
 
     db.transaction().then(t => {
@@ -105,7 +110,7 @@ router.route('/')
         purpose: req.body.purpose,
         address: req.body.address,
         contact_no: req.body.contact_no,
-        addressee: officer_emp_code,
+        addressee: req.body.officer_emp_code,
         status: codes.LEAVE_APPLIED,
         prefix_from: req.body.prefix_from,
         prefix_to: req.body.prefix_to,
@@ -116,7 +121,7 @@ router.route('/')
         console.log(app)
         return leaveAppHistModel.create({
           leave_application_id: app.id,
-          officer_emp_code: officer_emp_code,
+          officer_emp_code: req.body.emp_code,
           workflow_action: codes.LEAVE_APPLIED,
           remarks: "Leave applied",
         }, {transaction: t})

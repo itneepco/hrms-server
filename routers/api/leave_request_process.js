@@ -6,6 +6,7 @@ const leaveLedgerModel = require('../../model/leaveLedger.model')
 const EmployeeModel = require('../../model/employee.model');
 const Codes = require('../../global/codes')
 const db = require('../../config/db');
+const Op = require('sequelize').Op;
 
 router.route('/officer/:addresseeEmpCode/count')
   .get((req, res) => { 
@@ -41,6 +42,11 @@ router.route('/officer/:addresseeEmpCode')
           attributes: ['first_name', 'last_name'],
         },
         {
+          model: EmployeeModel,
+          as: "addresseeOfficer",
+          attributes: ['first_name', 'last_name'],
+        },
+        {
           model: leaveAppHistModel,
           include: [
             {
@@ -58,6 +64,7 @@ router.route('/officer/:addresseeEmpCode')
 
       console.log(JSON.stringify(results))
       let leave_request = results.rows.map(result => {
+        let addressee = result.addresseeOfficer
         return Object.assign(
           {},
           {
@@ -68,7 +75,7 @@ router.route('/officer/:addresseeEmpCode')
             purpose: result.purpose,
             address: result.address,
             contact_no: result.contact_no,
-            addressee: result.addressee,
+            addressee: addressee ? addressee.first_name + " " + addressee.last_name : "",
             status: result.status,
             prefix_from: result.prefix_from,
             prefix_to: result.prefix_to,
@@ -90,7 +97,8 @@ router.route('/officer/:addresseeEmpCode')
                 id: leaveDetail.id,
                 leave_type: leaveDetail.leave_type,
                 from_date: leaveDetail.from_date,
-                to_date: leaveDetail.to_date
+                to_date: leaveDetail.to_date,
+                station_leave: leaveDetail.station_leave
               })
             })
           }
@@ -110,10 +118,106 @@ router.route('/officer/:addresseeEmpCode')
 
   })
 
+  router.route('/officer/:addresseeEmpCode/processed')
+  .get((req, res) => {
+    let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
+    let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
+    let offset = pageIndex * limit
+
+    leaveAppModel.findAndCountAll({
+      order: [['updated_at', 'DESC']],
+      include: [
+        {
+          model: EmployeeModel,
+          as: "leaveApplier",
+          attributes: ['first_name', 'last_name'],
+        },
+        {
+          model: EmployeeModel,
+          as: "addresseeOfficer",
+          attributes: ['first_name', 'last_name'],
+        },
+        {
+          model: leaveAppHistModel,
+          where: {
+            officer_emp_code: req.params.addresseeEmpCode,
+            workflow_action: Codes.LEAVE_RECOMMENDED
+          },
+          include: [
+            {
+              model: EmployeeModel,
+              as: "officer",
+              attributes: ['emp_code', 'first_name', 'last_name'],
+            }
+          ]
+        },
+        { model: leaveDetailModel }
+      ]
+    })
+    .then(results => {
+      if (!results) return res.status(200).json(null)
+
+      console.log(JSON.stringify(results))
+      let leave_request = results.rows.map(result => {
+        let addressee = result.addresseeOfficer
+        return Object.assign(
+          {},
+          {
+            id: result.id,
+            emp_code: result.emp_code,
+            first_name: result.leaveApplier.first_name,
+            last_name: result.leaveApplier.last_name,
+            purpose: result.purpose,
+            address: result.address,
+            contact_no: result.contact_no,
+            addressee: addressee ? addressee.first_name + " " + addressee.last_name : "",
+            status: result.status,
+            prefix_from: result.prefix_from,
+            prefix_to: result.prefix_to,
+            suffix_from: result.prefix_from,
+            suffix_to: result.prefix_to,
+            created_at: result.created_at,   
+
+            history: result.leaveApplicationHists.map(hist => {
+              return Object.assign({}, {
+                id: hist.id,
+                officer: hist.officer,
+                workflow_action: hist.workflow_action,
+                updated_at: hist.updated_at,
+                remarks: hist.remarks
+              })
+            }),
+            leaveDetails: result.leaveDetails.map(leaveDetail => {
+              return Object.assign({}, {
+                id: leaveDetail.id,
+                leave_type: leaveDetail.leave_type,
+                from_date: leaveDetail.from_date,
+                to_date: leaveDetail.to_date,
+                station_leave: leaveDetail.station_leave
+              })
+            })
+          }
+        )
+      })
+
+      let data = {
+        rows: leave_request,
+        count: results.count
+      }
+      res.status(200).json(data)
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ message: 'Opps! Some error happened!!' })
+    })
+
+  })
+
+
 router.route('/:leaveAppId/actions')
   .post((req, res) => {
     let action = req.body.workflow_action
-    if (action === Codes.LEAVE_APPROVED) {
+    if (action === Codes.LEAVE_APPROVED) { 
       db.transaction().then(t => {
         leaveAppModel.find({
           where: { id: req.params.leaveAppId },
@@ -125,7 +229,7 @@ router.route('/:leaveAppId/actions')
           return leaveAppHistModel.create({
             leave_application_id: req.params.leaveAppId,
             remarks: req.body.remarks,
-            officer_emp_code: null,
+            officer_emp_code: req.body.officer_emp_code,
             workflow_action: action,
           }, {transaction: t})
 
@@ -156,12 +260,12 @@ router.route('/:leaveAppId/actions')
       })
     }
   
-    if(action === Codes.LEAVE_REJECTED || action === Codes.LEAVE_NOT_RECOMMENDED) {
+    if(action === Codes.LEAVE_NOT_RECOMMENDED) {
       db.transaction().then(t => {
         return leaveAppHistModel.create({
           leave_application_id: req.params.leaveAppId,
           remarks: req.body.remarks,
-          officer_emp_code: null,
+          officer_emp_code: req.body.officer_emp_code,
           workflow_action: action,
         }, {transaction: t})
         
@@ -197,6 +301,36 @@ router.route('/:leaveAppId/actions')
           return leaveAppModel.update(
             { 
               status: Codes.LEAVE_RECOMMENDED, 
+              addressee: req.body.addressee_emp_code
+            }, 
+            { where: { id: req.params.leaveAppId }
+          }, { transaction: t });
+        })
+        .then(function () {
+          res.status(200).json({message: "Leave request processed successful"})
+          return t.commit();
+        })
+        .catch(function (err) {
+          res.status(500).json({message: "Leave request processed unsuccessful"})
+          console.log(err)
+          return t.rollback();
+        });     
+      })
+    }
+ 
+    if(action === Codes.LEAVE_CALLBACKED) {
+      db.transaction().then(t => {
+        return leaveAppHistModel.create({
+          leave_application_id: req.params.leaveAppId,
+          remarks: req.body.remarks,
+          officer_emp_code: req.body.officer_emp_code,
+          workflow_action: action,
+        }, {transaction: t})
+        
+        .then(() => {
+          return leaveAppModel.update(
+            { 
+              status: Codes.LEAVE_CALLBACKED, 
               addressee: req.body.officer_emp_code
             }, 
             { where: { id: req.params.leaveAppId }
@@ -213,6 +347,7 @@ router.route('/:leaveAppId/actions')
         });     
       })
     }
+    
   });
 
 
