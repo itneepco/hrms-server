@@ -7,7 +7,7 @@ const Holiday = db.define('holiday', {
         type: Sequelize.STRING
     },
     day: {
-        type: Sequelize.DATE
+        type: Sequelize.DATEONLY
     },
    type: {
         type: Sequelize.STRING

@@ -28,11 +28,6 @@ router.get('/employee/:empCode', (req, res) => {
         attributes: ['first_name', 'last_name'],
       },
       {
-        model: EmployeeModel,
-        as: "addresseeOfficer",
-        attributes: ['first_name', 'last_name'],
-      },
-      {
         model: leaveAppHistModel,
         include: [
           {
@@ -48,7 +43,7 @@ router.get('/employee/:empCode', (req, res) => {
   .then(results => {
     if (!results) return res.status(200).json(null)
     let application = results.rows.map(result => {
-      let addressee = result.addresseeOfficer
+      //let addressee = result.addresseeOfficer
       return Object.assign(
         {},
         {
@@ -59,7 +54,7 @@ router.get('/employee/:empCode', (req, res) => {
           purpose: result.purpose,
           address: result.address,
           contact_no: result.contact_no,
-          addressee: addressee ? addressee.first_name + " " + addressee.last_name : "",
+          addressee: result.addressee ,
           status: result.status,
           prefix_from: result.prefix_from,
           prefix_to: result.prefix_to,
@@ -102,7 +97,13 @@ router.get('/employee/:empCode', (req, res) => {
 
 router.route('/')
   .post((req, res) => {
+    console.log("\nRequest\n",req.body)
     let leaveDetails = req.body.leave_details
+    let prefix_from = req.body.prefix_from
+    let prefix_to = req.body.prefix_to
+    let suffix_from = req.body.suffix_from
+    let suffix_to = req.body.suffix_to
+    
 
     db.transaction().then(t => {
       return leaveAppModel.create({
@@ -112,10 +113,10 @@ router.route('/')
         contact_no: req.body.contact_no,
         addressee: req.body.officer_emp_code,
         status: codes.LEAVE_APPLIED,
-        prefix_from: req.body.prefix_from,
-        prefix_to: req.body.prefix_to,
-        suffix_from: req.body.suffix_from,
-        suffix_to: req.body.suffix_from
+        prefix_from: (prefix_from && prefix_from.length > 0) ? prefix_from : null,
+        prefix_to: (prefix_to && prefix_to.length > 0) ? prefix_to : null,
+        suffix_from: (suffix_from && suffix_from.length > 0) ? suffix_from : null,
+        suffix_to: (suffix_to && suffix_to.length > 0) ? suffix_to : null,
       }, {transaction: t})
       .then(app => {
         console.log(app)

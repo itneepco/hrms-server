@@ -167,7 +167,18 @@ function getTotalDebitCredit(emp_codee, cal_year) {
   let total_credit_rh = totalCredit(emp_codee, cal_year, codes.RH_CODE)
   let total_debit_rh = totalDebit(emp_codee, cal_year, codes.RH_CODE)
 
-  return Promise.all([total_credit_cl, total_debit_cl, total_credit_rh, total_debit_rh])
+  let total_credit_el = totalCredit(emp_codee, cal_year, codes.EL_CODE)
+  let total_debit_el = totalDebit(emp_codee, cal_year, codes.EL_CODE)
+
+  let total_credit_ml = totalCredit(emp_codee, cal_year, codes.ML_CODE)
+  let total_debit_ml = totalDebit(emp_codee, cal_year, codes.ML_CODE)
+
+  return Promise.all([
+    total_credit_cl, total_debit_cl, 
+    total_credit_rh, total_debit_rh,
+    total_credit_el, total_debit_el,
+    total_credit_ml, total_debit_ml
+  ])
     .then(val => {
       // Return an array of { remaining: val, leave_code: code } object
       let leaveRegister = [
@@ -180,6 +191,18 @@ function getTotalDebitCredit(emp_codee, cal_year) {
           balance: JSON.parse(JSON.stringify(val[2][0])).total_credit - JSON.parse(JSON.stringify(val[3][0])).total_debit,
           leave_code: codes.RH_CODE,
           leave_type: "RH"
+        }
+        ,
+        {
+          balance: JSON.parse(JSON.stringify(val[4][0])).total_credit - JSON.parse(JSON.stringify(val[5][0])).total_debit,
+          leave_code: codes.EL_CODE,
+          leave_type: "EL"
+        }
+        ,
+        {
+          balance: JSON.parse(JSON.stringify(val[6][0])).total_credit - JSON.parse(JSON.stringify(val[7][0])).total_debit,
+          leave_code: codes.ML_CODE,
+          leave_type: "ML"
         }
       ];
 

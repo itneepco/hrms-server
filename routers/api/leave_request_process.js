@@ -4,16 +4,39 @@ const leaveDetailModel = require('../../model/leaveDetail.model')
 const leaveAppHistModel = require('../../model/leaveApplicationHist.model')
 const leaveLedgerModel = require('../../model/leaveLedger.model')
 const EmployeeModel = require('../../model/employee.model');
+const roleMapperModel = require('../../model/roleMapper.model');
 const Codes = require('../../global/codes')
 const db = require('../../config/db');
 const Op = require('sequelize').Op;
 
-router.route('/officer/:addresseeEmpCode/count')
-  .get((req, res) => { 
-    leaveAppModel.count({
-      where: {
-        addressee: req.params.addresseeEmpCode,
+router.route('/officer/:empCode/count')
+  .get(async (req, res) => { 
+    let role = await checkElRole(req, res)
+
+    let addressee_condition;
+    if(!role) {
+      addressee_condition = { addressee: req.params.empCode }
+    }
+    else {
+      addressee_condition = { 
+        addressee: { 
+          [Op.or]: [role.role, req.params.empCode]
+        }
       }
+    }
+
+    leaveAppModel.count({
+      where: addressee_condition,
+      include: [{
+        model: EmployeeModel,
+        as: "leaveApplier",
+        attributes: ['first_name', 'last_name'],
+        where: {
+          project_id: {
+            [Op.like]: role ? "%" + role.project_id  : '%' 
+          }
+        }
+      }]
     })
     .then(result => {
       res.status(200).json(result)
@@ -24,102 +47,15 @@ router.route('/officer/:addresseeEmpCode/count')
     })
   })
 
-router.route('/officer/:addresseeEmpCode')
-  .get((req, res) => {
-    let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
-    let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
-    let offset = pageIndex * limit
+router.route('/officer/:empCode')
+  .get(async(req, res) => {
 
-    leaveAppModel.findAndCountAll({
-      order: [['updated_at', 'DESC']],
-      distinct: true,
-      where: {
-        addressee: req.params.addresseeEmpCode,
-      },
-      include: [
-        {
-          model: EmployeeModel,
-          as: "leaveApplier",
-          attributes: ['first_name', 'last_name'],
-        },
-        {
-          model: EmployeeModel,
-          as: "addresseeOfficer",
-          attributes: ['first_name', 'last_name'],
-        },
-        {
-          model: leaveAppHistModel,
-          include: [
-            {
-              model: EmployeeModel,
-              as: "officer",
-              attributes: ['emp_code', 'first_name', 'last_name'],
-            }
-          ]
-        },
-        { model: leaveDetailModel }
-      ]
-    })
-    .then(results => {
-      if (!results) return res.status(200).json(null)
-
-      console.log(JSON.stringify(results))
-      let leave_request = results.rows.map(result => {
-        let addressee = result.addresseeOfficer
-        return Object.assign(
-          {},
-          {
-            id: result.id,
-            emp_code: result.emp_code,
-            first_name: result.leaveApplier.first_name,
-            last_name: result.leaveApplier.last_name,
-            purpose: result.purpose,
-            address: result.address,
-            contact_no: result.contact_no,
-            addressee: addressee ? addressee.first_name + " " + addressee.last_name : "",
-            status: result.status,
-            prefix_from: result.prefix_from,
-            prefix_to: result.prefix_to,
-            suffix_from: result.prefix_from,
-            suffix_to: result.prefix_to,
-            created_at: result.created_at,   
-
-            history: result.leaveApplicationHists.map(hist => {
-              return Object.assign({}, {
-                id: hist.id,
-                officer: hist.officer,
-                workflow_action: hist.workflow_action,
-                updated_at: hist.updated_at,
-                remarks: hist.remarks
-              })
-            }),
-            leaveDetails: result.leaveDetails.map(leaveDetail => {
-              return Object.assign({}, {
-                id: leaveDetail.id,
-                leave_type: leaveDetail.leave_type,
-                from_date: leaveDetail.from_date,
-                to_date: leaveDetail.to_date,
-                station_leave: leaveDetail.station_leave
-              })
-            })
-          }
-        )
-      })
-
-      let data = {
-        rows: leave_request,
-        count: results.count
-      }
-      res.status(200).json(data)
-    })
-    .catch(err => {
-      console.log(err)
-      res.status(500).json({ message: 'Opps! Some error happened!!' })
-    })
-
+    let role = await checkElRole(req, res)
+    console.log(role)
+    fetchLeaveApplication(req, res, role)
   })
 
-  router.route('/officer/:addresseeEmpCode/processed')
+router.route('/officer/:empCode/processed')
   .get((req, res) => {
     let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
     let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
@@ -132,18 +68,13 @@ router.route('/officer/:addresseeEmpCode')
         {
           model: EmployeeModel,
           as: "leaveApplier",
-          attributes: ['first_name', 'last_name'],
-        },
-        {
-          model: EmployeeModel,
-          as: "addresseeOfficer",
           attributes: ['first_name', 'last_name'],
         },
         {
           model: leaveAppHistModel,
           as: "leaveProcessor",
           where: {
-            officer_emp_code: req.params.addresseeEmpCode,
+            officer_emp_code: req.params.empCode,
             workflow_action: {
               [Op.or]: [Codes.LEAVE_RECOMMENDED, Codes.LEAVE_APPROVED, Codes.LEAVE_NOT_RECOMMENDED]
             }
@@ -168,7 +99,7 @@ router.route('/officer/:addresseeEmpCode')
 
       console.log(JSON.stringify(results))
       let leave_request = results.rows.map(result => {
-        let addressee = result.addresseeOfficer
+       
         return Object.assign(
           {},
           {
@@ -179,7 +110,7 @@ router.route('/officer/:addresseeEmpCode')
             purpose: result.purpose,
             address: result.address,
             contact_no: result.contact_no,
-            addressee: addressee ? addressee.first_name + " " + addressee.last_name : "",
+            addressee: result.addressee ,
             status: result.status,
             prefix_from: result.prefix_from,
             prefix_to: result.prefix_to,
@@ -245,9 +176,20 @@ router.route('/:leaveAppId/actions')
           .then(() => {
             let no_of_cl = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.CL_CODE).length
             let no_of_rh = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.RH_CODE).length
+            
+            //Calculate no of EL days
+            let no_of_el = 0
+            if(result.leaveDetails[0].leave_type === Codes.EL_CODE) {
+              let from_date = new Date(result.leaveDetails[0].from_date)
+              let to_date = new Date(result.leaveDetails[0].to_date)
+              
+              no_of_el = ((to_date - from_date) / (60*60*24*1000)) + 1
+            }
 
+            //Insert in to ledger table
             return insertLeaveLedger("2018", "D", no_of_cl, Codes.CL_CODE, result.emp_code, t)
               .then(() => insertLeaveLedger("2018", "D", no_of_rh, Codes.RH_CODE, result.emp_code, t))
+              .then(() => insertLeaveLedger("2018", "D", no_of_el, Codes.EL_CODE, result.emp_code, t))
           })
         })
         .then(() => {
@@ -310,7 +252,7 @@ router.route('/:leaveAppId/actions')
           return leaveAppModel.update(
             { 
               status: Codes.LEAVE_RECOMMENDED, 
-              addressee: req.body.addressee_emp_code
+              addressee: req.body.addressee
             }, 
             { where: { id: req.params.leaveAppId }
           }, { transaction: t });
@@ -337,8 +279,7 @@ router.route('/:leaveAppId/actions')
         }, {transaction: t})
         
         .then(() => {
-          return leaveAppModel.update(
-            { 
+          return leaveAppModel.update({ 
               status: Codes.LEAVE_CALLBACKED, 
               addressee: req.body.officer_emp_code
             }, 
@@ -361,7 +302,7 @@ router.route('/:leaveAppId/actions')
 
 
 function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_code, t) {
-  if(no_of_days < 1) return 
+  if(no_of_days < 1) return Promise.resolve()
 
   return leaveLedgerModel.create({
     cal_year: cal_year,
@@ -370,6 +311,149 @@ function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_cod
     leave_type: leave_type,
     emp_code: emp_code
   }, { transaction: t })
+}
+
+function checkElRole(req, res) {
+  return roleMapperModel.findOne({
+    where: {
+      emp_code: req.params.empCode,
+      role: {
+        [Op.or]: [Codes.RMAP_EL]
+      }
+    }
+  })
+  .then(roleMapper => {
+    if (!roleMapper) return null
+    
+    return roleMapper
+  })
+  .catch(err => {
+    console.log(err)
+    return null
+  })
+}
+
+function checkMedicalRole(req, res) {
+  return roleMapperModel.findOne({
+    where: {
+      emp_code: req.params.empCode,
+      role: {
+        [Op.or]: [Codes.RMAP_ML]
+      }
+    }
+  })
+  .then(roleMapper => {
+    if (!roleMapper) return null
+    
+    return roleMapper
+  })
+  .catch(err => {
+    console.log(err)
+    return null
+  })
+}
+
+function fetchLeaveApplication(req, res, role) {
+  let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
+  let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
+  let offset = pageIndex * limit
+  
+  let addressee_condition;
+  if(!role) {
+    addressee_condition = {addressee: req.params.empCode}
+  }
+  else{
+    addressee_condition = { 
+      addressee: { 
+        [Op.or]: [role.role, req.params.empCode]
+      }
+    }
+  }
+  
+  return leaveAppModel.findAndCountAll({
+    order: [['updated_at', 'DESC']],
+    distinct: true,
+    where: addressee_condition,
+    include: [
+      {
+        model: EmployeeModel,
+        as: "leaveApplier",
+        attributes: ['first_name', 'last_name'],
+        where: {
+          project_id: {
+            [Op.like]: role ? "%" + role.project_id  : '%' 
+          }
+        }
+      },
+      {
+        model: leaveAppHistModel,
+        include: [
+          {
+            model: EmployeeModel,
+            as: "officer",
+            attributes: ['emp_code', 'first_name', 'last_name'],
+          }
+        ]
+      },
+      { model: leaveDetailModel }
+    ]
+  })
+  .then(results => {
+    if (!results) return res.status(200).json(null)
+
+    console.log(JSON.stringify(results))
+    let leave_request = results.rows.map(result => {
+
+      return Object.assign(
+        {},
+        {
+          id: result.id,
+          emp_code: result.emp_code,
+          first_name: result.leaveApplier.first_name,
+          last_name: result.leaveApplier.last_name,
+          purpose: result.purpose,
+          address: result.address,
+          contact_no: result.contact_no,
+          addressee: result.addressee,
+          status: result.status,
+          prefix_from: result.prefix_from,
+          prefix_to: result.prefix_to,
+          suffix_from: result.prefix_from,
+          suffix_to: result.prefix_to,
+          created_at: result.created_at,
+
+          history: result.leaveApplicationHists.map(hist => {
+            return Object.assign({}, {
+              id: hist.id,
+              officer: hist.officer,
+              workflow_action: hist.workflow_action,
+              updated_at: hist.updated_at,
+              remarks: hist.remarks
+            })
+          }),
+          leaveDetails: result.leaveDetails.map(leaveDetail => {
+            return Object.assign({}, {
+              id: leaveDetail.id,
+              leave_type: leaveDetail.leave_type,
+              from_date: leaveDetail.from_date,
+              to_date: leaveDetail.to_date,
+              station_leave: leaveDetail.station_leave
+            })
+          })
+        }
+      )
+    })
+
+    let data = {
+      rows: leave_request,
+      count: results.count
+    }
+    return  res.status(200).json(data)
+  })
+  .catch(err => {
+    console.log(err)
+    return res.status(500).json({ message: 'Opps! Some error happened!!' })
+  })
 }
 
 module.exports = router
