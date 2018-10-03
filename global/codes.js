@@ -3,6 +3,7 @@ module.exports = {
     RH_CODE:'02',
     EL_CODE:'03',
     ML_CODE:'04',
+    HD_CL_CODE:'05',
     
     LEAVE_APPLIED:'01',
     LEAVE_APPROVED:'02',
@@ -11,5 +12,10 @@ module.exports = {
     LEAVE_CALLBACKED: '05',
 
     RMAP_EL: 'RMAPEL',
-    RMAP_ML: 'RMAPML'
+    RMAP_ML: 'RMAPML',
+
+    //User Roles
+    IT_ADMIN_ROLE: 1,
+    HR_SUPER_ADMIN_ROLE: 2,
+    HR_SITE_ADMIN_ROLE: 3
 }

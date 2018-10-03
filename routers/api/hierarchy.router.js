@@ -5,8 +5,9 @@ const hierarchyModel = require('../../model/hierarchy.model')
 const employeeModel = require('../../model/employee.model')
 const designationModel = require('../../model/designation.model')
 const projectModel = require('../../model/project.model')
+const validateAdmin = require('../../middlewares/validateAdmin');
 
-router.route('/:empCode')
+router.route('/:empCode', validateAdmin)
 	.get((req, res) => {
 		hierarchyModel.findOne({
 			where: { emp_code: req.params.empCode },
@@ -127,7 +128,7 @@ router.route('/:empCode')
 		})
 	})
 
-router.route('/:id')
+router.route('/:id', validateAdmin)
 	.delete((req, res) => {
 		hierarchyModel.findById(req.params.id)
 		.then((hierarchy) => {

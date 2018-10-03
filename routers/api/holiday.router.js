@@ -2,19 +2,6 @@
 const router = require('express').Router({mergeParams:true})
 const holidayModel = require('../../model/holiday.model')
 
-router.route('/calendar')
-.get((req, res) => {
-    holidayModel.findAll({
-        where: { project_id: req.params.id },
-        order: [['day', 'ASC']]
-    })
-    .then(result=>res.status(200).json(result))
-    .catch(err=>{
-        console.log(err)
-        res.status(500).json({message:'Opps! Some error happened!!'})
-    })
-})
-
 router.route('/')
 .get((req,res)=>{
     let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0

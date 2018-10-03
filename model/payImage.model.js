@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
-const db = require('../config/mysqldb');
-
-const PayImage = db.define('pay_image', {
+const db = require('../config/db');
+const payCodes = require('../model/payCodes.model')
+const payImage = db.define('pay_image', {
    emp_num: {
         type: Sequelize.STRING
     },
@@ -25,8 +25,11 @@ const PayImage = db.define('pay_image', {
 }, {
        
     underscored: true,
+    timestamps:false,
     tableName:'ii_pay_image'
     }
 );
+payImage.removeAttribute('id')
+payImage.belongsTo(payCodes, { as: 'payCode', foreignKey: 'pay_code', targetKey: 'pay_code' })
 
-module.exports = PayImage
+module.exports = payImage

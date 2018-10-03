@@ -13,7 +13,7 @@ const leaveLedger = db.define('leaveLedger', {
         type: Sequelize.CHAR
     },
     no_of_days: {
-        type: Sequelize.INTEGER
+        type: Sequelize.FLOAT
     },
     leave_type: {
         type: Sequelize.STRING

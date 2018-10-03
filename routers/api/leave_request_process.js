@@ -158,151 +158,26 @@ router.route('/:leaveAppId/actions')
   .post((req, res) => {
     let action = req.body.workflow_action
     if (action === Codes.LEAVE_APPROVED) { 
-      db.transaction().then(t => {
-        leaveAppModel.find({
-          where: { id: req.params.leaveAppId },
-          include: { model: leaveDetailModel } 
-        }, { transaction: t })
-        
-        .then(result => {
-          console.log(JSON.stringify(result.leaveDetails))
-          return leaveAppHistModel.create({
-            leave_application_id: req.params.leaveAppId,
-            remarks: req.body.remarks,
-            officer_emp_code: req.body.officer_emp_code,
-            workflow_action: action,
-          }, {transaction: t})
-
-          .then(() => {
-            let no_of_cl = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.CL_CODE).length
-            let no_of_rh = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.RH_CODE).length
-            
-            //Calculate no of EL days
-            let no_of_el = 0
-            if(result.leaveDetails[0].leave_type === Codes.EL_CODE) {
-              let from_date = new Date(result.leaveDetails[0].from_date)
-              let to_date = new Date(result.leaveDetails[0].to_date)
-              
-              no_of_el = ((to_date - from_date) / (60*60*24*1000)) + 1
-            }
-
-            //Insert in to ledger table
-            return insertLeaveLedger("2018", "D", no_of_cl, Codes.CL_CODE, result.emp_code, t)
-              .then(() => insertLeaveLedger("2018", "D", no_of_rh, Codes.RH_CODE, result.emp_code, t))
-              .then(() => insertLeaveLedger("2018", "D", no_of_el, Codes.EL_CODE, result.emp_code, t))
-          })
-        })
-        .then(() => {
-          return leaveAppModel.update(
-            { status: Codes.LEAVE_APPROVED, addressee: null}, 
-            {where: { id: req.params.leaveAppId }
-          }, 
-          { transaction: t })
-        })
-        .then(function () {
-          res.status(200).json({message: "Leave request processed successful"})
-          return t.commit();
-        })
-        .catch(function (err) {
-          res.status(500).json({message: "Leave request processed unsuccessful"})
-          console.log(err)
-          return t.rollback();
-        });
-      })
+      leaveApprove(req, res)
     }
   
     if(action === Codes.LEAVE_NOT_RECOMMENDED) {
-      db.transaction().then(t => {
-        return leaveAppHistModel.create({
-          leave_application_id: req.params.leaveAppId,
-          remarks: req.body.remarks,
-          officer_emp_code: req.body.officer_emp_code,
-          workflow_action: action,
-        }, {transaction: t})
-        
-        .then(() => {
-          return leaveAppModel.update({ 
-              status: Codes.LEAVE_NOT_RECOMMENDED, 
-              addressee: null
-            }, 
-            { where: { id: req.params.leaveAppId }
-          }, {transaction: t});
-        })
-        .then(function () {
-          res.status(200).json({message: "Leave request processed successful"})
-          return t.commit();
-        }).catch(function (err) {
-          res.status(500).json({message: "Leave request processed unsuccessful"})
-          console.log(err)
-          return t.rollback();
-        });     
-      })
+      leaveNotRecommended(req, res)
     }
 
     if(action === Codes.LEAVE_RECOMMENDED) {
-      db.transaction().then(t => {
-        return leaveAppHistModel.create({
-          leave_application_id: req.params.leaveAppId,
-          remarks: req.body.remarks,
-          officer_emp_code: req.body.officer_emp_code,
-          workflow_action: action,
-        }, {transaction: t})
-        
-        .then(() => {
-          return leaveAppModel.update(
-            { 
-              status: Codes.LEAVE_RECOMMENDED, 
-              addressee: req.body.addressee
-            }, 
-            { where: { id: req.params.leaveAppId }
-          }, { transaction: t });
-        })
-        .then(function () {
-          res.status(200).json({message: "Leave request processed successful"})
-          return t.commit();
-        })
-        .catch(function (err) {
-          res.status(500).json({message: "Leave request processed unsuccessful"})
-          console.log(err)
-          return t.rollback();
-        });     
-      })
+      leaveRecommended(req, res)
     }
  
     if(action === Codes.LEAVE_CALLBACKED) {
-      db.transaction().then(t => {
-        return leaveAppHistModel.create({
-          leave_application_id: req.params.leaveAppId,
-          remarks: req.body.remarks,
-          officer_emp_code: req.body.officer_emp_code,
-          workflow_action: action,
-        }, {transaction: t})
-        
-        .then(() => {
-          return leaveAppModel.update({ 
-              status: Codes.LEAVE_CALLBACKED, 
-              addressee: req.body.officer_emp_code
-            }, 
-            { where: { id: req.params.leaveAppId }
-          }, { transaction: t });
-        })
-        .then(function () {
-          res.status(200).json({message: "Leave request processed successful"})
-          return t.commit();
-        })
-        .catch(function (err) {
-          res.status(500).json({message: "Leave request processed unsuccessful"})
-          console.log(err)
-          return t.rollback();
-        });     
-      })
+      leaveCallback(req, res)
     }
-    
   });
 
 
 function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_code, t) {
-  if(no_of_days < 1) return Promise.resolve()
+  console.log("no of days:", no_of_days)
+  if(no_of_days < .5) return Promise.resolve()
 
   return leaveLedgerModel.create({
     cal_year: cal_year,
@@ -453,6 +328,149 @@ function fetchLeaveApplication(req, res, role) {
   .catch(err => {
     console.log(err)
     return res.status(500).json({ message: 'Opps! Some error happened!!' })
+  })
+}
+
+function leaveNotRecommended(req, res) {
+  db.transaction().then(t => {
+    return leaveAppHistModel.create({
+      leave_application_id: req.params.leaveAppId,
+      remarks: req.body.remarks,
+      officer_emp_code: req.body.officer_emp_code,
+      workflow_action: req.body.workflow_action,
+    }, {transaction: t})
+    
+    .then(() => {
+      return leaveAppModel.update({ 
+          status: Codes.LEAVE_NOT_RECOMMENDED, 
+          addressee: null
+        }, 
+        { where: { id: req.params.leaveAppId }
+      }, {transaction: t});
+    })
+    .then(function () {
+      res.status(200).json({message: "Leave request processed successful"})
+      return t.commit();
+    }).catch(function (err) {
+      res.status(500).json({message: "Leave request processed unsuccessful"})
+      console.log(err)
+      return t.rollback();
+    });     
+  })
+}
+
+function leaveRecommended(req, res) {
+  db.transaction().then(t => {
+    return leaveAppHistModel.create({
+      leave_application_id: req.params.leaveAppId,
+      remarks: req.body.remarks,
+      officer_emp_code: req.body.officer_emp_code,
+      workflow_action: req.body.workflow_action,
+    }, {transaction: t})
+    
+    .then(() => {
+      return leaveAppModel.update(
+        { 
+          status: Codes.LEAVE_RECOMMENDED, 
+          addressee: req.body.addressee
+        }, 
+        { where: { id: req.params.leaveAppId }
+      }, { transaction: t });
+    })
+    .then(function () {
+      res.status(200).json({message: "Leave request processed successful"})
+      return t.commit();
+    })
+    .catch(function (err) {
+      res.status(500).json({message: "Leave request processed unsuccessful"})
+      console.log(err)
+      return t.rollback();
+    });     
+  })
+}
+
+function leaveCallback(req, res) {
+  db.transaction().then(t => {
+    return leaveAppHistModel.create({
+      leave_application_id: req.params.leaveAppId,
+      remarks: req.body.remarks,
+      officer_emp_code: req.body.officer_emp_code,
+      workflow_action: req.body.workflow_action,
+    }, {transaction: t})
+    
+    .then(() => {
+      return leaveAppModel.update({ 
+          status: Codes.LEAVE_CALLBACKED, 
+          addressee: req.body.officer_emp_code
+        }, 
+        { where: { id: req.params.leaveAppId }
+      }, { transaction: t });
+    })
+    .then(function () {
+      res.status(200).json({message: "Leave request processed successful"})
+      return t.commit();
+    })
+    .catch(function (err) {
+      res.status(500).json({message: "Leave request processed unsuccessful"})
+      console.log(err)
+      return t.rollback();
+    });     
+  })
+}
+
+function leaveApprove(req, res) {
+  db.transaction().then(t => {
+    leaveAppModel.find({
+      where: { id: req.params.leaveAppId },
+      include: { model: leaveDetailModel } 
+    }, { transaction: t })
+    
+    .then(result => {
+      console.log(JSON.stringify(result.leaveDetails))
+      return leaveAppHistModel.create({
+        leave_application_id: req.params.leaveAppId,
+        remarks: req.body.remarks,
+        officer_emp_code: req.body.officer_emp_code,
+        workflow_action: req.body.workflow_action,
+      }, {transaction: t})
+
+      .then(() => {
+        let no_of_cl = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.CL_CODE).length
+        let no_of_rh = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.RH_CODE).length
+        let no_of_hd_cl = (result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.HD_CL_CODE).length)/2
+        
+        //Calculate no of EL days
+        let no_of_el = 0
+        if(result.leaveDetails[0].leave_type === Codes.EL_CODE) {
+          let from_date = new Date(result.leaveDetails[0].from_date)
+          let to_date = new Date(result.leaveDetails[0].to_date)
+          
+          no_of_el = ((to_date - from_date) / (60*60*24*1000)) + 1
+        }
+
+        //Insert in to ledger table
+        return insertLeaveLedger("2018", "D", no_of_cl, Codes.CL_CODE, result.emp_code, t)
+          .then(() => insertLeaveLedger("2018", "D", no_of_rh, Codes.RH_CODE, result.emp_code, t))
+          .then(() => insertLeaveLedger("2018", "D", no_of_el, Codes.EL_CODE, result.emp_code, t))
+          .then(() => insertLeaveLedger("2018", "D", no_of_hd_cl, Codes.CL_CODE, result.emp_code, t))
+      })
+    })
+    .then(() => {
+      return leaveAppModel.update(
+        { status: Codes.LEAVE_APPROVED, addressee: null}, 
+        {where: { id: req.params.leaveAppId }
+      }, 
+      { transaction: t })
+    })
+    .then(function () {
+      res.status(200).json({message: "Leave request processed successful"})
+      return t.commit();
+    })
+    .catch(function (err) {
+      res.status(500).json({message: "Leave request processed unsuccessful"})
+      console.log(err)
+      return t.rollback();
+    });
   })
 }
 

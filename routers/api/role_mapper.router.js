@@ -101,15 +101,42 @@ router.route('/')
 
 .post((req, res) => {
   roleMapperModel
-    .build({
+    .create({
       role: req.body.role,
       emp_code: req.body.emp_code,
       project_id: req.body.project_id
     })
-    .save()
     .then(result => {
-      console.log(result)
-      res.status(200).send(result)
+      roleMapperModel.findById(result.id, {
+        include : [
+          {
+            model: EmployeeModel,
+            as: "admin",
+            attributes: ['emp_code', 'first_name', 'last_name'],
+          },
+          {
+            model:ProjectModel,
+            as:"project"
+          }
+        ]
+      })
+      .then(result=> {
+        let data = Object.assign({}, {
+          id : result.id,
+          role:result.role,
+          emp_code : result.emp_code,         
+          first_name : result.admin.first_name,          
+          last_name: result.admin.last_name,
+          project_id: result.project.id,
+          project_name: result.project.name
+          
+        })
+        res.status(200).json(data) 
+      })
+      .catch(err =>{
+        console.log(err) 
+        res.status(500).json({message:'Opps! Some error happened!!'})
+      })
     })
     .catch(error => {
       console.log(error)
@@ -166,13 +193,13 @@ router.route('/')
       res.status(200).json(data) 
     })
     .catch(err =>{
-        console.log(err) 
-        res.status(500).json({message:'Opps! Some error happened!!'})
+      console.log(err) 
+      res.status(500).json({message:'Opps! Some error happened!!'})
     })
   })
   .catch(err=>{
-      console.log(err)
-      res.status(500).json({message:'Opps! Some error happened!!'})
+    console.log(err)
+    res.status(500).json({message:'Opps! Some error happened!!'})
   })
 })
 

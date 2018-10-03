@@ -4,9 +4,29 @@ const ledgerModel = require('../../model/leaveLedger.model')
 const Sequelize = require('sequelize');
 const codes = require('../../global/codes');
 
+router.route('/ledger/employee/:emp_code')
+  .get((req, res) => {
+    let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
+    let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
+    let offset = pageIndex * limit
+
+    ledgerModel.findAndCountAll({
+      where: { emp_code: req.params.emp_code },
+      order: [['updated_at', 'DESC']],
+      limit: limit,
+      offset: offset
+    })
+    .then(result => {
+      res.status(200).json(result)
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ message: 'Oops! Some error happend' })
+    })
+  })
+
 router.route('/ledger')
   .post((req, res) => {
-
     ledgerModel.build(
       {
         emp_code: req.body.emp_code,
@@ -19,8 +39,6 @@ router.route('/ledger')
       .save()
       .then(result => {
         console.log(result)
-        //res.redirect('/ledger/:'+result.id)
-        //res.status(200).send(result)
         findLedger(result.id, res)
       })
       .catch(err => {
@@ -28,6 +46,7 @@ router.route('/ledger')
         res.status(500).json({ message: 'Opps! Some error occured!!' })
       })
   })
+
 router.route('/ledger/:id')
   .get((req, res) => {
 
@@ -75,10 +94,10 @@ router.route('/ledger/:id')
       })
   })
 
-// Return an array of { balance: val, leave_type: type, leave_type_id: id } object
-router.route('/status/:emp_code/:year_param')
+router.route('/status/:emp_code')
   .get((req, res) => {
-    getTotalDebitCredit(req.params.emp_code, req.params.year_param)
+    let curr_year = (new Date()).getFullYear()
+    getTotalDebitCredit(req.params.emp_code, curr_year)
       .then(result => {
         res.status(200).json(result)
       })
@@ -87,41 +106,20 @@ router.route('/status/:emp_code/:year_param')
       })
   })
 
-router.route('/ledger/employee/:emp_code')
-  .get((req, res) => {
-    let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
-    let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
-    let offset = pageIndex * limit
-    ledgerModel.findAndCountAll({
-      where: { emp_code: req.params.emp_code },
-      order: [['updated_at', 'DESC']],
-      limit: parseInt(req.query.pageSize),
-      offset: offset
-    })
-      .then(result => {
-        res.status(200).json(result)
-      })
-      .catch(err => {
-        console.log(err)
-        res.status(500).json({ message: 'Oops! Some error happend' })
-      })
-  })
-
 function findLedger(lid, res) {
   ledgerModel.findOne({
     where: { id: lid }
   })
-    .then(result => {
-      res.status(200).json(result)
-    })
-    .catch(err => {
-      console.log(err)
-      res.status(500).json({ message: 'Oops! Some error happend' })
-    })
+  .then(result => {
+    res.status(200).json(result)
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({ message: 'Oops! Some error happend' })
+  })
 }
 
 function totalCredit(emp_code, cal_year, leave_type) {
-
   return ledgerModel.findAll({
     attributes: [[Sequelize.fn('SUM', Sequelize.col('no_of_days')), 'total_credit']],
     where: {
