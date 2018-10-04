@@ -11,7 +11,7 @@ router.route('/:empCode')
     let year = today.getFullYear().toString()
     let mon  = today.getMonth() > 9 ?  today.getMonth().toString() : '0' + today.getMonth().toString()
     let yymm = req.query.yymm ? req.query.yymm : (year+mon)
-
+    
     let employee = await employeeModel.findOne({
         where: {emp_code: req.params.empCode},
         include:[{model:projectModel},{model:designationModel}
@@ -20,7 +20,7 @@ router.route('/:empCode')
     .then(emp=>{
         if(!emp) return res.status(200).json(null)
         let result = Object.assign({}, {
-            id : emp.id,
+            id : emp.id,            
             emp_code : emp.emp_code,
             first_name : emp.first_name,
             middle_name : emp.middle_name,
@@ -38,11 +38,20 @@ router.route('/:empCode')
     .then(results=>{
         if(!results) return res.status(200).json({message:'data not found'})
 
-        let payments = results.filter(result=>result.pay_mode == 1|| result.pay_mode ==2)
-        let deductions = results.filter(result=>result.pay_mode == 4|| result.pay_mode ==5)
+        let payments = results.filter(result=> {
+            let pay_code = result.pay_code
+            let pay_mode = result.pay_mode
+            return ((pay_mode == 1 || pay_mode == 2) && !(pay_code == 997 || pay_code == 999))
+        })
         let pdata = payments.map(result => Object.assign({},{
-            emp_code: result.emp_num,
-            yymm : result.yymm,
+            pay_code: result.pay_code,
+            pay_code_desc: result.payCode.pay_code_desc,
+            pay_code_srl: result. pay_code_srl,
+            pay_mode: result.pay_mode,
+            txn_amt: result.txn_amt
+        }))
+        
+        let grossPay = results.filter(result=> result.pay_code == 997).map(result => Object.assign({},{
             pay_code: result.pay_code,
             pay_code_desc: result.payCode.pay_code_desc,
             pay_code_srl: result. pay_code_srl,
@@ -50,9 +59,24 @@ router.route('/:empCode')
             txn_amt: result.txn_amt
         }))
 
+        let netPay = results.filter(result=> result.pay_code == 999).map(result => Object.assign({},{
+            pay_code: result.pay_code,
+            pay_code_desc: result.payCode.pay_code_desc,
+            pay_code_srl: result. pay_code_srl,
+            pay_mode: result.pay_mode,
+            txn_amt: result.txn_amt
+        }))
+
+        let deductions = results.filter(result=> ((result.pay_mode == 4 || result.pay_mode == 5) && result.pay_code != 998))     
         let ddata = deductions.map(result => Object.assign({},{
-            emp_code: result.emp_num,
-            yymm : result.yymm,
+            pay_code: result.pay_code,
+            pay_code_desc: result.payCode.pay_code_desc,
+            pay_code_srl: result. pay_code_srl,
+            pay_mode: result.pay_mode,
+            txn_amt: result.txn_amt
+        }))
+
+        let grossDeduction = results.filter(result=> result.pay_code == 998).map(result => Object.assign({},{
             pay_code: result.pay_code,
             pay_code_desc: result.payCode.pay_code_desc,
             pay_code_srl: result. pay_code_srl,
@@ -63,7 +87,11 @@ router.route('/:empCode')
         res.status(200).json({
             employee: employee,
             payments: pdata,
-            deductions:ddata
+            deductions:ddata,
+            grossPay: grossPay[0],
+            netPay: netPay[0],
+            grossDeduction: grossDeduction[0],
+            yymm: yymm
         })
     })
     .catch(error=>{
