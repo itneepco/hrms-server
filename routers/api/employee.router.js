@@ -2,32 +2,90 @@ const router = require('express').Router()
 const employeeModel = require('../../model/employee.model')
 const projectModel = require('../../model/project.model')
 const designationModel = require('../../model/designation.model')
+const Op = require('Sequelize').Op
 
-router.route('/hierarchy/:empCode')
-.get((req,res)=>{
-    employeeModel.findOne({
-        where: {emp_code: req.params.empCode},
-        include:[{model:projectModel},{model:designationModel}
-        ]
-    })
-    .then(emp=>{
-        if(!emp) return res.status(200).json(null)
-        let result = Object.assign({},{
-            id : emp.id,
-            emp_code : emp.emp_code,
-            first_name : emp.first_name,
-            middle_name : emp.middle_name,
-            last_name: emp.last_name,
-            project: emp.project.name,
-            designation:emp.designation.name
-        })
+router.route('/search/')
+	.get((req, res) => {
+		let user = req.user
+		let condition = {
+			emp_code: {
+				[Op.like]: req.query.emp_code ? "%" + req.query.emp_code + "%" : '%'
+			}
+		}
 
-        res.status(200).json(result)
-    })
-    .catch(error=>{
-        console.log(error)
-        res.status(500).json({message : 'An error occured'})
-    })
-      
-})
+		//If current user is not IT admin or HR Admin, the specify project id
+		if (!(user.role == 1 || user.role == 2)) {
+			condition["project_id"] = user.project_id
+		}
+
+		employeeModel.findAll({
+			where: condition,
+			include: [
+				{ model: projectModel },
+				{ model: designationModel }
+			]
+		})
+		.then(results => {
+			if (!results) return res.status(200).json(null)
+
+			let data = results.map(emp => Object.assign(
+				{},
+				{
+					id: emp.id,
+					emp_code: emp.emp_code,
+					first_name: emp.first_name,
+					middle_name: emp.middle_name,
+					last_name: emp.last_name,
+					project: emp.project.name,
+					designation: emp.designation.name
+				})
+			)
+
+			res.status(200).json(data)
+		})
+		.catch(error => {
+			console.log(error)
+			res.status(500).json({ message: 'An error occured' })
+		})
+
+	})
+
+
+router.route('/:empCode')
+	.get((req, res) => {
+		let user = req.user
+		let condition = { emp_code: req.params.empCode }
+
+		//If current user is not IT admin or HR Admin, the specify project id
+		if (!(user.role == 1 || user.role == 2)) {
+			condition["project_id"] = user.project_id
+		}
+
+		employeeModel.findOne({
+			where: condition,
+			include: [
+				{ model: projectModel },
+				{ model: designationModel }
+			]
+		})
+		.then(emp => {
+			if (!emp) return res.status(200).json(null)
+			let result = Object.assign({}, {
+				id: emp.id,
+				emp_code: emp.emp_code,
+				first_name: emp.first_name,
+				middle_name: emp.middle_name,
+				last_name: emp.last_name,
+				project: emp.project.name,
+				designation: emp.designation.name
+			})
+
+			res.status(200).json(result)
+		})
+		.catch(error => {
+			console.log(error)
+			res.status(500).json({ message: 'An error occured' })
+		})
+	})
+
 module.exports = router

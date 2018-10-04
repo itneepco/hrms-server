@@ -10,6 +10,7 @@ module.exports = {
     LEAVE_RECOMMENDED: '03',
     LEAVE_NOT_RECOMMENDED: '04',
     LEAVE_CALLBACKED: '05',
+    LEAVE_CANCELLED: '06',
 
     RMAP_EL: 'RMAPEL',
     RMAP_ML: 'RMAPML',

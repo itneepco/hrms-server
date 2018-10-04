@@ -178,7 +178,7 @@ router.route('/:leaveAppId/actions')
 function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_code, t) {
   console.log("no of days:", no_of_days)
   if(no_of_days < .5) return Promise.resolve()
-
+ //--- Check leave balance ---
   return leaveLedgerModel.create({
     cal_year: cal_year,
     db_cr_flag: db_cr_flag,

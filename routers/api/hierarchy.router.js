@@ -6,9 +6,27 @@ const employeeModel = require('../../model/employee.model')
 const designationModel = require('../../model/designation.model')
 const projectModel = require('../../model/project.model')
 const validateAdmin = require('../../middlewares/validateAdmin');
+const Op = require('Sequelize').Op
 
-router.route('/:empCode', validateAdmin)
+//Authorization for all routes except parents/:empCode route
+router.use((req, res, next) => {
+	console.log("path", req.path)
+	if(req.path.match(/\/parents\/[0-9]{6}/)) {
+		next()
+	} else {
+		validateAdmin(req, res, next)
+	}
+})
+
+router.route('/:empCode')
 	.get((req, res) => {
+		// If current user is not IT admin or HR Admin, then specify project id
+		let user = req.user
+		let project_id
+		if (user && !(user.role == 1 || user.role == 2)) {
+			project_id = user.project_id
+		}
+
 		hierarchyModel.findOne({
 			where: { emp_code: req.params.empCode },
 			include: [
@@ -27,6 +45,11 @@ router.route('/:empCode', validateAdmin)
 				},
 				{
 					model: employeeModel,
+					where: {
+						project_id: {
+							[Op.like]: project_id ? "%"+project_id+"%" : '%' 
+						}
+					},
 					include: [
 						{ model: designationModel },
 						{ model: projectModel }
@@ -44,7 +67,7 @@ router.route('/:empCode', validateAdmin)
 		})
 		.then(async (emp) => {
 			if (!emp) {
-				insertEmpNode(req.params.empCode).then(result => {
+				insertEmpNode(req.params.empCode, project_id).then(result => {
 					res.status(200).json(result)
 				})
 			}
@@ -91,6 +114,10 @@ router.route('/:empCode', validateAdmin)
 				res.status(200).json(result)
 			}
 		})
+		.catch(err=>{
+			console.log(err)
+			res.status(500).json({message:'Opps! Some error happened!!'})
+		})
 	})
 	.post((req, res) => {
 		hierarchyModel.findOne({ where: { emp_code: req.params.empCode } })
@@ -128,7 +155,7 @@ router.route('/:empCode', validateAdmin)
 		})
 	})
 
-router.route('/:id', validateAdmin)
+router.route('/:id')
 	.delete((req, res) => {
 		hierarchyModel.findById(req.params.id)
 		.then((hierarchy) => {
@@ -166,44 +193,42 @@ router.route('/parents/:empCode')
 					result = [firstParent]
 				}
 			}
-
-
 			return res.status(200).json(result)
 		}
 		catch (err) {
 			console.log(err)
-			return null
+			res.status(500).json({message:'Opps! Some error happened!!'})
 		}
-
-
 	})
 
-function insertEmpNode(empCode) {
+function insertEmpNode(empCode, project_id) {
+	let condition = { emp_code: empCode }
+	//Include project_id in the condition if project_id is defined
+	if(project_id) 
+		condition['project_id'] = project_id
+
 	return employeeModel.findOne({
-		where: { emp_code: empCode }
+		where: condition 
 	})
 	.then(emp => {
 		if (!emp) return null
 		return hierarchyModel.create({
 			emp_code: empCode
-	})
-	.then(result => {
-		return hierarchyModel.findOne({
-			where: { emp_code: empCode },
-			include: [
-				{
-					model: employeeModel,
-					include: [
-						{ model: designationModel },
-						{ model: projectModel }
-					]
-				}
-			]
-		})
-		.then(emp => {
-			console.log(emp)
-			return Object.assign(
-				{},
+	  })
+		.then(result => {
+			return hierarchyModel.findOne({
+				where: { emp_code: empCode },
+				include: [
+					{
+						model: employeeModel,
+						include: [
+							{ model: designationModel },
+							{ model: projectModel }
+						]
+					}
+				]
+			})
+			.then(emp => Object.assign({},
 				{
 					id: emp.id,
 					emp_code: emp.emp_code,
@@ -212,14 +237,12 @@ function insertEmpNode(empCode) {
 					last_name: emp.employee.last_name,
 					project: emp.employee.project.name,
 					designation: emp.employee.designation.name,
-				})
+				}))
 			})
 		})
-	})
 }
 
 function getParent(empCode) {
-
 	return new Promise((resolve, reject) => {
 		hierarchyModel.findOne({
 			where: { emp_code: empCode },
@@ -229,26 +252,26 @@ function getParent(empCode) {
 				include: [{ model: designationModel }]
 			}]
 		})
-			.then(emp => {
-				if (!emp) reject
-				if (emp && emp.parent) {
-					parent = {
-						emp_code: emp.parent.emp_code,
-						first_name: emp.parent.first_name,
-						last_name: emp.parent.last_name,
-						designation: emp.parent.designation.name
-					}
-				} else {
-					parent = null
+		.then(emp => {
+			if (!emp) reject
+			if (emp && emp.parent) {
+				parent = {
+					emp_code: emp.parent.emp_code,
+					first_name: emp.parent.first_name,
+					last_name: emp.parent.last_name,
+					designation: emp.parent.designation.name
 				}
+			} else {
+				parent = null
+			}
 
-				resolve(parent)
+			resolve(parent)
 
-			})
-			.catch(err => {
-				console.log(err)
-				reject
-			})
+		})
+		.catch(err => {
+			console.log(err)
+			reject
+		})
 	})
 }
 

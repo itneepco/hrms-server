@@ -18,8 +18,7 @@ router.route('/')
     .catch(err=>{
         console.log(err)
         res.status(500).json({message:'Opps! Some error happened!!'})
-    }
-    )
+    })
 })
 .post((req,res)=>{
     holidayModel

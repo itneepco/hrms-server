@@ -1,7 +1,7 @@
 const Codes = require('../global/codes');
 
 module.exports = (req, res, next) => {
-  console.log(req.user)
+  // console.log(req.user)
   let curr_user = req.user
   
   if(curr_user && (curr_user.role == Codes.IT_ADMIN_ROLE || 
