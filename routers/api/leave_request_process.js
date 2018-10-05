@@ -14,12 +14,16 @@ router.route('/officer/:empCode/count')
     let conditions = await getQueryCondition(req, res)
       
     leaveAppModel.count({
-      where: conditions[0],
+      where: {
+        addressee: conditions[0].addressee
+      },
       include: [{
         model: EmployeeModel,
         as: "leaveApplier",
         attributes: ['first_name', 'last_name'],
-        where: conditions[1]
+        where: {
+          project_id: conditions[1].project_id
+        }
       }]
     })
     .then(result => {
@@ -209,13 +213,17 @@ async function fetchLeaveApplication(req, res, el_role, hpl_role) {
   return leaveAppModel.findAndCountAll({
     order: [['updated_at', 'DESC']],
     distinct: true,
-    where: conditions[0],
+    where: {
+      addressee: conditions[0].addressee
+    },
     include: [
       {
         model: EmployeeModel,
         as: "leaveApplier",
         attributes: ['first_name', 'last_name'],
-        where: conditions[1]
+        where: {
+          project_id: conditions[1].project_id
+        }
       },
       {
         model: leaveAppHistModel,
