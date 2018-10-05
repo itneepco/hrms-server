@@ -13,8 +13,6 @@ router.get('/employee/:empCode', (req, res) => {
   let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
   let offset = pageIndex * limit
 
-  console.log(limit)
-
   leaveAppModel.findAndCountAll({
     where: { emp_code: req.params.empCode },
     distinct: true,
@@ -42,52 +40,14 @@ router.get('/employee/:empCode', (req, res) => {
   })
   .then(results => {
     if (!results) return res.status(200).json(null)
-    let application = results.rows.map(result => {
-      //let addressee = result.addresseeOfficer
-      return Object.assign(
-        {},
-        {
-          id: result.id,
-          emp_code: result.emp_code,
-          first_name: result.leaveApplier.first_name,
-          last_name: result.leaveApplier.last_name,
-          purpose: result.purpose,
-          address: result.address,
-          contact_no: result.contact_no,
-          addressee: result.addressee ,
-          status: result.status,
-          prefix_from: result.prefix_from,
-          prefix_to: result.prefix_to,
-          suffix_from: result.prefix_from,
-          suffix_to: result.prefix_to,
-          created_at: result.created_at,
 
-          history: result.leaveApplicationHists.map(hist => {
-            return Object.assign({}, {
-              id: hist.id,
-              officer: hist.officer,
-              workflow_action: hist.workflow_action,
-              updated_at: hist.updated_at,
-              remarks: hist.remarks
-            })
-          }),
-          leaveDetails: result.leaveDetails.map(leaveDetail => {
-            return Object.assign({}, {
-              id: leaveDetail.id,
-              leave_type: leaveDetail.leave_type,
-              from_date: leaveDetail.from_date,
-              to_date: leaveDetail.to_date,
-              station_leave: leaveDetail.station_leave
-            })
-          })
-        }
-      )
-    })
-    let data = {
-      rows: application,
-      count: results.count
-    }
-    res.status(200).json(data)
+    filterData(results).then(application => {
+      let data = {
+        rows: application,
+        count: results.count
+      }
+      res.status(200).json(data)
+    }) 
   })
   .catch(err => {
     console.log(err)
@@ -145,4 +105,82 @@ router.route('/')
     })
   })
 
+function filterData(results) {
+  let promises = results.rows.map(async (result) => {
+    let addressee = await findAdressee(result.addressee)
+    return Object.assign({},
+      {
+        id: result.id,
+        emp_code: result.emp_code,
+        first_name: result.leaveApplier.first_name,
+        last_name: result.leaveApplier.last_name,
+        purpose: result.purpose,
+        address: result.address,
+        contact_no: result.contact_no,
+        addressee: addressee,
+        status: result.status,
+        prefix_from: result.prefix_from,
+        prefix_to: result.prefix_to,
+        suffix_from: result.prefix_from,
+        suffix_to: result.prefix_to,
+        created_at: result.created_at,
+
+        history: result.leaveApplicationHists.map(hist => {
+          return Object.assign({}, {
+            id: hist.id,
+            officer: hist.officer,
+            workflow_action: hist.workflow_action,
+            updated_at: hist.updated_at,
+            remarks: hist.remarks
+          })
+        }),
+        leaveDetails: result.leaveDetails.map(leaveDetail => {
+          return Object.assign({}, {
+            id: leaveDetail.id,
+            leave_type: leaveDetail.leave_type,
+            from_date: leaveDetail.from_date,
+            to_date: leaveDetail.to_date,
+            station_leave: leaveDetail.station_leave
+          })
+        })
+      }
+    )
+  })
+
+  return Promise.all(promises).then(function(application) {
+    console.log(application)
+    return application
+  })
+}
+
+function findAdressee(addressee) {
+  return new Promise((resolve, reject) => {
+    if(addressee && addressee.match(/00[0-9]{4}/)) {
+      EmployeeModel.findOne({where: 
+        {emp_code: addressee}
+      })
+      .then(data => {
+        if(!data) return resolve("")
+
+        let name = data.first_name + " " + data.last_name
+        return resolve(name)
+      })
+      .catch(err => {
+        console.log(err)
+        return reject()
+      })
+    }
+    else if(addressee == codes.RMAP_EL) {
+      return resolve("EL ADMIN")
+    } 
+    else if(addressee == codes.RMAP_HPL) {
+      return resolve("HPL ADMIN")
+    }
+    else {
+      return resolve("")
+    }
+  })
+}
+  
 module.exports = router
+

@@ -11,31 +11,15 @@ const Op = require('sequelize').Op;
 
 router.route('/officer/:empCode/count')
   .get(async (req, res) => { 
-    let role = await checkElRole(req, res)
-
-    let addressee_condition;
-    if(!role) {
-      addressee_condition = { addressee: req.params.empCode }
-    }
-    else {
-      addressee_condition = { 
-        addressee: { 
-          [Op.or]: [role.role, req.params.empCode]
-        }
-      }
-    }
-
+    let conditions = await getQueryCondition(req, res)
+      
     leaveAppModel.count({
-      where: addressee_condition,
+      where: conditions[0],
       include: [{
         model: EmployeeModel,
         as: "leaveApplier",
         attributes: ['first_name', 'last_name'],
-        where: {
-          project_id: {
-            [Op.like]: role ? "%" + role.project_id  : '%' 
-          }
-        }
+        where: conditions[1]
       }]
     })
     .then(result => {
@@ -48,11 +32,12 @@ router.route('/officer/:empCode/count')
   })
 
 router.route('/officer/:empCode')
-  .get(async(req, res) => {
+  .get(async (req, res) => {
 
-    let role = await checkElRole(req, res)
-    console.log(role)
-    fetchLeaveApplication(req, res, role)
+    let el_role = await checkElRole(req, res)
+    let hpl_role = await checkHalfPayRole(req, res)
+
+    fetchLeaveApplication(req, res, el_role, hpl_role)
   })
 
 router.route('/officer/:empCode/processed')
@@ -172,29 +157,17 @@ router.route('/:leaveAppId/actions')
     if(action === Codes.LEAVE_CALLBACKED) {
       leaveCallback(req, res)
     }
+
+    if(action === Codes.LEAVE_CANCELLED) {
+      leaveCancel(req, res)
+    }
   });
-
-
-function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_code, t) {
-  console.log("no of days:", no_of_days)
-  if(no_of_days < .5) return Promise.resolve()
- //--- Check leave balance ---
-  return leaveLedgerModel.create({
-    cal_year: cal_year,
-    db_cr_flag: db_cr_flag,
-    no_of_days: no_of_days,
-    leave_type: leave_type,
-    emp_code: emp_code
-  }, { transaction: t })
-}
 
 function checkElRole(req, res) {
   return roleMapperModel.findOne({
     where: {
       emp_code: req.params.empCode,
-      role: {
-        [Op.or]: [Codes.RMAP_EL]
-      }
+      role: Codes.RMAP_EL
     }
   })
   .then(roleMapper => {
@@ -208,13 +181,11 @@ function checkElRole(req, res) {
   })
 }
 
-function checkMedicalRole(req, res) {
+function checkHalfPayRole(req, res) {
   return roleMapperModel.findOne({
     where: {
       emp_code: req.params.empCode,
-      role: {
-        [Op.or]: [Codes.RMAP_ML]
-      }
+      role: Codes.RMAP_HPL
     }
   })
   .then(roleMapper => {
@@ -228,37 +199,23 @@ function checkMedicalRole(req, res) {
   })
 }
 
-function fetchLeaveApplication(req, res, role) {
+async function fetchLeaveApplication(req, res, el_role, hpl_role) {
   let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
   let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
   let offset = pageIndex * limit
-  
-  let addressee_condition;
-  if(!role) {
-    addressee_condition = {addressee: req.params.empCode}
-  }
-  else{
-    addressee_condition = { 
-      addressee: { 
-        [Op.or]: [role.role, req.params.empCode]
-      }
-    }
-  }
+
+  let conditions = await getQueryCondition(req, res)
   
   return leaveAppModel.findAndCountAll({
     order: [['updated_at', 'DESC']],
     distinct: true,
-    where: addressee_condition,
+    where: conditions[0],
     include: [
       {
         model: EmployeeModel,
         as: "leaveApplier",
         attributes: ['first_name', 'last_name'],
-        where: {
-          project_id: {
-            [Op.like]: role ? "%" + role.project_id  : '%' 
-          }
-        }
+        where: conditions[1]
       },
       {
         model: leaveAppHistModel,
@@ -472,6 +429,129 @@ function leaveApprove(req, res) {
       return t.rollback();
     });
   })
+}
+
+function leaveCancel(req, res) {
+  db.transaction().then(t => {
+    leaveAppModel.find({
+      where: { id: req.params.leaveAppId },
+      include: { model: leaveDetailModel } 
+    }, { transaction: t })
+    
+    .then(result => {
+      console.log(JSON.stringify(result.leaveDetails))
+      return leaveAppHistModel.create({
+        leave_application_id: req.params.leaveAppId,
+        remarks: req.body.remarks,
+        officer_emp_code: req.body.officer_emp_code,
+        workflow_action: req.body.workflow_action,
+      }, {transaction: t})
+
+      .then(() => {
+        let no_of_cl = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.CL_CODE).length
+        let no_of_rh = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.RH_CODE).length
+        let no_of_hd_cl = (result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.HD_CL_CODE).length)/2
+        
+        //Calculate no of EL days
+        let no_of_el = 0
+        if(result.leaveDetails[0].leave_type === Codes.EL_CODE) {
+          let from_date = new Date(result.leaveDetails[0].from_date)
+          let to_date = new Date(result.leaveDetails[0].to_date)
+          
+          no_of_el = ((to_date - from_date) / (60*60*24*1000)) + 1
+        }
+
+        //Insert in to ledger table
+        return insertLeaveLedger("2018", "C", no_of_cl, Codes.CL_CODE, result.emp_code, t)
+          .then(() => insertLeaveLedger("2018", "C", no_of_rh, Codes.RH_CODE, result.emp_code, t))
+          .then(() => insertLeaveLedger("2018", "C", no_of_el, Codes.EL_CODE, result.emp_code, t))
+          .then(() => insertLeaveLedger("2018", "C", no_of_hd_cl, Codes.CL_CODE, result.emp_code, t))
+      })
+    })
+    .then(() => {
+      return leaveAppModel.update(
+        { status: Codes.LEAVE_CANCELLED, addressee: null}, 
+        {where: { id: req.params.leaveAppId }
+      }, 
+      { transaction: t })
+    })
+    .then(function () {
+      res.status(200).json({message: "Leave request processed successful"})
+      return t.commit();
+    })
+    .catch(function (err) {
+      res.status(500).json({message: "Leave request processed unsuccessful"})
+      console.log(err)
+      return t.rollback();
+    });
+  })
+}
+
+function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_code, t) {
+  console.log("no of days:", no_of_days)
+  if(no_of_days < .5) return Promise.resolve()
+ //--- Check leave balance ---
+  return leaveLedgerModel.create({
+    cal_year: cal_year,
+    db_cr_flag: db_cr_flag,
+    no_of_days: no_of_days,
+    leave_type: leave_type,
+    emp_code: emp_code
+  }, { transaction: t })
+}
+
+async function getQueryCondition(req, res) {
+  let el_role = await checkElRole(req, res)
+  let hpl_role = await checkHalfPayRole(req, res)
+
+  let addressee_condition;
+  let project_condition;
+  if(el_role && !hpl_role){
+    addressee_condition = { 
+      addressee: { 
+        [Op.or]: [el_role.role, req.params.empCode]
+      }
+    }
+    project_condition = {
+      project_id: {
+        [Op.like]: "%" + el_role.project_id
+      }
+    }
+  }
+  else if(!el_role && hpl_role){
+    addressee_condition = { 
+      addressee: { 
+        [Op.or]: [hpl_role.role, req.params.empCode]
+      }
+    }
+    project_condition = {
+      project_id: {
+        [Op.like]: "%" + hpl_role.project_id
+      }
+    }
+  }
+  else if(el_role && hpl_role){
+    addressee_condition = { 
+      addressee: { 
+        [Op.or]: [hpl_role.role, el_role, req.params.empCode]
+      }
+    }
+    project_condition = {
+      project_id: {
+        [Op.like]: "%" + el_role.project_id 
+      }
+    }
+  }
+  else {
+    addressee_condition = { addressee: req.params.empCode }
+    project_condition = {
+      project_id: {
+        [Op.like]: "%"
+      }
+    }
+  }
+
+  return [addressee_condition, project_condition]
 }
 
 module.exports = router

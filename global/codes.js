@@ -2,7 +2,7 @@ module.exports = {
     CL_CODE:'01',
     RH_CODE:'02',
     EL_CODE:'03',
-    ML_CODE:'04',
+    HPL_CODE:'04',
     HD_CL_CODE:'05',
     
     LEAVE_APPLIED:'01',
@@ -13,7 +13,7 @@ module.exports = {
     LEAVE_CANCELLED: '06',
 
     RMAP_EL: 'RMAPEL',
-    RMAP_ML: 'RMAPML',
+    RMAP_HPL: 'RMAPML',
 
     //User Roles
     IT_ADMIN_ROLE: 1,
