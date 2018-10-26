@@ -19,7 +19,7 @@ sequelize.authenticate()
 const AuthRouter = require('./routers/auth.router')
 app.use('/auth', AuthRouter);
 
-app.get('/',(req,res)=>{
+app.get('/',(req, res)=>{
     res.send('Welcome to HRMS APP');
 });
 

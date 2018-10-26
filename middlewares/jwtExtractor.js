@@ -14,7 +14,7 @@ module.exports = (req, res, next) => {
       where: { emp_code: decoded.emp_code }
     })
     .then(user => {
-      // console.log("current user", user)
+      console.log("current user found in the database")
       if (!user) return res.status(404).send({ message: "No user found." });
       
       req.user = user

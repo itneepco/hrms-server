@@ -168,14 +168,14 @@ function getTotalDebitCredit(emp_codee, cal_year) {
   let total_credit_el = totalCredit(emp_codee, cal_year, codes.EL_CODE)
   let total_debit_el = totalDebit(emp_codee, cal_year, codes.EL_CODE)
 
-  let total_credit_ml = totalCredit(emp_codee, cal_year, codes.ML_CODE)
-  let total_debit_ml = totalDebit(emp_codee, cal_year, codes.ML_CODE)
+  let total_credit_hpl = totalCredit(emp_codee, cal_year, codes.HPL_CODE)
+  let total_debit_hpl = totalDebit(emp_codee, cal_year, codes.HPL_CODE)
 
   return Promise.all([
     total_credit_cl, total_debit_cl, 
     total_credit_rh, total_debit_rh,
     total_credit_el, total_debit_el,
-    total_credit_ml, total_debit_ml
+    total_credit_hpl, total_debit_hpl
   ])
     .then(val => {
       // Return an array of { remaining: val, leave_code: code } object
@@ -199,8 +199,8 @@ function getTotalDebitCredit(emp_codee, cal_year) {
         ,
         {
           balance: JSON.parse(JSON.stringify(val[6][0])).total_credit - JSON.parse(JSON.stringify(val[7][0])).total_debit,
-          leave_code: codes.ML_CODE,
-          leave_type: "ML"
+          leave_code: codes.HPL_CODE,
+          leave_type: "HPL"
         }
       ];
 

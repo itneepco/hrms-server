@@ -1,4 +1,6 @@
 const router = require('express').Router()
+const Op = require('sequelize').Op;
+
 const leaveAppModel = require('../../model/leaveApplication.model')
 const leaveDetailModel = require('../../model/leaveDetail.model')
 const leaveAppHistModel = require('../../model/leaveApplicationHist.model')
@@ -7,7 +9,6 @@ const EmployeeModel = require('../../model/employee.model');
 const roleMapperModel = require('../../model/roleMapper.model');
 const Codes = require('../../global/codes')
 const db = require('../../config/db');
-const Op = require('sequelize').Op;
 
 router.route('/officer/:empCode/count')
   .get(async (req, res) => { 
@@ -53,6 +54,8 @@ router.route('/officer/:empCode/processed')
     leaveAppModel.findAndCountAll({
       order: [['updated_at', 'DESC']],
       distinct: true,
+      limit: limit,
+      offset: offset,
       include: [
         {
           model: EmployeeModel,
@@ -213,6 +216,8 @@ async function fetchLeaveApplication(req, res, el_role, hpl_role) {
   return leaveAppModel.findAndCountAll({
     order: [['updated_at', 'DESC']],
     distinct: true,
+    limit: limit,
+    offset: offset,
     where: {
       addressee: conditions[0].addressee
     },
@@ -405,6 +410,7 @@ function leaveApprove(req, res) {
         let no_of_hd_cl = (result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.HD_CL_CODE).length)/2
         
         //Calculate no of EL days
+        let remarks = "Leave Approved"
         let no_of_el = 0
         if(result.leaveDetails[0].leave_type === Codes.EL_CODE) {
           let from_date = new Date(result.leaveDetails[0].from_date)
@@ -414,10 +420,10 @@ function leaveApprove(req, res) {
         }
 
         //Insert in to ledger table
-        return insertLeaveLedger("2018", "D", no_of_cl, Codes.CL_CODE, result.emp_code, t)
-          .then(() => insertLeaveLedger("2018", "D", no_of_rh, Codes.RH_CODE, result.emp_code, t))
-          .then(() => insertLeaveLedger("2018", "D", no_of_el, Codes.EL_CODE, result.emp_code, t))
-          .then(() => insertLeaveLedger("2018", "D", no_of_hd_cl, Codes.CL_CODE, result.emp_code, t))
+        return insertLeaveLedger("2018", "D", no_of_cl, Codes.CL_CODE, result.emp_code, remarks, t)
+          .then(() => insertLeaveLedger("2018", "D", no_of_rh, Codes.RH_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger("2018", "D", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger("2018", "D", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
       })
     })
     .then(() => {
@@ -461,6 +467,7 @@ function leaveCancel(req, res) {
         let no_of_hd_cl = (result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.HD_CL_CODE).length)/2
         
         //Calculate no of EL days
+        let remarks = "Leave Cancelled"
         let no_of_el = 0
         if(result.leaveDetails[0].leave_type === Codes.EL_CODE) {
           let from_date = new Date(result.leaveDetails[0].from_date)
@@ -470,10 +477,10 @@ function leaveCancel(req, res) {
         }
 
         //Insert in to ledger table
-        return insertLeaveLedger("2018", "C", no_of_cl, Codes.CL_CODE, result.emp_code, t)
-          .then(() => insertLeaveLedger("2018", "C", no_of_rh, Codes.RH_CODE, result.emp_code, t))
-          .then(() => insertLeaveLedger("2018", "C", no_of_el, Codes.EL_CODE, result.emp_code, t))
-          .then(() => insertLeaveLedger("2018", "C", no_of_hd_cl, Codes.CL_CODE, result.emp_code, t))
+        return insertLeaveLedger("2018", "C", no_of_cl, Codes.CL_CODE, result.emp_code, remarks, t)
+          .then(() => insertLeaveLedger("2018", "C", no_of_rh, Codes.RH_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger("2018", "C", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger("2018", "C", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
       })
     })
     .then(() => {
@@ -495,7 +502,7 @@ function leaveCancel(req, res) {
   })
 }
 
-function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_code, t) {
+function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_code, remarks, t) {
   console.log("no of days:", no_of_days)
   if(no_of_days < .5) return Promise.resolve()
  //--- Check leave balance ---
@@ -504,7 +511,8 @@ function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_cod
     db_cr_flag: db_cr_flag,
     no_of_days: no_of_days,
     leave_type: leave_type,
-    emp_code: emp_code
+    emp_code: emp_code,
+    remarks: remarks
   }, { transaction: t })
 }
 
