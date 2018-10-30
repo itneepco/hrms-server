@@ -2,7 +2,7 @@ const router = require('express').Router()
 const roleMapperModel = require('../../model/roleMapper.model')
 const EmployeeModel = require('../../model/employee.model')
 const ProjectModel = require('../../model/project.model')
-const Op = require('Sequelize').Op
+const Op = require('sequelize').Op
 
 router.route('/role/:roleId')
 .get((req,res)=>{
