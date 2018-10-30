@@ -6,7 +6,7 @@ const employeeModel = require('../../model/employee.model')
 const designationModel = require('../../model/designation.model')
 const projectModel = require('../../model/project.model')
 const validateAdmin = require('../../middlewares/validateAdmin');
-const Op = require('Sequelize').Op
+const Op = require('sequelize').Op
 
 //Authorization for all routes except parents/:empCode route
 router.use((req, res, next) => {
