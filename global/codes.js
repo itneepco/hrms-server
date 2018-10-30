@@ -12,8 +12,7 @@ module.exports = {
     LEAVE_CALLBACKED: '05',
     LEAVE_CANCELLED: '06',
 
-    RMAP_EL: 'RMAPEL',
-    RMAP_HPL: 'RMAPML',
+    RMAP_EL_HPL: 'RMAPEL',
 
     //User Roles
     IT_ADMIN_ROLE: 1,
