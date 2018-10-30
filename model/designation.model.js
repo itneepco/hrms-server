@@ -3,16 +3,13 @@ const Sequelize = require('sequelize');
 const db = require('../config/db');
 
 const Designation = db.define('designation', {
-   name: {
-        type: Sequelize.STRING
-    }
-   
-        
+  name: {
+    type: Sequelize.STRING
+  }
 }, {
-       
     underscored: true,
-    tableName:'designations'
-    }
+    tableName: 'designations'
+  }
 );
 
 module.exports = Designation

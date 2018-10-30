@@ -2,18 +2,16 @@ const Sequelize = require('sequelize');
 const db = require('../config/db');
 
 const Project = db.define('project', {
-   name: {
-        type: Sequelize.STRING
-    },
-   code: {
-        type: Sequelize.STRING
-    },
-        
+  name: {
+    type: Sequelize.STRING
+  },
+  code: {
+    type: Sequelize.STRING
+  },
 }, {
-       
     underscored: true,
-    tableName:'projects'
-    }
+    tableName: 'projects'
+  }
 );
 
 module.exports = Project
