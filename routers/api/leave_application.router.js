@@ -170,12 +170,9 @@ function findAdressee(addressee) {
         return reject()
       })
     }
-    else if(addressee == codes.RMAP_EL) {
-      return resolve("EL ADMIN")
+    else if(addressee == codes.RMAP_EL_HPL) {
+      return resolve("EL/HPL ADMIN")
     } 
-    else if(addressee == codes.RMAP_HPL) {
-      return resolve("HPL ADMIN")
-    }
     else {
       return resolve("")
     }
