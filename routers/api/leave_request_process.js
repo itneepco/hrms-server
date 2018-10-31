@@ -12,18 +12,18 @@ const db = require('../../config/db');
 
 router.route('/officer/:empCode/count')
   .get(async (req, res) => { 
-    let conditions = await getQueryCondition(req, res)
+    let condition = await getQueryCondition(req, res)
       
     leaveAppModel.count({
       where: {
-        addressee: conditions[0].addressee
+        addressee: condition.addressee
       },
       include: [{
         model: EmployeeModel,
         as: "leaveApplier",
         attributes: ['first_name', 'last_name'],
         where: {
-          project_id: conditions[1].project_id
+          project_id: condition.project_id
         }
       }]
     })
@@ -38,11 +38,7 @@ router.route('/officer/:empCode/count')
 
 router.route('/officer/:empCode')
   .get(async (req, res) => {
-
-    let el_role = await checkElRole(req, res)
-    let hpl_role = await checkHalfPayRole(req, res)
-
-    fetchLeaveApplication(req, res, el_role, hpl_role)
+    fetchLeaveApplication(req, res)
   })
 
 router.route('/officer/:empCode/processed')
@@ -170,11 +166,11 @@ router.route('/:leaveAppId/actions')
     }
   });
 
-function checkElRole(req, res) {
+function checkElHplRole(req, res) {
   return roleMapperModel.findOne({
     where: {
       emp_code: req.params.empCode,
-      role: Codes.RMAP_EL
+      role: Codes.RMAP_EL_HPL
     }
   })
   .then(roleMapper => {
@@ -188,11 +184,11 @@ function checkElRole(req, res) {
   })
 }
 
-function checkHalfPayRole(req, res) {
+function checkLeaveSuperAdminRole(req, res) {
   return roleMapperModel.findOne({
     where: {
       emp_code: req.params.empCode,
-      role: Codes.RMAP_HPL
+      role: Codes.HR_LEAVE_SUPER_ADMIN
     }
   })
   .then(roleMapper => {
@@ -206,12 +202,12 @@ function checkHalfPayRole(req, res) {
   })
 }
 
-async function fetchLeaveApplication(req, res, el_role, hpl_role) {
+async function fetchLeaveApplication(req, res) {
   let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
   let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
   let offset = pageIndex * limit
 
-  let conditions = await getQueryCondition(req, res)
+  let condition = await getQueryCondition(req, res)
   
   return leaveAppModel.findAndCountAll({
     order: [['updated_at', 'DESC']],
@@ -219,7 +215,7 @@ async function fetchLeaveApplication(req, res, el_role, hpl_role) {
     limit: limit,
     offset: offset,
     where: {
-      addressee: conditions[0].addressee
+      addressee: condition.addressee
     },
     include: [
       {
@@ -227,7 +223,7 @@ async function fetchLeaveApplication(req, res, el_role, hpl_role) {
         as: "leaveApplier",
         attributes: ['first_name', 'last_name'],
         where: {
-          project_id: conditions[1].project_id
+          project_id: condition.project_id
         }
       },
       {
@@ -409,8 +405,9 @@ function leaveApprove(req, res) {
         let no_of_rh = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.RH_CODE).length
         let no_of_hd_cl = (result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.HD_CL_CODE).length)/2
         
-        //Calculate no of EL days
         let remarks = "Leave Approved"
+
+        //Calculate no of EL days
         let no_of_el = 0
         if(result.leaveDetails[0].leave_type === Codes.EL_CODE) {
           let from_date = new Date(result.leaveDetails[0].from_date)
@@ -419,17 +416,27 @@ function leaveApprove(req, res) {
           no_of_el = ((to_date - from_date) / (60*60*24*1000)) + 1
         }
 
+        //Calculate no of HPL days
+        let no_of_hpl = 0
+        if(result.leaveDetails[0].leave_type === Codes.HPL_CODE) {
+          let from_date = new Date(result.leaveDetails[0].from_date)
+          let to_date = new Date(result.leaveDetails[0].to_date)
+          
+          no_of_hpl = ((to_date - from_date) / (60*60*24*1000)) + 1
+        }
+
         //Insert in to ledger table
         return insertLeaveLedger("2018", "D", no_of_cl, Codes.CL_CODE, result.emp_code, remarks, t)
+          .then(() => insertLeaveLedger("2018", "D", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
           .then(() => insertLeaveLedger("2018", "D", no_of_rh, Codes.RH_CODE, result.emp_code, remarks, t))
           .then(() => insertLeaveLedger("2018", "D", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
-          .then(() => insertLeaveLedger("2018", "D", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger("2018", "D", no_of_hpl, Codes.HPL_CODE, result.emp_code, remarks, t))
       })
     })
     .then(() => {
       return leaveAppModel.update(
-        { status: Codes.LEAVE_APPROVED, addressee: null}, 
-        {where: { id: req.params.leaveAppId }
+        { status: Codes.LEAVE_APPROVED, addressee: null }, 
+        { where: { id: req.params.leaveAppId }
       }, 
       { transaction: t })
     })
@@ -466,8 +473,9 @@ function leaveCancel(req, res) {
         let no_of_rh = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.RH_CODE).length
         let no_of_hd_cl = (result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.HD_CL_CODE).length)/2
         
-        //Calculate no of EL days
         let remarks = "Leave Cancelled"
+
+        //Calculate no of EL days
         let no_of_el = 0
         if(result.leaveDetails[0].leave_type === Codes.EL_CODE) {
           let from_date = new Date(result.leaveDetails[0].from_date)
@@ -476,17 +484,27 @@ function leaveCancel(req, res) {
           no_of_el = ((to_date - from_date) / (60*60*24*1000)) + 1
         }
 
+        //Calculate no of HPL days
+        let no_of_hpl = 0
+        if(result.leaveDetails[0].leave_type === Codes.HPL_CODE) {
+          let from_date = new Date(result.leaveDetails[0].from_date)
+          let to_date = new Date(result.leaveDetails[0].to_date)
+          
+          no_of_hpl = ((to_date - from_date) / (60*60*24*1000)) + 1
+        }
+
         //Insert in to ledger table
         return insertLeaveLedger("2018", "C", no_of_cl, Codes.CL_CODE, result.emp_code, remarks, t)
+          .then(() => insertLeaveLedger("2018", "C", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
           .then(() => insertLeaveLedger("2018", "C", no_of_rh, Codes.RH_CODE, result.emp_code, remarks, t))
           .then(() => insertLeaveLedger("2018", "C", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
-          .then(() => insertLeaveLedger("2018", "C", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger("2018", "C", no_of_hpl, Codes.HPL_CODE, result.emp_code, remarks, t))
       })
     })
     .then(() => {
       return leaveAppModel.update(
-        { status: Codes.LEAVE_CANCELLED, addressee: null}, 
-        {where: { id: req.params.leaveAppId }
+        { status: Codes.LEAVE_CANCELLED, addressee: null }, 
+        { where: { id: req.params.leaveAppId }
       }, 
       { transaction: t })
     })
@@ -517,57 +535,37 @@ function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_cod
 }
 
 async function getQueryCondition(req, res) {
-  let el_role = await checkElRole(req, res)
-  let hpl_role = await checkHalfPayRole(req, res)
+  let el_hpl_role = await checkElHplRole(req, res)
+  let leave_super_admin_role = await checkLeaveSuperAdminRole(req, res)
 
-  let addressee_condition;
-  let project_condition;
-  if(el_role && !hpl_role){
-    addressee_condition = { 
+  if(leave_super_admin_role) {
+    return { 
       addressee: { 
-        [Op.or]: [el_role.role, req.params.empCode]
-      }
-    }
-    project_condition = {
-      project_id: {
-        [Op.like]: "%" + el_role.project_id
-      }
-    }
-  }
-  else if(!el_role && hpl_role){
-    addressee_condition = { 
-      addressee: { 
-        [Op.or]: [hpl_role.role, req.params.empCode]
-      }
-    }
-    project_condition = {
-      project_id: {
-        [Op.like]: "%" + hpl_role.project_id
-      }
-    }
-  }
-  else if(el_role && hpl_role){
-    addressee_condition = { 
-      addressee: { 
-        [Op.or]: [hpl_role.role, el_role, req.params.empCode]
-      }
-    }
-    project_condition = {
-      project_id: {
-        [Op.like]: "%" + el_role.project_id 
-      }
-    }
-  }
-  else {
-    addressee_condition = { addressee: req.params.empCode }
-    project_condition = {
+        [Op.or]: [leave_super_admin_role.role, req.params.empCode]
+      },
       project_id: {
         [Op.like]: "%"
       }
     }
   }
-
-  return [addressee_condition, project_condition]
+  else if(el_hpl_role){
+    return { 
+      addressee: { 
+        [Op.or]: [el_hpl_role.role, req.params.empCode]
+      },
+      project_id: {
+        [Op.like]: "%" + el_hpl_role.project_id
+      }
+    }
+  }
+  else {
+    return { 
+      addressee: req.params.empCode,
+      project_id: {
+        [Op.like]: "%"
+      }
+    }
+  }
 }
 
 module.exports = router

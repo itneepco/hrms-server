@@ -173,6 +173,9 @@ function findAdressee(addressee) {
     else if(addressee == codes.RMAP_EL_HPL) {
       return resolve("EL/HPL ADMIN")
     } 
+    else if(addressee == codes.HR_LEAVE_SUPER_ADMIN) {
+      return resolve("EL/HPL Corporate")
+    } 
     else {
       return resolve("")
     }
