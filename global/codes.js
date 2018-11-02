@@ -5,6 +5,7 @@ module.exports = {
     HPL_CODE:'04',
     HD_CL_CODE:'05',
     
+    //Leave Status
     LEAVE_APPLIED:'01',
     LEAVE_APPROVED:'02',
     LEAVE_RECOMMENDED: '03',
@@ -12,6 +13,7 @@ module.exports = {
     LEAVE_CALLBACKED: '05',
     LEAVE_CANCELLED: '06',
 
+    //Rolemapper codes
     RMAP_EL_HPL: 'RMAPEL',
     TIME_OFFICE_ADMIN: 'RMAPTO',
     VEHICLE_ADMIN: 'RMAPVH',
@@ -20,6 +22,12 @@ module.exports = {
     HR_REP_UPLOADER: ' RMARHR',
     FIN_REP_UPLOADER: 'RMARFN',
     HR_LEAVE_SUPER_ADMIN: 'RMASHR',
+
+    //Joining Report Status
+    JR_PENDING: '01',
+    JR_SUBMITTED: '02',
+    JR_RECOMMENDED: '03',
+    JR_ACCEPTED: '04',
 
     //User Roles
     IT_ADMIN_ROLE: 1,

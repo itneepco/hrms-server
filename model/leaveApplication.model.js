@@ -5,6 +5,7 @@ const db = require('../config/db');
 const leaveAppHistModel = require('../model/leaveApplicationHist.model');
 const leaveDetailModel = require('../model/leaveDetail.model');
 const employeeModel = require('../model/employee.model');
+const joiningReportModel = require('./joiningReport.model');
 
 const leaveApplication = db.define('leaveApplication', {
 	emp_code: {
@@ -45,8 +46,9 @@ const leaveApplication = db.define('leaveApplication', {
 
 leaveApplication.hasMany(leaveAppHistModel)
 leaveApplication.hasMany(leaveDetailModel)
+leaveApplication.hasOne(joiningReportModel)
+
 leaveApplication.belongsTo(employeeModel, { as: "leaveApplier", foreignKey: 'emp_code', targetKey: 'emp_code' })
-//leaveApplication.belongsTo(employeeModel, { as: "addresseeOfficer", foreignKey: 'addressee', targetKey: 'emp_code' })
 leaveApplication.hasMany(leaveAppHistModel, { as: "leaveProcessor", foreignKey: 'leave_application_id', targetKey: 'id'})
 
 module.exports = leaveApplication

@@ -51,8 +51,8 @@ router.route('/:id/approved-leave')
     console.log(from_date, to_date)
 
 		LeaveAppModel.findAll({
-			order: [['updated_at', 'DESC']],
-			distinct: true,
+			order: ['emp_code', ['id', 'ASC']],
+      distinct: true,
 			where: {
 				status: codes.LEAVE_APPROVED
 			},

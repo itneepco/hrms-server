@@ -15,5 +15,6 @@ router.use('/leave/request', require('./leave_request_process'))
 router.use('/pay-image', require('./pay_image.router'))
 router.use('/rolemapper', require('./role_mapper.router'))
 router.use('/hierarchy', require('./hierarchy.router'))
+router.use('/joining-report', require('./joining_report.router'))
 
 module.exports = router

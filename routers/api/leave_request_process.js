@@ -5,8 +5,9 @@ const leaveAppModel = require('../../model/leaveApplication.model')
 const leaveDetailModel = require('../../model/leaveDetail.model')
 const leaveAppHistModel = require('../../model/leaveApplicationHist.model')
 const leaveLedgerModel = require('../../model/leaveLedger.model')
-const EmployeeModel = require('../../model/employee.model');
+const employeeModel = require('../../model/employee.model');
 const roleMapperModel = require('../../model/roleMapper.model');
+const joiningReportModel = require('../../model/joiningReport.model');
 const Codes = require('../../global/codes')
 const db = require('../../config/db');
 
@@ -19,7 +20,7 @@ router.route('/officer/:empCode/count')
         addressee: condition.addressee
       },
       include: [{
-        model: EmployeeModel,
+        model: employeeModel,
         as: "leaveApplier",
         attributes: ['first_name', 'last_name'],
         where: {
@@ -54,7 +55,7 @@ router.route('/officer/:empCode/processed')
       offset: offset,
       include: [
         {
-          model: EmployeeModel,
+          model: employeeModel,
           as: "leaveApplier",
           attributes: ['first_name', 'last_name'],
         },
@@ -72,7 +73,7 @@ router.route('/officer/:empCode/processed')
           model: leaveAppHistModel,
           include: [
             {
-              model: EmployeeModel,
+              model: employeeModel,
               as: "officer",
               attributes: ['emp_code', 'first_name', 'last_name'],
             }
@@ -219,7 +220,7 @@ async function fetchLeaveApplication(req, res) {
     },
     include: [
       {
-        model: EmployeeModel,
+        model: employeeModel,
         as: "leaveApplier",
         attributes: ['first_name', 'last_name'],
         where: {
@@ -230,7 +231,7 @@ async function fetchLeaveApplication(req, res) {
         model: leaveAppHistModel,
         include: [
           {
-            model: EmployeeModel,
+            model: employeeModel,
             as: "officer",
             attributes: ['emp_code', 'first_name', 'last_name'],
           }
@@ -392,20 +393,36 @@ function leaveApprove(req, res) {
     }, { transaction: t })
     
     .then(result => {
-      console.log(JSON.stringify(result.leaveDetails))
+      // console.log(JSON.stringify(result.leaveDetails))
       return leaveAppHistModel.create({
         leave_application_id: req.params.leaveAppId,
         remarks: req.body.remarks,
         officer_emp_code: req.body.officer_emp_code,
         workflow_action: req.body.workflow_action,
-      }, {transaction: t})
-
+      }, { transaction: t })
+      
+      .then(() => {
+        let el_hpl = result.leaveDetails.filter(leave => {
+          let type = leave.leave_type
+          return type === Codes.EL_CODE || type === Codes.HPL_CODE 
+        })
+        //if leave type is not EL or HPL return
+        if(!el_hpl) return Promise.resolve() 
+  
+        //insert in to joining report table if EL or HPL leave type
+        return joiningReportModel.create({
+          status: Codes.JR_PENDING,
+          leave_application_id: req.params.leaveAppId
+        }, 
+        { transaction: t})
+  
+      })
       .then(() => {
         let no_of_cl = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.CL_CODE).length
         let no_of_rh = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.RH_CODE).length
         let no_of_hd_cl = (result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.HD_CL_CODE).length)/2
         
-        let remarks = "Leave Approved"
+        let remarks = "Leave Approved for leave application " + req.params.leaveAppId
 
         //Calculate no of EL days
         let no_of_el = 0
@@ -415,7 +432,6 @@ function leaveApprove(req, res) {
           
           no_of_el = ((to_date - from_date) / (60*60*24*1000)) + 1
         }
-
         //Calculate no of HPL days
         let no_of_hpl = 0
         if(result.leaveDetails[0].leave_type === Codes.HPL_CODE) {
@@ -432,13 +448,14 @@ function leaveApprove(req, res) {
           .then(() => insertLeaveLedger("2018", "D", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
           .then(() => insertLeaveLedger("2018", "D", no_of_hpl, Codes.HPL_CODE, result.emp_code, remarks, t))
       })
-    })
-    .then(() => {
-      return leaveAppModel.update(
-        { status: Codes.LEAVE_APPROVED, addressee: null }, 
-        { where: { id: req.params.leaveAppId }
-      }, 
-      { transaction: t })
+      .then(() => {
+        //Update leave application status
+        return leaveAppModel.update(
+          { status: Codes.LEAVE_APPROVED, addressee: null }, 
+          { where: { id: req.params.leaveAppId }
+        }, 
+        { transaction: t })
+      })
     })
     .then(function () {
       res.status(200).json({message: "Leave request processed successful"})
@@ -458,32 +475,42 @@ function leaveCancel(req, res) {
       where: { id: req.params.leaveAppId },
       include: { model: leaveDetailModel } 
     }, { transaction: t })
-    
+
     .then(result => {
-      console.log(JSON.stringify(result.leaveDetails))
+      // console.log(JSON.stringify(result.leaveDetails))
       return leaveAppHistModel.create({
         leave_application_id: req.params.leaveAppId,
         remarks: req.body.remarks,
         officer_emp_code: req.body.officer_emp_code,
         workflow_action: req.body.workflow_action,
-      }, {transaction: t})
-
+      }, { transaction: t })
+      .then(() => {
+        let el_hpl = result.leaveDetails.filter(leave => {
+          let type = leave.leave_type
+          return type === Codes.EL_CODE || type === Codes.HPL_CODE 
+        })
+        //if leave type is not EL or HPL return
+        if(!el_hpl) return Promise.resolve() 
+  
+        return joiningReportModel.destroy({
+          where: { leave_application_id: req.params.leaveAppId }
+        }, { transaction: t })
+      })
       .then(() => {
         let no_of_cl = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.CL_CODE).length
         let no_of_rh = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.RH_CODE).length
         let no_of_hd_cl = (result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.HD_CL_CODE).length)/2
         
-        let remarks = "Leave Cancelled"
+        let remarks = "Leave Cancelled for leave application " + req.params.leaveAppId
 
         //Calculate no of EL days
         let no_of_el = 0
         if(result.leaveDetails[0].leave_type === Codes.EL_CODE) {
           let from_date = new Date(result.leaveDetails[0].from_date)
           let to_date = new Date(result.leaveDetails[0].to_date)
-          
+
           no_of_el = ((to_date - from_date) / (60*60*24*1000)) + 1
         }
-
         //Calculate no of HPL days
         let no_of_hpl = 0
         if(result.leaveDetails[0].leave_type === Codes.HPL_CODE) {
@@ -492,7 +519,6 @@ function leaveCancel(req, res) {
           
           no_of_hpl = ((to_date - from_date) / (60*60*24*1000)) + 1
         }
-
         //Insert in to ledger table
         return insertLeaveLedger("2018", "C", no_of_cl, Codes.CL_CODE, result.emp_code, remarks, t)
           .then(() => insertLeaveLedger("2018", "C", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
@@ -500,13 +526,13 @@ function leaveCancel(req, res) {
           .then(() => insertLeaveLedger("2018", "C", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
           .then(() => insertLeaveLedger("2018", "C", no_of_hpl, Codes.HPL_CODE, result.emp_code, remarks, t))
       })
-    })
-    .then(() => {
-      return leaveAppModel.update(
-        { status: Codes.LEAVE_CANCELLED, addressee: null }, 
-        { where: { id: req.params.leaveAppId }
-      }, 
-      { transaction: t })
+      .then(() => {
+        return leaveAppModel.update(
+          { status: Codes.LEAVE_CANCELLED, addressee: null }, 
+          { where: { id: req.params.leaveAppId }
+        }, 
+        { transaction: t })
+      })
     })
     .then(function () {
       res.status(200).json({message: "Leave request processed successful"})
@@ -521,9 +547,10 @@ function leaveCancel(req, res) {
 }
 
 function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_code, remarks, t) {
-  console.log("no of days:", no_of_days)
+  // console.log("no of days:", no_of_days)
+  //--- Check leave balance ---
   if(no_of_days < .5) return Promise.resolve()
- //--- Check leave balance ---
+ 
   return leaveLedgerModel.create({
     cal_year: cal_year,
     db_cr_flag: db_cr_flag,
