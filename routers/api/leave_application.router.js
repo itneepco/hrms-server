@@ -121,8 +121,8 @@ function filterData(results) {
         status: result.status,
         prefix_from: result.prefix_from,
         prefix_to: result.prefix_to,
-        suffix_from: result.prefix_from,
-        suffix_to: result.prefix_to,
+        suffix_from: result.suffix_from,
+        suffix_to: result.suffix_to,
         created_at: result.created_at,
 
         history: result.leaveApplicationHists.map(hist => {

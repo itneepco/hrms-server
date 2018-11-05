@@ -1,15 +1,15 @@
-const router = require('express').Router()
+const router = require('express').Router();
 const Op = require('sequelize').Op;
 
-const leaveAppModel = require('../../model/leaveApplication.model')
-const leaveDetailModel = require('../../model/leaveDetail.model')
-const leaveAppHistModel = require('../../model/leaveApplicationHist.model')
-const leaveLedgerModel = require('../../model/leaveLedger.model')
+const leaveAppModel = require('../../model/leaveApplication.model');
+const leaveDetailModel = require('../../model/leaveDetail.model');
+const leaveAppHistModel = require('../../model/leaveApplicationHist.model');
+const leaveLedgerModel = require('../../model/leaveLedger.model');
 const employeeModel = require('../../model/employee.model');
-const roleMapperModel = require('../../model/roleMapper.model');
 const joiningReportModel = require('../../model/joiningReport.model');
-const Codes = require('../../global/codes')
+const Codes = require('../../global/codes');
 const db = require('../../config/db');
+const checkRole = require('./check_roles');
 
 router.route('/officer/:empCode/count')
   .get(async (req, res) => { 
@@ -103,8 +103,8 @@ router.route('/officer/:empCode/processed')
             status: result.status,
             prefix_from: result.prefix_from,
             prefix_to: result.prefix_to,
-            suffix_from: result.prefix_from,
-            suffix_to: result.prefix_to,
+            suffix_from: result.suffix_from,
+            suffix_to: result.suffix_to,
             created_at: result.created_at,   
 
             history: result.leaveApplicationHists.map(hist => {
@@ -167,42 +167,6 @@ router.route('/:leaveAppId/actions')
     }
   });
 
-function checkElHplRole(req, res) {
-  return roleMapperModel.findOne({
-    where: {
-      emp_code: req.params.empCode,
-      role: Codes.RMAP_EL_HPL
-    }
-  })
-  .then(roleMapper => {
-    if (!roleMapper) return null
-    
-    return roleMapper
-  })
-  .catch(err => {
-    console.log(err)
-    return null
-  })
-}
-
-function checkLeaveSuperAdminRole(req, res) {
-  return roleMapperModel.findOne({
-    where: {
-      emp_code: req.params.empCode,
-      role: Codes.HR_LEAVE_SUPER_ADMIN
-    }
-  })
-  .then(roleMapper => {
-    if (!roleMapper) return null
-    
-    return roleMapper
-  })
-  .catch(err => {
-    console.log(err)
-    return null
-  })
-}
-
 async function fetchLeaveApplication(req, res) {
   let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
   let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
@@ -260,8 +224,8 @@ async function fetchLeaveApplication(req, res) {
           status: result.status,
           prefix_from: result.prefix_from,
           prefix_to: result.prefix_to,
-          suffix_from: result.prefix_from,
-          suffix_to: result.prefix_to,
+          suffix_from: result.suffix_from,
+          suffix_to: result.suffix_to,
           created_at: result.created_at,
 
           history: result.leaveApplicationHists.map(hist => {
@@ -562,8 +526,8 @@ function insertLeaveLedger(cal_year, db_cr_flag, no_of_days, leave_type, emp_cod
 }
 
 async function getQueryCondition(req, res) {
-  let el_hpl_role = await checkElHplRole(req, res)
-  let leave_super_admin_role = await checkLeaveSuperAdminRole(req, res)
+  let el_hpl_role = await checkRole.checkElHplRole(req, res)
+  let leave_super_admin_role = await checkRole.checkLeaveSuperAdminRole(req, res)
 
   if(leave_super_admin_role) {
     return { 
