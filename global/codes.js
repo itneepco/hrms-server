@@ -28,6 +28,7 @@ module.exports = {
     JR_SUBMITTED: '02',
     JR_RECOMMENDED: '03',
     JR_ACCEPTED: '04',
+    JR_CALLBACK: '05',
 
     //User Roles
     IT_ADMIN_ROLE: 1,

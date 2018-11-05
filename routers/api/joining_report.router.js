@@ -32,7 +32,11 @@ router.route('/employee/:empCode')
         },
         {
           model: JoiningReport,
-          where: { status: codes.JR_PENDING }
+          where: { 
+            status:  {
+              [Op.or]: [codes.JR_PENDING, codes.JR_SUBMITTED, codes.JR_RECOMMENDED, codes.JR_CALLBACK] 
+            }
+          }
         }
       ]
     })
