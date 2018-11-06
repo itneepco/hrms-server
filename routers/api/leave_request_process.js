@@ -165,6 +165,22 @@ router.route('/:leaveAppId/actions')
     if(action === Codes.LEAVE_CANCELLED) {
       leaveCancel(req, res)
     }
+
+    if(action == Codes.LEAVE_CANCEL_INITIATION) {
+      leaveCancelInitiation(req, res)
+    }
+
+    if(action == Codes.LEAVE_CANCEL_CALLBACKED) {
+      leaveCancelCallback(req, res)
+    }
+
+    if(action == Codes.LEAVE_CANCEL_RECOMMENDED) {
+      leaveCancelRecommended(req, res)
+    }
+
+    if(action == Codes.LEAVE_CANCEL_NOT_RECOMMENDED) {
+      leaveCancelNotRecommended(req, res)
+    }
   });
 
 async function fetchLeaveApplication(req, res) {
@@ -262,91 +278,23 @@ async function fetchLeaveApplication(req, res) {
   })
 }
 
+//Leave is not recommended
 function leaveNotRecommended(req, res) {
-  db.transaction().then(t => {
-    return leaveAppHistModel.create({
-      leave_application_id: req.params.leaveAppId,
-      remarks: req.body.remarks,
-      officer_emp_code: req.body.officer_emp_code,
-      workflow_action: req.body.workflow_action,
-    }, {transaction: t})
-    
-    .then(() => {
-      return leaveAppModel.update({ 
-          status: Codes.LEAVE_NOT_RECOMMENDED, 
-          addressee: null
-        }, 
-        { where: { id: req.params.leaveAppId }
-      }, {transaction: t});
-    })
-    .then(function () {
-      res.status(200).json({message: "Leave request processed successful"})
-      return t.commit();
-    }).catch(function (err) {
-      res.status(500).json({message: "Leave request processed unsuccessful"})
-      console.log(err)
-      return t.rollback();
-    });     
-  })
+  let status = Codes.LEAVE_NOT_RECOMMENDED
+  let addressee = null
+  processLeaveWorkflowAction(req, res, status, addressee)
 }
 
+//Leave is recommended
 function leaveRecommended(req, res) {
-  db.transaction().then(t => {
-    return leaveAppHistModel.create({
-      leave_application_id: req.params.leaveAppId,
-      remarks: req.body.remarks,
-      officer_emp_code: req.body.officer_emp_code,
-      workflow_action: req.body.workflow_action,
-    }, {transaction: t})
-    
-    .then(() => {
-      return leaveAppModel.update(
-        { 
-          status: Codes.LEAVE_RECOMMENDED, 
-          addressee: req.body.addressee
-        }, 
-        { where: { id: req.params.leaveAppId }
-      }, { transaction: t });
-    })
-    .then(function () {
-      res.status(200).json({message: "Leave request processed successful"})
-      return t.commit();
-    })
-    .catch(function (err) {
-      res.status(500).json({message: "Leave request processed unsuccessful"})
-      console.log(err)
-      return t.rollback();
-    });     
-  })
+  let status = Codes.LEAVE_RECOMMENDED
+  let addressee = req.body.addressee
+  processLeaveWorkflowAction(req, res, status, addressee)
 }
 
+//Leave callback process
 function leaveCallback(req, res) {
-  db.transaction().then(t => {
-    return leaveAppHistModel.create({
-      leave_application_id: req.params.leaveAppId,
-      remarks: req.body.remarks,
-      officer_emp_code: req.body.officer_emp_code,
-      workflow_action: req.body.workflow_action,
-    }, {transaction: t})
-    
-    .then(() => {
-      return leaveAppModel.update({ 
-          status: Codes.LEAVE_CALLBACKED, 
-          addressee: req.body.officer_emp_code
-        }, 
-        { where: { id: req.params.leaveAppId }
-      }, { transaction: t });
-    })
-    .then(function () {
-      res.status(200).json({message: "Leave request processed successful"})
-      return t.commit();
-    })
-    .catch(function (err) {
-      res.status(500).json({message: "Leave request processed unsuccessful"})
-      console.log(err)
-      return t.rollback();
-    });     
-  })
+  processCallbackAction(req, res, Codes.LEAVE_CALLBACKED)
 }
 
 function leaveApprove(req, res) {
@@ -507,6 +455,100 @@ function leaveCancel(req, res) {
       console.log(err)
       return t.rollback();
     });
+  })
+}
+
+//Leave cancellation Initialization
+function leaveCancelInitiation(req, res) {
+  let status = Codes.LEAVE_CANCEL_INITIATION
+  let addressee = req.body.addressee
+  processLeaveWorkflowAction(req, res, status, addressee)
+}
+
+//Leave cancellation not recommended
+function leaveCancelNotRecommended(req, res) {
+  let status = Codes.LEAVE_CANCEL_NOT_RECOMMENDED
+  let addressee = null
+  processLeaveWorkflowAction(req, res, status, addressee)
+}
+
+//Leave cancellation recommended
+function leaveCancelRecommended(req, res) {
+  let status = Codes.LEAVE_CANCEL_RECOMMENDED
+  let addressee = req.body.addressee
+  processLeaveWorkflowAction(req, res, status, addressee)
+}
+
+//Leave cancellation callback
+function leaveCancelCallback(req, res) {
+  processCallbackAction(req, res, Codes.LEAVE_CANCEL_CALLBACKED)
+}
+
+function processCallbackAction(req, res, status) {
+  //Fetch current user
+  let user = req.user
+  db.transaction().then(t => {
+    leaveAppModel.find({
+      where: { id: req.params.leaveAppId }
+    }, { transaction: t })
+
+    .then(result => {
+      return leaveAppHistModel.create({
+        leave_application_id: req.params.leaveAppId,
+        remarks: req.body.remarks,
+        officer_emp_code: req.body.officer_emp_code,
+        workflow_action: req.body.workflow_action,
+      }, {transaction: t})
+      
+      .then(() => {
+        return leaveAppModel.update({ 
+            status: status, 
+            addressee: (user && user.emp_code == result.emp_code) ? null : req.body.officer_emp_code
+          }, 
+          { where: { id: req.params.leaveAppId }}, 
+          { transaction: t }
+        );
+      })
+    })
+    .then(function () {
+      res.status(200).json({message: "Leave request processed successful"})
+      return t.commit();
+    })
+    .catch(function (err) {
+      res.status(500).json({message: "Leave request processed unsuccessful"})
+      console.log(err)
+      return t.rollback();
+    });     
+  })
+}
+
+function processLeaveWorkflowAction(req, res, status, addressee) {
+  db.transaction().then(t => {
+    return leaveAppHistModel.create({
+      leave_application_id: req.params.leaveAppId,
+      remarks: req.body.remarks,
+      officer_emp_code: req.body.officer_emp_code,
+      workflow_action: req.body.workflow_action,
+    }, {transaction: t})
+    
+    .then(() => {
+      return leaveAppModel.update(
+        { 
+          status: status, 
+          addressee: addressee
+        }, 
+        { where: { id: req.params.leaveAppId }
+      }, { transaction: t });
+    })
+    .then(function () {
+      res.status(200).json({message: "Leave request processed successful"})
+      return t.commit();
+    })
+    .catch(function (err) {
+      res.status(500).json({message: "Leave request processed unsuccessful"})
+      console.log(err)
+      return t.rollback();
+    });     
   })
 }
 

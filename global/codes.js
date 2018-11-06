@@ -5,13 +5,19 @@ module.exports = {
     HPL_CODE:'04',
     HD_CL_CODE:'05',
     
-    //Leave Status
+    //Leave Status Codes
     LEAVE_APPLIED:'01',
     LEAVE_APPROVED:'02',
     LEAVE_RECOMMENDED: '03',
     LEAVE_NOT_RECOMMENDED: '04',
     LEAVE_CALLBACKED: '05',
+
+    //Leave cancellation status codes
     LEAVE_CANCELLED: '06',
+    LEAVE_CANCEL_INITIATION: '07',
+    LEAVE_CANCEL_RECOMMENDED: '08',
+    LEAVE_CANCEL_NOT_RECOMMENDED: '09',
+    LEAVE_CANCEL_CALLBACKED: '10',
 
     //Rolemapper codes
     RMAP_EL_HPL: 'RMAPEL',
