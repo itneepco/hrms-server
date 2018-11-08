@@ -53,8 +53,16 @@ router.route('/:id/approved-leave')
 		LeaveAppModel.findAll({
 			order: ['emp_code', ['id', 'ASC']],
       distinct: true,
-			where: {
-				status: codes.LEAVE_APPROVED
+			where: { 
+        status: {
+          [Op.or]: [
+            codes.LEAVE_APPROVED, 
+            codes.LEAVE_CANCEL_INITIATION,
+            codes.LEAVE_CANCEL_CALLBACKED,
+            codes.LEAVE_CANCEL_RECOMMENDED,
+            codes.LEAVE_CANCEL_NOT_RECOMMENDED
+          ] 
+        }
 			},
 			include: [
 				{
@@ -68,13 +76,11 @@ router.route('/:id/approved-leave')
 				{
 					model: LeaveDetailModel,
 					where: {
-            [Op.or]: [
-              { 
+            [Op.or]: [{ 
                 from_date: {
                   [Op.between]: [ req.query.from_date, req.query.to_date],
                 }
-              },
-              { 
+              }, { 
                 to_date: {
                   [Op.between]: [ req.query.from_date, req.query.to_date],
                 }
@@ -90,8 +96,7 @@ router.route('/:id/approved-leave')
 			console.log(JSON.stringify(results))
 			let approved_leaves = results.map(result => {
 
-				return Object.assign(
-					{},
+				return Object.assign({},
 					{
 						id: result.id,
 						emp_code: result.emp_code,
