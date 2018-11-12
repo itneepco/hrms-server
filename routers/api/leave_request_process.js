@@ -79,67 +79,17 @@ router.route('/officer/:empCode/processed')
             }
           ]
         },
-        
+        { model: joiningReportModel },
         { model: leaveDetailModel }
       ]
     })
     .then(results => {
-      if (!results) return res.status(200).json(null)
-
-      console.log(JSON.stringify(results))
-      let leave_request = results.rows.map(result => {
-       
-        return Object.assign(
-          {},
-          {
-            id: result.id,
-            emp_code: result.emp_code,
-            first_name: result.leaveApplier.first_name,
-            last_name: result.leaveApplier.last_name,
-            purpose: result.purpose,
-            address: result.address,
-            contact_no: result.contact_no,
-            addressee: result.addressee ,
-            status: result.status,
-            prefix_from: result.prefix_from,
-            prefix_to: result.prefix_to,
-            suffix_from: result.suffix_from,
-            suffix_to: result.suffix_to,
-            created_at: result.created_at,   
-
-            history: result.leaveApplicationHists.map(hist => {
-              return Object.assign({}, {
-                id: hist.id,
-                officer: hist.officer,
-                workflow_action: hist.workflow_action,
-                updated_at: hist.updated_at,
-                remarks: hist.remarks
-              })
-            }),
-            leaveDetails: result.leaveDetails.map(leaveDetail => {
-              return Object.assign({}, {
-                id: leaveDetail.id,
-                leave_type: leaveDetail.leave_type,
-                from_date: leaveDetail.from_date,
-                to_date: leaveDetail.to_date,
-                station_leave: leaveDetail.station_leave
-              })
-            })
-          }
-        )
-      })
-
-      let data = {
-        rows: leave_request,
-        count: results.count
-      }
-      res.status(200).json(data)
+      filterData(req, res, results)
     })
     .catch(err => {
       console.log(err)
       res.status(500).json({ message: 'Opps! Some error happened!!' })
     })
-
   })
 
 
@@ -217,60 +167,12 @@ async function fetchLeaveApplication(req, res) {
           }
         ]
       },
+      { model: joiningReportModel },
       { model: leaveDetailModel }
     ]
   })
   .then(results => {
-    if (!results) return res.status(200).json(null)
-
-    console.log(JSON.stringify(results))
-    let leave_request = results.rows.map(result => {
-
-      return Object.assign(
-        {},
-        {
-          id: result.id,
-          emp_code: result.emp_code,
-          first_name: result.leaveApplier.first_name,
-          last_name: result.leaveApplier.last_name,
-          purpose: result.purpose,
-          address: result.address,
-          contact_no: result.contact_no,
-          addressee: result.addressee,
-          status: result.status,
-          prefix_from: result.prefix_from,
-          prefix_to: result.prefix_to,
-          suffix_from: result.suffix_from,
-          suffix_to: result.suffix_to,
-          created_at: result.created_at,
-
-          history: result.leaveApplicationHists.map(hist => {
-            return Object.assign({}, {
-              id: hist.id,
-              officer: hist.officer,
-              workflow_action: hist.workflow_action,
-              updated_at: hist.updated_at,
-              remarks: hist.remarks
-            })
-          }),
-          leaveDetails: result.leaveDetails.map(leaveDetail => {
-            return Object.assign({}, {
-              id: leaveDetail.id,
-              leave_type: leaveDetail.leave_type,
-              from_date: leaveDetail.from_date,
-              to_date: leaveDetail.to_date,
-              station_leave: leaveDetail.station_leave
-            })
-          })
-        }
-      )
-    })
-
-    let data = {
-      rows: leave_request,
-      count: results.count
-    }
-    return  res.status(200).json(data)
+    filterData(req, res, results)
   })
   .catch(err => {
     console.log(err)
@@ -599,6 +501,60 @@ async function getQueryCondition(req, res) {
       }
     }
   }
+}
+
+function filterData(req, res, results) {
+  if (!results) return res.status(200).json(null)
+
+  console.log(JSON.stringify(results))
+  let leave_request = results.rows.map(result => {
+
+    return Object.assign(
+      {},
+      {
+        id: result.id,
+        emp_code: result.emp_code,
+        first_name: result.leaveApplier.first_name,
+        last_name: result.leaveApplier.last_name,
+        purpose: result.purpose,
+        address: result.address,
+        contact_no: result.contact_no,
+        addressee: result.addressee,
+        status: result.status,
+        prefix_from: result.prefix_from,
+        prefix_to: result.prefix_to,
+        suffix_from: result.suffix_from,
+        suffix_to: result.suffix_to,
+        created_at: result.created_at,
+        joiningReport: result.joiningReport,
+
+        history: result.leaveApplicationHists.map(hist => {
+          return Object.assign({}, {
+            id: hist.id,
+            officer: hist.officer,
+            workflow_action: hist.workflow_action,
+            updated_at: hist.updated_at,
+            remarks: hist.remarks
+          })
+        }),
+        leaveDetails: result.leaveDetails.map(leaveDetail => {
+          return Object.assign({}, {
+            id: leaveDetail.id,
+            leave_type: leaveDetail.leave_type,
+            from_date: leaveDetail.from_date,
+            to_date: leaveDetail.to_date,
+            station_leave: leaveDetail.station_leave
+          })
+        })
+      }
+    )
+  })
+
+  let data = {
+    rows: leave_request,
+    count: results.count
+  }
+  return  res.status(200).json(data)
 }
 
 module.exports = router

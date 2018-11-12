@@ -3,9 +3,10 @@ const router = require('express').Router()
 const leaveAppModel = require('../../model/leaveApplication.model')
 const leaveDetailModel = require('../../model/leaveDetail.model')
 const leaveAppHistModel = require('../../model/leaveApplicationHist.model')
-const EmployeeModel = require('../../model/employee.model');
-const codes = require('../../global/codes');
+const employeeModel = require('../../model/employee.model');
+const joiningReportModel = require('../../model/joiningReport.model');
 
+const codes = require('../../global/codes');
 const db = require('../../config/db');
 
 router.get('/employee/:empCode', (req, res) => {
@@ -21,7 +22,7 @@ router.get('/employee/:empCode', (req, res) => {
     offset: offset,
     include: [
       {
-        model: EmployeeModel,
+        model: employeeModel,
         as: "leaveApplier",
         attributes: ['first_name', 'last_name'],
       },
@@ -29,12 +30,13 @@ router.get('/employee/:empCode', (req, res) => {
         model: leaveAppHistModel,
         include: [
           {
-            model: EmployeeModel,
+            model: employeeModel,
             as: "officer",
             attributes: ['emp_code', 'first_name', 'last_name'],
           }
         ]
       },
+      { model: joiningReportModel },
       { model: leaveDetailModel }
     ]
   })
@@ -63,7 +65,6 @@ router.route('/')
     let prefix_to = req.body.prefix_to
     let suffix_from = req.body.suffix_from
     let suffix_to = req.body.suffix_to
-    
 
     db.transaction().then(t => {
       return leaveAppModel.create({
@@ -124,6 +125,7 @@ function filterData(results) {
         suffix_from: result.suffix_from,
         suffix_to: result.suffix_to,
         created_at: result.created_at,
+        joiningReport: result.joiningReport,
 
         history: result.leaveApplicationHists.map(hist => {
           return Object.assign({}, {
@@ -156,7 +158,7 @@ function filterData(results) {
 function findAdressee(addressee) {
   return new Promise((resolve, reject) => {
     if(addressee && addressee.match(/00[0-9]{4}/)) {
-      EmployeeModel.findOne({where: 
+      employeeModel.findOne({where: 
         {emp_code: addressee}
       })
       .then(data => {

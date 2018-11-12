@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt-nodejs');
 const secret = require('../config/secret');
 const roleMapper = require('../model/roleMapper.model');
+const jwtExtractor = require('../middlewares/jwtExtractor');
 
 const AuthRouter = express.Router();
 
@@ -30,18 +31,64 @@ AuthRouter.route('/login')
               roleMapper: results
             };
             const token = jwt.sign(data, secret, { expiresIn: '3000s' })
-            res.status(200).json({ token, messgae: "Success" })
+            console.log("Login successful")
+            res.status(200).json({ token, message: "Success" })
           })
         }
         else {
-          res.status(401).json({ messgae: 'Authentication Failed' })
+          res.status(401).json({ message: 'Authentication Failed' })
         }
       })
     })
     .catch(err => {
       console.log(err)
-      res.status(500).json({ messgae: 'An error occured' })
+      res.status(500).json({ message: 'An error occured' })
     })
   })
+
+AuthRouter.put('/change-password', jwtExtractor, (req, res) => {
+    const old_password = req.body.old_password
+    const new_password = req.body.new_password
+    const emp_code = req.body.emp_code
+
+    User.findOne({
+      where: { emp_code: emp_code }
+    })
+    .then(userData => {
+      bcrypt.compare(old_password, userData.password_digest, (err, success) => {
+        if (!err & success) {
+          bcrypt.genSalt(10, (err, salt) => {
+            if(err) {
+              console.log(err)
+              return res.status(500).json({ message: 'An error occured' })
+            }
+            bcrypt.hash(new_password, salt, null, (err, hash) => {
+              if(err) {
+                console.log(err)
+                return res.status(500).json({ message: 'An error occured' })
+              }  
+              User.update({
+                password_digest: hash
+              }, 
+              {
+                where: { emp_code: req.user.emp_code }
+              }).then(data => {
+                console.log("Password changed successfully", data)
+                return res.status(200).json({ message: 'Successfully changed the password' })
+              })
+            }) 
+          })
+        }
+        else {
+          res.status(422).json({ message: 'Invalid old password' })
+        }
+      })
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ message: 'An error occured' })
+    })
+  })  
+
 
 module.exports = AuthRouter
