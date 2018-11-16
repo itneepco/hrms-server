@@ -21,6 +21,9 @@ const Employee = db.define('employee', {
 	},
 	project_id: {
 		type: Sequelize.INTEGER
+  },
+  dos: {
+		type: Sequelize.STRING
 	}
 }, {
 		underscored: true,
