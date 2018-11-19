@@ -1,10 +1,12 @@
 const router = require('express').Router()
 const ledgerModel = require('../../model/leaveLedger.model')
+const leaveYearEndInfo = require('../../model/leaveYearEndInfo.model')
 const leaveCreditInfo = require('../../model/leaveCreditInfo.model')
 const employeeModel = require('../../model/employee.model')
 const db = require('../../config/db');
 const Op = require('sequelize').Op;
 const codes = require('../../global/codes');
+const Sequelize = require('sequelize');
 
 router.route('/yearly/cl')
   .post((req, res) => {
@@ -43,6 +45,15 @@ router.route('/half-yearly/hpl')
     }
   })
 
+router.route('/year-closing') 
+  .post((req, res) => {
+    try {
+      computeYearEndLeaveBalance(req ,res)
+    } catch(error) {
+      console.log(error)
+    }
+  })  
+
 async function annualClRhCredit(req, res, leave_type) {
   if(!(leave_type == codes.CL_CODE || leave_type == codes.RH_CODE)) return
 
@@ -69,6 +80,7 @@ async function annualClRhCredit(req, res, leave_type) {
   db.transaction().then(t => {
     employeeModel.findAll({
       order: [['emp_code', 'ASC']],
+      limit: 3,
       where: {
         dos: { [Op.gte]: [new Date()] }
       }
@@ -110,7 +122,7 @@ async function annualClRhCredit(req, res, leave_type) {
       }, { transaction: t })
       .then(() => {
         //Bulk insert in to leave leder table
-        return ledgerModel.bulkCreate(ledgers.slice(0,3), { transaction: t })
+        return ledgerModel.bulkCreate(ledgers, { transaction: t })
       })
     })
     .then(() => {
@@ -158,6 +170,7 @@ async function annualElHplCredit(req, res, leave_type) {
   db.transaction().then(t => {
     employeeModel.findAll({
       order: [['emp_code', 'ASC']],
+      limit: 3,
       where: {
         dos: { [Op.gte]: [new Date()] }
       }
@@ -214,7 +227,7 @@ async function annualElHplCredit(req, res, leave_type) {
       }, { transaction: t })
       .then(() => {
         //Bulk insert in to leave leder table
-        return ledgerModel.bulkCreate(ledgers.slice(0,3), { transaction: t })
+        return ledgerModel.bulkCreate(ledgers, { transaction: t })
       })
     })
     .then(() => {
@@ -230,6 +243,123 @@ async function annualElHplCredit(req, res, leave_type) {
       return t.rollback();
     }); 
   })  
+}
+
+async function computeYearEndLeaveBalance(req, res) {
+  let curr_year = (new Date()).getFullYear() + 1
+  let prev_year = curr_year - 1
+  let ledgers = []
+
+  //Check if year end in processed for previous year
+  let result = await leaveYearEndInfo.findOne({
+    where: {
+      cal_year: prev_year
+    }
+  })
+  
+  if(result) {
+    console.log("Already Processed")
+    return res.status(200).json({ 
+      message: "Already processed annual year end processing for previous year", 
+      year: prev_year
+    })
+  }
+
+  employeeModel.findAll({
+    order: [['emp_code', 'ASC']],
+    limit: 3,
+    where: {
+      dos: { [Op.gte]: [new Date()] }
+    }
+  })
+  .then(employees => {
+    let promises = employees.map(async (employee) => {
+      let el_balance = await getClosingBalance(employee.emp_code, codes.EL_CODE, prev_year)
+      let hpl_balance = await getClosingBalance(employee.emp_code, codes.HPL_CODE, prev_year)
+      
+      ledgers.push({
+        emp_code: employee.emp_code,
+        cal_year: curr_year,
+        db_cr_flag: 'C',
+        no_of_days: el_balance,
+        leave_type: codes.EL_CODE,
+        remarks: "Year Opening Balance"
+      })
+
+      ledgers.push({
+        emp_code: employee.emp_code,
+        cal_year: curr_year,
+        db_cr_flag: 'C',
+        no_of_days: hpl_balance,
+        leave_type: codes.HPL_CODE,
+        remarks: "Year Opening Balance"
+      })
+    })
+
+    Promise.all(promises).then(function() {
+      console.log("Ledgers", ledgers)
+      db.transaction().then(t => {
+        //Insert in to leave credit info table
+        return leaveYearEndInfo.create({
+          cal_year: curr_year - 1,
+          created_by: req.user.emp_code,
+          remarks: "Annual Leave Year End Processing "
+        }, { transaction: t })
+        .then(() => {
+          //Bulk insert in to leave leder table
+          return ledgerModel.bulkCreate(ledgers, { transaction: t })
+        })
+        .then(() => {
+          t.commit()
+          res.status(200).json({ 
+            message: "Leave Year End Processing Successful for previous year", 
+            year: curr_year - 1
+          })
+        })
+        .catch(function (err) {
+          res.status(500).json({ message: "Leave Year End Processing Unsuccessful", error: err })
+          console.log(err)
+          return t.rollback();
+        })
+      })
+    })
+  })
+  .catch(function (err) {
+    res.status(500).json({message: "Leave Year End Processing Unsuccessful", error: err})
+    console.log(err)
+    return t.rollback();
+  }); 
+}
+
+async function getClosingBalance(emp_code, leave_type, cal_year) {
+  let credit = await ledgerModel.findAll({
+    attributes: [[Sequelize.fn('SUM', Sequelize.col('no_of_days')), 'total_credit']],
+    where: {
+      emp_code: emp_code,
+      cal_year: cal_year,
+      db_cr_flag: 'C',
+      leave_type: leave_type
+    }
+  })
+  
+  let debit = await ledgerModel.findAll({
+    attributes: [[Sequelize.fn('SUM', Sequelize.col('no_of_days')), 'total_debit']],
+    where: {
+      emp_code: emp_code,
+      cal_year: cal_year,
+      db_cr_flag: 'D',
+      leave_type: leave_type
+    }
+  })
+  let total_credit = JSON.parse(JSON.stringify(credit[0])).total_credit
+  total_credit = total_credit ? total_credit : 0
+  console.log("Total Credit", total_credit)
+  
+  let total_debit = JSON.parse(JSON.stringify(debit[0])).total_debit
+  total_debit = total_debit ? total_debit : 0
+  console.log("Total Debit", total_debit)
+
+  return (total_credit - total_debit)
 }
 
 module.exports = router  

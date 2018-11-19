@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
   const bearer = req.headers.authorization.split(" ")[1];
   
   jwt.verify(bearer, secret, (err, decoded)=>{
-    if (err) return res.status(403).send({ error: err, message: 'Failed to authenticate token.' });
+    if (err) return res.status(401).send({message: "Failed to authenticate token", error: err});
 
     User.findOne({
       where: { emp_code: decoded.emp_code }
