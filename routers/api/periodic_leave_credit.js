@@ -9,7 +9,7 @@ const codes = require('../../global/codes');
 const Sequelize = require('sequelize');
 
 router.route('/yearly/cl')
-  .post((req, res) => {
+  .get((req, res) => {
     try {
       annualClRhCredit(req, res, codes.CL_CODE) 
     } catch(error) {
@@ -18,7 +18,7 @@ router.route('/yearly/cl')
   })
 
 router.route('/yearly/rh')
-  .post((req, res) => {
+  .get((req, res) => {
     try { 
       annualClRhCredit(req, res, codes.RH_CODE) 
     } catch(error) {
@@ -27,26 +27,26 @@ router.route('/yearly/rh')
   })
   
 router.route('/half-yearly/el')
-  .post((req, res) => {
+  .get((req, res) => {
     console.log("World")
     try {    
-      annualElHplCredit(req, res, codes.EL_CODE)
+      halfYearlyElHplCredit(req, res, codes.EL_CODE)
     } catch(error) {
       console.log(error)
     }
   })  
 
 router.route('/half-yearly/hpl')
-  .post((req, res) => {
+  .get((req, res) => {
     try {    
-      annualElHplCredit(req, res, codes.HPL_CODE)
+      halfYearlyElHplCredit(req, res, codes.HPL_CODE)
     } catch(error) {
       console.log(error)
     }
   })
 
 router.route('/year-closing') 
-  .post((req, res) => {
+  .get((req, res) => {
     try {
       computeYearEndLeaveBalance(req ,res)
     } catch(error) {
@@ -140,7 +140,7 @@ async function annualClRhCredit(req, res, leave_type) {
   })  
 }
 
-async function annualElHplCredit(req, res, leave_type) {
+async function halfYearlyElHplCredit(req, res, leave_type) {
   if(!(leave_type == codes.EL_CODE || leave_type == codes.HPL_CODE)) return
   
   let remarks
@@ -233,12 +233,12 @@ async function annualElHplCredit(req, res, leave_type) {
     .then(() => {
       t.commit()
       res.status(200).json({ 
-        message: "Annual Leave Credit Processing Successful", 
+        message: "Half Yearly Leave Credit Processing Successful", 
         year: curr_year 
       })
     })
     .catch(function (err) {
-      res.status(500).json({ message: "Annual Leave Credit Processing Unsuccessful", error: err })
+      res.status(500).json({ message: "Half Yearly Leave Credit Processing Unsuccessful", error: err })
       console.log(err)
       return t.rollback();
     }); 
@@ -246,7 +246,7 @@ async function annualElHplCredit(req, res, leave_type) {
 }
 
 async function computeYearEndLeaveBalance(req, res) {
-  let curr_year = (new Date()).getFullYear() + 1
+  let curr_year = (new Date()).getFullYear()
   let prev_year = curr_year - 1
   let ledgers = []
 
