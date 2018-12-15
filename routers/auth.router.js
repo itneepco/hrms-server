@@ -17,6 +17,8 @@ AuthRouter.route('/login')
       where: { emp_code: emp_code }
     })
     .then(user => {
+      if(!user) return res.status(404).json({ message: "User Not Found" })
+
       bcrypt.compare(password, user.password_digest, (err, result) => {
         if (!err & result) {
           roleMapper.findAll({
