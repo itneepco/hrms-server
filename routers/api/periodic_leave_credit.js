@@ -80,7 +80,7 @@ async function annualClRhCredit(req, res, leave_type) {
   db.transaction().then(t => {
     employeeModel.findAll({
       order: [['emp_code', 'ASC']],
-      limit: 3,
+      // limit: 3,
       where: {
         dos: { [Op.gte]: [new Date()] }
       }
@@ -170,7 +170,7 @@ async function halfYearlyElHplCredit(req, res, leave_type) {
   db.transaction().then(t => {
     employeeModel.findAll({
       order: [['emp_code', 'ASC']],
-      limit: 3,
+      // limit: 3,
       where: {
         dos: { [Op.gte]: [new Date()] }
       }
@@ -267,7 +267,7 @@ async function computeYearEndLeaveBalance(req, res) {
 
   employeeModel.findAll({
     order: [['emp_code', 'ASC']],
-    limit: 3,
+    // limit: 3,
     where: {
       dos: { [Op.gte]: [new Date()] }
     }
@@ -277,23 +277,27 @@ async function computeYearEndLeaveBalance(req, res) {
       let el_balance = await getClosingBalance(employee.emp_code, codes.EL_CODE, prev_year)
       let hpl_balance = await getClosingBalance(employee.emp_code, codes.HPL_CODE, prev_year)
       
-      ledgers.push({
-        emp_code: employee.emp_code,
-        cal_year: curr_year,
-        db_cr_flag: 'C',
-        no_of_days: el_balance,
-        leave_type: codes.EL_CODE,
-        remarks: "Year Opening Balance"
-      })
+      if(el_balance > 0) {
+        ledgers.push({
+          emp_code: employee.emp_code,
+          cal_year: curr_year,
+          db_cr_flag: 'C',
+          no_of_days: el_balance,
+          leave_type: codes.EL_CODE,
+          remarks: "Year Opening Balance"
+        })
+      }
 
-      ledgers.push({
-        emp_code: employee.emp_code,
-        cal_year: curr_year,
-        db_cr_flag: 'C',
-        no_of_days: hpl_balance,
-        leave_type: codes.HPL_CODE,
-        remarks: "Year Opening Balance"
-      })
+      if(hpl_balance > 0) {
+        ledgers.push({
+          emp_code: employee.emp_code,
+          cal_year: curr_year,
+          db_cr_flag: 'C',
+          no_of_days: hpl_balance,
+          leave_type: codes.HPL_CODE,
+          remarks: "Year Opening Balance"
+        })
+      }
     })
 
     Promise.all(promises).then(function() {
