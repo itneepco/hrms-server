@@ -8,6 +8,11 @@ const jwtExtractor = require('./middlewares/jwtExtractor')
 app.use(bodyParser.json());
 app.use(cors());
 
+// app.use(cors({
+//   origin: 'http://10.3.0.10',
+//   optionsSuccessStatus: 200
+// }));
+
 sequelize.authenticate()
   .then(() => {
     console.log('Connection has been established successfully.');
@@ -24,6 +29,12 @@ app.get('/',(req, res)=>{
 });
 
 app.use('/api', jwtExtractor, require('./routers/api/api.router'))
+
+// app.use('/', express.static('public'));
+
+// app.all('*', function(req, res) {
+//   res.redirect('/');
+// });
 
 // error handler
 app.use(function(err, req, res, next) {

@@ -255,12 +255,13 @@ function leaveApprove(req, res) {
           no_of_hpl = ((to_date - from_date) / (60*60*24*1000)) + 1
         }
 
+        let curr_year = (new Date()).getFullYear()
         //Insert in to ledger table
-        return insertLeaveLedger("2018", "D", no_of_cl, Codes.CL_CODE, result.emp_code, remarks, t)
-          .then(() => insertLeaveLedger("2018", "D", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
-          .then(() => insertLeaveLedger("2018", "D", no_of_rh, Codes.RH_CODE, result.emp_code, remarks, t))
-          .then(() => insertLeaveLedger("2018", "D", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
-          .then(() => insertLeaveLedger("2018", "D", no_of_hpl, Codes.HPL_CODE, result.emp_code, remarks, t))
+        return insertLeaveLedger(curr_year, "D", no_of_cl, Codes.CL_CODE, result.emp_code, remarks, t)
+          .then(() => insertLeaveLedger(curr_year, "D", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger(curr_year, "D", no_of_rh, Codes.RH_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger(curr_year, "D", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger(curr_year, "D", no_of_hpl, Codes.HPL_CODE, result.emp_code, remarks, t))
       })
       .then(() => {
         //Update leave application status
@@ -333,12 +334,14 @@ function leaveCancel(req, res) {
           
           no_of_hpl = ((to_date - from_date) / (60*60*24*1000)) + 1
         }
+
+        let curr_year = (new Date()).getFullYear()
         //Insert in to ledger table
-        return insertLeaveLedger("2018", "C", no_of_cl, Codes.CL_CODE, result.emp_code, remarks, t)
-          .then(() => insertLeaveLedger("2018", "C", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
-          .then(() => insertLeaveLedger("2018", "C", no_of_rh, Codes.RH_CODE, result.emp_code, remarks, t))
-          .then(() => insertLeaveLedger("2018", "C", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
-          .then(() => insertLeaveLedger("2018", "C", no_of_hpl, Codes.HPL_CODE, result.emp_code, remarks, t))
+        return insertLeaveLedger(curr_year, "C", no_of_cl, Codes.CL_CODE, result.emp_code, remarks, t)
+          .then(() => insertLeaveLedger(curr_year, "C", no_of_hd_cl, Codes.CL_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger(curr_year, "C", no_of_rh, Codes.RH_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger(curr_year, "C", no_of_el, Codes.EL_CODE, result.emp_code, remarks, t))
+          .then(() => insertLeaveLedger(curr_year, "C", no_of_hpl, Codes.HPL_CODE, result.emp_code, remarks, t))
       })
       .then(() => {
         return leaveAppModel.update(
