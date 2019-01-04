@@ -9,8 +9,9 @@ router.route('/:empCode')
 .get(async(req,res)=>{
     let today = new Date()
     let year = today.getFullYear().toString()
-    let mon  = today.getMonth() > 9 ?  today.getMonth().toString() : '0' + today.getMonth().toString()
-    let yymm = req.query.yymm ? req.query.yymm : (year+mon)
+    let curr_month = today.getMonth() + 1
+    let month  = curr_month > 9 ?  curr_month.toString() : '0' + curr_month.toString()
+    let yymm = req.query.yymm ? req.query.yymm : (year + month)
     
     let employee = await employeeModel.findOne({
         where: {emp_code: req.params.empCode},
