@@ -9,16 +9,28 @@ const joiningReportModel = require('./joiningReport.model');
 
 const leaveApplication = db.define('leaveApplication', {
 	emp_code: {
-		type: Sequelize.STRING
+    type: Sequelize.STRING,
+    validate: {
+      notEmpty: true
+    }
 	},
 	purpose: {
-		type: Sequelize.STRING
+    type: Sequelize.STRING,
+    validate: {
+      notEmpty: true
+    }
 	},
 	address: {
-		type: Sequelize.STRING
+    type: Sequelize.STRING,
+    validate: {
+      notEmpty: true
+    }
 	},
 	contact_no: {
-		type: Sequelize.STRING
+    type: Sequelize.STRING,
+    validate: {
+      notEmpty: true
+    }
 	},
 	addressee: {
 		type: Sequelize.STRING
@@ -38,6 +50,9 @@ const leaveApplication = db.define('leaveApplication', {
   suffix_to: {
 		type: Sequelize.DATEONLY
   },
+	remarks: {
+		type: Sequelize.STRING
+	},
 }, 
 {
 	underscored: true,

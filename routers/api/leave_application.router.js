@@ -74,6 +74,7 @@ router.route('/')
         contact_no: req.body.contact_no,
         addressee: req.body.officer_emp_code,
         status: codes.LEAVE_APPLIED,
+        remarks: req.body.remarks ? req.body.remarks : '',
         prefix_from: (prefix_from && prefix_from.length > 0) ? prefix_from : null,
         prefix_to: (prefix_to && prefix_to.length > 0) ? prefix_to : null,
         suffix_from: (suffix_from && suffix_from.length > 0) ? suffix_from : null,
@@ -98,9 +99,10 @@ router.route('/')
       .then(function () {
         res.status(200).json({ message: "Created successfully" })
         return t.commit();
-      }).catch(function (err) {
+      })
+      .catch(function (err) {
         console.log(err)
-        res.status(500).json({ message: "Some error occured" })
+        res.status(500).json({ message: "Some error occured", error: err })
         return t.rollback();
       });
     })
@@ -120,6 +122,7 @@ function filterData(results) {
         contact_no: result.contact_no,
         addressee: addressee,
         status: result.status,
+        remarks: result.remarks,
         prefix_from: result.prefix_from,
         prefix_to: result.prefix_to,
         suffix_from: result.suffix_from,
