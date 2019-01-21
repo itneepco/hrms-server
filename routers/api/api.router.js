@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const validateAdmin = require('../../middlewares/validateAdmin');
 const validateSuperAdmin = require('../../middlewares/validateSuperAdmin');
+const validateItAdmin = require('../../middlewares/validateItAdmin');
 
 //Routes Validation for Admin
 router.use('/leave/ledger', validateAdmin)
@@ -8,7 +9,7 @@ router.use('/projects/:id/holidays', validateAdmin)
 
 //Routes Validation for Super Admin
 router.use('/rolemapper', validateSuperAdmin, require('./role_mapper.router'))
-router.use('/leave/credit', validateSuperAdmin, require('./periodic_leave_credit'))
+router.use('/leave/credit', validateItAdmin, require('./periodic_leave_credit'))
 
 router.use('/projects', require('./projects.router'))
 router.use('/employees', require('./employee.router'))
