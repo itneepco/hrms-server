@@ -9,7 +9,14 @@ router.route('/:empCode')
 .get(async(req,res)=>{
     let today = new Date()
     let year = today.getFullYear().toString()
-    let curr_month = today.getMonth() + 1
+    
+    //Get previous month. If current month is January make it previous year December
+    let curr_month = today.getMonth()
+    if(curr_month == 0) {
+      curr_month = 12
+      year = year - 1
+    }
+
     let month  = curr_month > 9 ?  curr_month.toString() : '0' + curr_month.toString()
     let yymm = req.query.yymm ? req.query.yymm : (year + month)
     
