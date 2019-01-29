@@ -52,7 +52,10 @@ const leaveApplication = db.define('leaveApplication', {
   },
 	remarks: {
 		type: Sequelize.STRING
-	},
+  },
+  time_office_status: {
+    type: Sequelize.BOOLEAN
+  }
 }, 
 {
 	underscored: true,

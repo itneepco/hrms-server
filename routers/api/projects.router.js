@@ -101,7 +101,8 @@ router.route('/:id/approved-leave')
 						id: result.id,
 						emp_code: result.emp_code,
 						first_name: result.leaveApplier.first_name,
-						last_name: result.leaveApplier.last_name,
+            last_name: result.leaveApplier.last_name,
+            time_office_status: result.time_office_status,
 
 						leaveDetails: result.leaveDetails.map(leaveDetail => {
 							return Object.assign({}, {
@@ -120,7 +121,30 @@ router.route('/:id/approved-leave')
 			console.log(err)
 			return res.status(500).json({ message: 'Opps! Some error happened!!' })
 		})
-	})
+  })
+
+router.route('/:id/approved-leave/update-timeoffice')
+  .post((req, res) => {
+    console.log(req.body)
+
+    LeaveAppModel.update({
+      time_office_status: true
+    }, {
+      where: {
+        id: {
+          [Op.in]: req.body
+        }
+      }
+    })
+    .then(result => {
+      console.log(result)
+      res.status(200).json({message: "Successfully updated the records"})
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ error: err, message: 'Opps! Some error occured!!' })
+    })
+  })
 
 router.use('/:id/holidays', require('./holiday.router'))
 
