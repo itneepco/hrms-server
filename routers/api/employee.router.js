@@ -7,11 +7,33 @@ const Op = require('sequelize').Op
 router.route('/search/')
 	.get((req, res) => {
 		let user = req.user
-		let condition = {
-			emp_code: {
-				[Op.like]: req.query.emp_code ? "%" + req.query.emp_code + "%" : '%'
+		let condition = {}
+    
+    if(req.query.emp_code && req.query.emp_code.length > 0) {
+      condition = {
+				emp_code: { [Op.like]: "%" + req.query.emp_code + "%" }
 			}
-		}
+    }
+
+    if(req.query.name && req.query.name.length > 0) {
+      condition = {
+        [Op.or]: [{
+          first_name: {
+            [Op.like]: "%" + req.query.name + "%"
+          }
+        },
+        {
+          middle_name: {
+            [Op.like]: "%" + req.query.name + "%"
+          }
+        },
+        {
+          last_name: {
+            [Op.like]: "%" + req.query.name + "%"
+          }
+        }]
+      }
+    }
 
 		//If current user is not IT admin or HR Admin, the specify project id
 		if (!(user.role == 1 || user.role == 2)) {
@@ -19,6 +41,7 @@ router.route('/search/')
 		}
 
 		employeeModel.findAll({
+      order: [['first_name', 'ASC']],
 			where: condition,
 			include: [
 				{ model: projectModel },
