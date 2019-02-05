@@ -20,4 +20,7 @@ router.use('/pay-image', require('./pay_image.router'))
 router.use('/hierarchy', require('./hierarchy.router'))
 router.use('/joining-report', require('./joining_report.router'))
 
+//Training Router
+router.use('/training', require('./training/api.training.router'))
+
 module.exports = router
