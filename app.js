@@ -4,6 +4,7 @@ const sequelize = require('./config/db');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwtExtractor = require('./middlewares/jwtExtractor')
+const compression = require('compression')
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -24,17 +25,13 @@ sequelize.authenticate()
 const AuthRouter = require('./routers/auth.router')
 app.use('/auth', AuthRouter);
 
-app.get('/',(req, res)=>{
-    res.send('Welcome to HRMS APP');
-});
-
 app.use('/api', jwtExtractor, require('./routers/api/api.router'))
 
-// app.use('/', express.static('public'));
+app.use('/', compression(), express.static('public'));
 
-// app.all('*', function(req, res) {
-//   res.redirect('/');
-// });
+app.all('*', function(req, res) {
+  res.redirect('/');
+});
 
 // error handler
 app.use(function(err, req, res, next) {
