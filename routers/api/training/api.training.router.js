@@ -1,8 +1,8 @@
 const router = require('express').Router()
-const validateAdmin = require('../../../middlewares/validateAdmin');
-const validateSuperAdmin = require('../../../middlewares/validateSuperAdmin');
-const validateItAdmin = require('../../../middlewares/validateItAdmin');
+const validateTrainingAdmin = require('../../../middlewares/validateTrainingAdmin');
 
-router.use('/institute', require('./training_institute.router'))
+router.use('/institute', validateTrainingAdmin, require('./training_institute.router'))
+
+router.use('/info', require('./training.router'))
 
 module.exports = router

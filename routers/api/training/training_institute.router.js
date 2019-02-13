@@ -23,7 +23,7 @@ router.route('/search/')
   })
 })
 
-router.route('/')
+router.route('/paginate')
 .get((req,res)=>{
     let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
     let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
@@ -35,6 +35,21 @@ router.route('/')
       offset: offset
     })
     .then(result => res.status(200).json(result))
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ message:'Opps! Some error happened!!', error: err })
+    })
+})
+
+router.route('/')
+.get((req, res)=>{
+  instituteModel.findAll({ 
+      order: [['name', 'ASC']]
+    })
+    .then(result => { 
+      // console.log(result)
+      res.status(200).json(result) 
+    })
     .catch(err => {
       console.log(err)
       res.status(500).json({ message:'Opps! Some error happened!!', error: err })
