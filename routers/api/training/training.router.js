@@ -1,16 +1,23 @@
 const router = require('express').Router()
 const trainingInfo = require('../../../model/training/trainingInfo.model')
+const codes = require('../../../global/codes')
 
 router.route('/')
 .get((req, res)=>{
-  trainingInfo.findAll({ 
-      order: [['from_date', 'ASC']]
-    })
-    .then(result => res.status(200).json(result))
-    .catch(err => {
+  let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
+  let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
+  let offset = pageIndex * limit
+
+  trainingInfo.findAndCountAll({ 
+      order: [['from_date', 'ASC']],
+      limit: limit,
+      offset: offset
+  })
+  .then(result=>res.status(200).json(result))
+  .catch(err=>{
       console.log(err)
-      res.status(500).json({ message:'Opps! Some error happened!!', error: err })
-    })
+      res.status(500).json({message:'Opps! Some error happened!!'})
+  })  
 })
 .post((req,res)=>{
   trainingInfo
@@ -21,7 +28,8 @@ router.route('/')
       venue: req.body.venue,
       objective: req.body.objective,
       training_type: req.body.training_type,
-      training_institue_id: req.body.training_institue_id
+      training_institute_id: req.body.training_institute_id,
+      status: codes.TRAINING_CREATED
     }) 
     .save()
     .then(result=>{
@@ -52,6 +60,7 @@ router.route('/:id')
     })
 })
 .put((req,res)=>{
+  console.log(req.body)
   trainingInfo.update({ 
       course_title: req.body.course_title,
       from_date: req.body.from_date,
@@ -59,7 +68,7 @@ router.route('/:id')
       venue: req.body.venue,
       objective: req.body.objective,
       training_type: req.body.training_type,
-      training_institue_id: req.body.training_institue_id
+      training_institute_id: req.body.training_institute_id
     },
     { where: {id: req.params.id }
   })

@@ -35,10 +35,18 @@ const trainingInfo = db.define('training_infos', {
       notEmpty: true
     }
   },
-  training_institue_id: {
+  training_institute_id: {
     type: Sequelize.INTEGER,
-  }
-
+  },
+  status: {
+    type: Sequelize.STRING,
+    validate: {
+      notEmpty: true
+    }
+  },
+  training_order_name: {
+    type: Sequelize.STRING,
+  },
 }, {
 		underscored: true,
 		tableName: 'training_infos'

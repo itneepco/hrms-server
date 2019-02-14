@@ -39,5 +39,14 @@ module.exports = {
     //User Roles
     IT_ADMIN_ROLE: 1,
     HR_SUPER_ADMIN_ROLE: 2,
-    HR_SITE_ADMIN_ROLE: 3
+    HR_SITE_ADMIN_ROLE: 3,
+
+    //TRAINING TYPES
+    IN_HOUSE_TRAINING: '01',
+    EXTERNAL_TRAINING: '02',
+
+    //Training status
+    TRAINING_CREATED: '01',
+    TRAINING_PUBLISHED: '02',
+    TRAINING_COMPLETED: '03',
 }
