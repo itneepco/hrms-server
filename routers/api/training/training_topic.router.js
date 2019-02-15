@@ -1,4 +1,4 @@
-const router = require('express').Router()
+const router = require('express').Router({mergeParams: true})
 const trainingTopic = require('../../../model/training/trainingTopic.model')
 const codes = require('../../../global/codes')
 
@@ -15,7 +15,7 @@ router.route('/')
     res.status(500).json({message:'Opps! Some error happened!!'})
   })  
 })
-.post((req,res)=>{
+.post((req, res)=>{
   trainingTopic
     .build({
       topic_name: req.body.topic_name,

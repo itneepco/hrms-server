@@ -1,5 +1,7 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
+const trainingTopic = require('./trainingTopic.model')
+const trainingInstitute = require('./trainingInstitute.model')
 
 const trainingInfo = db.define('training_infos', {
 	course_title: {
@@ -52,5 +54,8 @@ const trainingInfo = db.define('training_infos', {
 		tableName: 'training_infos'
 	}
 )
+
+trainingInfo.hasMany(trainingTopic)
+trainingInfo.hasOne(trainingInstitute, { foreignKey: 'id', sourceKey: 'training_institute_id'})
 
 module.exports = trainingInfo

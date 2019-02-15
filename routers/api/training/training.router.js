@@ -1,5 +1,7 @@
 const router = require('express').Router()
 const trainingInfo = require('../../../model/training/trainingInfo.model')
+const trainingInstitute = require('../../../model/training/trainingInstitute.model')
+const trainingTopic = require('../../../model/training/trainingTopic.model')
 const codes = require('../../../global/codes')
 
 router.route('/')
@@ -9,14 +11,22 @@ router.route('/')
   let offset = pageIndex * limit
 
   trainingInfo.findAndCountAll({ 
-      order: [['from_date', 'ASC']],
-      limit: limit,
-      offset: offset
+    order: [['from_date', 'ASC']],
+    limit: limit,
+    offset: offset,
+    attributes: { exclude: ['training_institute_id'] },
+    include: [
+      { model: trainingInstitute },
+      { model: trainingTopic }
+    ]
   })
-  .then(result=>res.status(200).json(result))
+  .then(result => { 
+    // console.log(result)
+    res.status(200).json(result) 
+  })
   .catch(err=>{
-      console.log(err)
-      res.status(500).json({message:'Opps! Some error happened!!'})
+    console.log(err)
+    res.status(500).json({message:'Opps! Some error happened!!'})
   })  
 })
 .post((req,res)=>{
