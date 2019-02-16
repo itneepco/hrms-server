@@ -1,5 +1,8 @@
 const router = require('express').Router({mergeParams: true})
-const participantModel = require('../../../model/training/tainingParticipant.model')
+const participantModel = require('../../../model/training/trainingParticipant.model')
+const projectModel = require('../../../model/project.model')
+const gradeModel = require('../../../model/grade.model')
+const designationModel = require('../../../model/designation.model')
 const employeeModel = require('../../../model/employee.model')
 
 router.route('/')
@@ -17,10 +20,8 @@ router.route('/')
     ]
   })
   .then(results => {
-    let filter = results.map(result => {
-      return filterData(result)
-    }) 
-    res.status(200).json(filter) 
+    let filteredData = results.map(data => filterData(data)) 
+    res.status(200).json(filteredData) 
   })
   .catch(err=>{
     console.log(err)
@@ -34,22 +35,22 @@ router.route('/')
     if(!emp) return res.status(500).json({ message: 'Cannot find employee with code ' + req.body.emp_code })
 
     participantModel
-      .build({
-        emp_code: emp.emp_code,
-        project_id: emp.project_id,
-        designation_id: emp.designation_id,
-        grade_id: emp.grade_id,
-        training_info_id: parseInt(req.params.trainingId)
-      }) 
-      .save()
-      .then(result=>{
-        console.log(result)
-        res.status(200).send(result)
-      })
-      .catch(error=>{
-        console.log(error)
-        res.status(500).json({ message: 'Oops! An error occured', error: err })
-      })
+    .build({
+      emp_code: emp.emp_code,
+      project_id: emp.project_id,
+      designation_id: emp.designation_id,
+      grade_id: emp.grade_id,
+      training_info_id: parseInt(req.params.trainingId)
+    }) 
+    .save()
+    .then(result => {
+      console.log(result)
+      res.status(200).send(result) 
+    })
+    .catch(error=>{
+      console.log(error)
+      res.status(500).json({ message: 'Oops! An error occured', error: err })
+    })
   }
   catch(error) {
     console.log(error)
@@ -60,16 +61,23 @@ router.route('/')
 router.route('/:participantId')
 .delete((req, res)=>{
   participantModel.destroy({ where: { id: req.params.participantId }})
-    .then(result => res.status(200).json(result))
-    .catch(err=>{
-      console.log(err)
-      res.status(500).json({ message:'Opps! Some error happened!!', error: err })
-    })
+  .then(result => res.status(200).json(result))
+  .catch(err=>{
+    console.log(err)
+    res.status(500).json({ message:'Opps! Some error happened!!', error: err })
+  })
 })
 
 .get((req,res)=>{
-  participantModel.findById(req.params.participantId)
-    .then(result=>res.status(200).json(result))
+  participantModel.findOne({
+    where: { id: req.params.participantId },
+    include: [
+      { model: projectModel },
+      { model: designationModel },
+      { model: gradeModel },
+      { model: employeeModel }
+    ]})
+    .then(data => res.status(200).json(filterData(data)))
     .catch(err=>{
       console.log(err)
       res.status(500).json({ message:'Opps! Some error happened!!', error: err })
@@ -111,13 +119,18 @@ router.route('/:participantId')
 })
 
 function filterData(data) {
-  return Object.assign(
-    {},
-    {
-      id: data.id,
-      emp_code: data.employee
-    }
-  )
+  let name = data.employee.first_name + " " + 
+    data.employee.middle_name + " " + data.employee.last_name
+
+  return {
+    id: data.id,
+    name: name,
+    designation: data.designation.name,
+    grade: data.grade.name,
+    project: data.project.name,
+    emp_code: data.emp_code,
+    training_info_id: data.training_info_id
+  }
 }
 
 module.exports = router

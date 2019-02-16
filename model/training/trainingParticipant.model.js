@@ -48,6 +48,6 @@ const participantModel = db.define('training_participants', {
 participantModel.belongsTo(projectModel)
 participantModel.belongsTo(designationModel)
 participantModel.belongsTo(gradeModel)
-participantModel.belongsTo(employeeModel, { foreignKey: 'emp_code', sourceKey: 'emp_code'})
+participantModel.belongsTo(employeeModel, { foreignKey: 'emp_code', targetKey: 'emp_code'})
 
 module.exports = participantModel
