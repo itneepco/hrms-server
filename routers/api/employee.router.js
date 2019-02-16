@@ -2,6 +2,7 @@ const router = require('express').Router()
 const employeeModel = require('../../model/employee.model')
 const projectModel = require('../../model/project.model')
 const designationModel = require('../../model/designation.model')
+const gradeModel = require('../../model/grade.model')
 const Op = require('sequelize').Op
 
 router.route('/search/')
@@ -45,7 +46,8 @@ router.route('/search/')
 			where: condition,
 			include: [
 				{ model: projectModel },
-				{ model: designationModel }
+        { model: designationModel },
+        { model: gradeModel }
 			]
 		})
 		.then(results => {
@@ -60,7 +62,8 @@ router.route('/search/')
 					middle_name: emp.middle_name,
 					last_name: emp.last_name,
 					project: emp.project.name,
-					designation: emp.designation.name
+          designation: emp.designation.name,
+          grade: emp.grade.name,
 				})
 			)
 
@@ -70,9 +73,7 @@ router.route('/search/')
 			console.log(error)
 			res.status(500).json({ message: 'An error occured' })
 		})
-
 	})
-
 
 router.route('/:empCode')
 	.get((req, res) => {

@@ -2,6 +2,9 @@ const router = require('express').Router()
 const trainingInfo = require('../../../model/training/trainingInfo.model')
 const trainingInstitute = require('../../../model/training/trainingInstitute.model')
 const trainingTopic = require('../../../model/training/trainingTopic.model')
+const trainingParticipant = require('../../../model/training/tainingParticipant.model')
+
+const Op = require('sequelize').Op
 const codes = require('../../../global/codes')
 
 router.route('/')
@@ -11,13 +14,22 @@ router.route('/')
   let offset = pageIndex * limit
 
   trainingInfo.findAndCountAll({ 
+    distinct: true,
     order: [['from_date', 'ASC']],
     limit: limit,
     offset: offset,
     attributes: { exclude: ['training_institute_id'] },
     include: [
       { model: trainingInstitute },
-      { model: trainingTopic }
+      { model: trainingTopic },
+      { 
+        model: trainingParticipant,
+        // include: [
+        //   { model: projectModel },
+        //   { model: designationModel },
+        //   { model: gradeModel }
+        // ] 
+      }
     ]
   })
   .then(result => { 

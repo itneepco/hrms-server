@@ -2,6 +2,7 @@ const Sequelize = require('sequelize');
 const db = require('../../config/db');
 const trainingTopic = require('./trainingTopic.model')
 const trainingInstitute = require('./trainingInstitute.model')
+const trainingParticipant = require('./tainingParticipant.model')
 
 const trainingInfo = db.define('training_infos', {
 	course_title: {
@@ -55,6 +56,7 @@ const trainingInfo = db.define('training_infos', {
 	}
 )
 
+trainingInfo.hasMany(trainingParticipant)
 trainingInfo.hasMany(trainingTopic)
 trainingInfo.hasOne(trainingInstitute, { foreignKey: 'id', sourceKey: 'training_institute_id'})
 

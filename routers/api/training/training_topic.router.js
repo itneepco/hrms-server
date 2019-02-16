@@ -20,16 +20,12 @@ router.route('/')
     .build({
       topic_name: req.body.topic_name,
       faculty_name: req.body.faculty_name,
-      training_info_id: req.params.trainingId
+      training_info_id: parseInt(req.params.trainingId)
     }) 
     .save()
     .then(result=>{
       console.log(result)
-      res.status(200).send({
-        topic_name: result.topic_name,
-        faculty_name: result.faculty_name,
-        training_info_id: result.trainingId
-      })
+      res.status(200).send(result)
     })
     .catch(error=>{
       console.log(error)
@@ -59,7 +55,7 @@ router.route('/:topicId')
   trainingTopic.update({ 
       topic_name: req.body.topic_name,
       faculty_name: req.body.faculty_name,
-      training_info_id: req.params.trainingId
+      training_info_id: parseInt(req.params.trainingId)
     },
     { where: { id: req.params.topicId }
   })

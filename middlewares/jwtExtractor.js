@@ -26,7 +26,7 @@ module.exports = (req, res, next) => {
           emp_code: user.emp_code,
           name: user.user_name,
           role: user.role,
-          project: user.project_id,
+          project_id: user.project_id,
           roleMapper: results
         };
 
