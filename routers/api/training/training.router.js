@@ -150,4 +150,18 @@ router.route('/:id')
   })
 })
 
+router.route('/:id/publish')
+.put((req, res) => {
+  trainingInfo.update({ status: codes.TRAINING_PUBLISHED },
+    { where: {id: req.params.id }
+  })
+  .then(() => {
+    res.status(200).json({ message:'Successfully published the training' })
+  })
+  .catch(err=>{
+    console.log(err)
+    res.status(500).json({ message:'Opps! Some error happened!!', error: err })
+  })
+})
+
 module.exports = router
