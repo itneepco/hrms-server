@@ -9,7 +9,6 @@ const gradeModel = require('../../../model/grade.model')
 const designationModel = require('../../../model/designation.model')
 const employeeModel = require('../../../model/employee.model')
 
-const validateTrainingAdmin = require('../../../middlewares/validateTrainingAdmin');
 const Op = require('sequelize').Op
 const codes = require('../../../global/codes')
 
@@ -25,6 +24,7 @@ router.route('/')
     limit: limit,
     offset: offset,
     attributes: { exclude: ['training_institute_id'] },
+    where: { project_id: req.user.project_id },
     include: [
       { model: trainingInstitute },
       { model: trainingTopic },
@@ -80,8 +80,7 @@ router.route('/')
   })  
 })
 
-//Check authorization. only taining admin can create new training
-router.route('/', validateTrainingAdmin)
+router.route('/')
 .post((req, res)=>{
   trainingInfo
     .build({
@@ -91,8 +90,9 @@ router.route('/', validateTrainingAdmin)
       venue: req.body.venue,
       objective: req.body.objective,
       training_type: req.body.training_type,
-      training_institute_id: req.body.training_institute_id,
-      status: codes.TRAINING_CREATED
+      training_institute_id: req.body.training_institute_id ? req.body.training_institute_id : null,
+      status: codes.TRAINING_CREATED,
+      project_id: req.user.project_id
     }) 
     .save()
     .then(result=>{
@@ -105,7 +105,7 @@ router.route('/', validateTrainingAdmin)
     })
 })
 
-router.route('/:id', validateTrainingAdmin)
+router.route('/:id')
 .delete((req, res)=>{
   trainingInfo.destroy({ where: { id: req.params.id }})
     .then(result => res.status(200).json(result))
@@ -122,7 +122,7 @@ router.route('/:id', validateTrainingAdmin)
       res.status(500).json({ message:'Opps! Some error happened!!', error: err })
     })
 })
-.put((req,res)=>{
+.put((req, res)=>{
   console.log(req.body)
   trainingInfo.update({ 
       course_title: req.body.course_title,
@@ -131,7 +131,8 @@ router.route('/:id', validateTrainingAdmin)
       venue: req.body.venue,
       objective: req.body.objective,
       training_type: req.body.training_type,
-      training_institute_id: req.body.training_institute_id
+      training_institute_id: req.body.training_institute_id ? req.body.training_institute_id : null,
+      project_id: req.user.project_id
     },
     { where: {id: req.params.id }
   })
