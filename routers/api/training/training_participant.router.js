@@ -1,4 +1,6 @@
 const router = require('express').Router({mergeParams: true})
+const Op = require('sequelize').Op;
+
 const participantModel = require('../../../model/training/trainingParticipant.model')
 const projectModel = require('../../../model/project.model')
 const gradeModel = require('../../../model/grade.model')
@@ -40,7 +42,8 @@ router.route('/')
       project_id: emp.project_id,
       designation_id: emp.designation_id,
       grade_id: emp.grade_id,
-      training_info_id: parseInt(req.params.trainingId)
+      training_info_id: parseInt(req.params.trainingId),
+      present: false
     }) 
     .save()
     .then(result => {
@@ -116,6 +119,32 @@ router.route('/:participantId')
     console.log(error)
     res.status(500).json({ message: 'Oops! An error occured', error: err })
   }
+})
+
+router.route('/attendance/mark')
+.put(async (req, res) => {
+  console.log("Request Body", req.body)
+
+  let promises = await req.body.map(attendant => {
+    return participantModel.update({
+        present: attendant.present
+      }, {
+        where: { 
+          training_info_id: req.params.trainingId,
+          emp_code: attendant.emp_code 
+        }
+      })
+    })
+    
+    Promise.all(promises)
+    .then(result => {
+      console.log(result)
+      res.status(200).json({message: "Successfully updated the records"})
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ error: err, message: 'Opps! Some error occured!!' })
+    })
 })
 
 function filterData(data) {

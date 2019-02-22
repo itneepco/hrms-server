@@ -64,6 +64,7 @@ const trainingInfo = db.define('training_infos', {
 )
 
 trainingInfo.hasMany(trainingParticipant)
+trainingInfo.hasMany(trainingParticipant, { as: "employee", foreignKey: 'training_info_id', targetKey: 'id'})
 trainingInfo.hasMany(trainingTopic)
 trainingInfo.hasOne(trainingInstitute, { foreignKey: 'id', sourceKey: 'training_institute_id'})
 

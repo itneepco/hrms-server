@@ -31,13 +31,17 @@ router.route('/my-training')
       { model: trainingTopic },
       { 
         model: trainingParticipant,
-        where: { emp_code: req.user.emp_code },
         include: [
           { model: projectModel },
           { model: designationModel },
           { model: gradeModel },
           { model: employeeModel }
         ] 
+      }, 
+      {
+        model: trainingParticipant,
+        as: 'employee',
+        where: { emp_code: req.user.emp_code },
       }
     ]
   })
