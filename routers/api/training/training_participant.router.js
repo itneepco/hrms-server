@@ -42,8 +42,7 @@ router.route('/')
       project_id: emp.project_id,
       designation_id: emp.designation_id,
       grade_id: emp.grade_id,
-      training_info_id: parseInt(req.params.trainingId),
-      present: false
+      training_info_id: parseInt(req.params.trainingId)
     }) 
     .save()
     .then(result => {

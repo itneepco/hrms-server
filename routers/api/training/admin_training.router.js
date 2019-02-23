@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const Op = require('sequelize').Op;
 
 const trainingInfo = require('../../../model/training/trainingInfo.model')
 const trainingInstitute = require('../../../model/training/trainingInstitute.model')
@@ -19,6 +20,8 @@ router.route('/')
   let condition = { project_id: req.user.project_id }
   if(req.query.status == 'archived') {
     condition['status'] = codes.TRAINING_COMPLETED
+  } else {
+    condition['status'] = { [Op.not]: codes.TRAINING_COMPLETED }
   }
 
   trainingInfo.findAndCountAll({ 

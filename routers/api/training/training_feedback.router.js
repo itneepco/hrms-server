@@ -1,10 +1,9 @@
 const router = require('express').Router({mergeParams: true})
-const trainingTopic = require('../../../model/training/trainingTopic.model')
-const codes = require('../../../global/codes')
+const trainingFeedback = require('../../../model/training/trainingFeedback.model')
 
 router.route('/')
 .get((req, res)=>{
-  trainingTopic.findAll({
+  trainingFeedback.findAll({
     where: {
       training_info_id: req.params.trainingId
     }
@@ -16,10 +15,16 @@ router.route('/')
   })  
 })
 .post((req, res)=>{
-  trainingTopic
+  trainingFeedback
     .build({
-      topic_name: req.body.topic_name,
-      faculty_name: req.body.faculty_name,
+      emp_code: req.body.emp_code,
+      ta_da_incurred: req.body.ta_da_incurred,
+      comments: req.body.comments,
+      duration_rating: req.body.duration_rating,
+      content_rating: req.body.content_rating,  
+      methodology_rating: req.body.methodology_rating,  
+      admin_service_rating: req.body.admin_service_rating,  
+      overall_utility_rating: req.body.overall_utility_rating,     
       training_info_id: parseInt(req.params.trainingId)
     }) 
     .save()
@@ -33,9 +38,9 @@ router.route('/')
     })
 })
 
-router.route('/:topicId')
+router.route('/:feedbackId')
 .delete((req, res)=>{
-  trainingTopic.destroy({ where: { id: req.params.topicId }})
+  trainingFeedback.destroy({ where: { id: req.params.feedbackId }})
     .then(result => res.status(200).json(result))
     .catch(err=>{
       console.log(err)
@@ -43,7 +48,7 @@ router.route('/:topicId')
     })
 })
 .get((req,res)=>{
-  trainingTopic.findById(req.params.topicId)
+  trainingFeedback.findById(req.params.feedbackId)
     .then(result=>res.status(200).json(result))
     .catch(err=>{
       console.log(err)
@@ -52,22 +57,22 @@ router.route('/:topicId')
 })
 .put((req, res)=>{
   console.log(req.body)
-  trainingTopic.update({ 
-      topic_name: req.body.topic_name,
-      faculty_name: req.body.faculty_name,
+  trainingFeedback.update({ 
+      emp_code: req.body.emp_code,
+      ta_da_incurred: req.body.ta_da_incurred,
+      comments: req.body.comments,
+      duration_rating: req.body.duration_rating,
+      content_rating: req.body.content_rating,  
+      methodology_rating: req.body.methodology_rating,  
+      admin_service_rating: req.body.admin_service_rating,  
+      overall_utility_rating: req.body.overall_utility_rating,
       // training_info_id: parseInt(req.params.trainingId)
     },
-    { where: { id: req.params.topicId }
+    { where: { id: req.params.feedbackId }
   })
   .then(() => {
-    trainingTopic.findById(req.params.topicId)
-      .then(result => {
-        res.status(200).send({
-          topic_name: result.topic_name,
-          faculty_name: result.faculty_name,
-          training_info_id: result.trainingId
-        })
-      })
+    trainingFeedback.findById(req.params.feedbackId)
+      .then(result => res.status(200).send(result))
       .catch(err =>{
         console.log(err) 
         res.status(500).json({ message:'Opps! Some error happened!!', error: err })
