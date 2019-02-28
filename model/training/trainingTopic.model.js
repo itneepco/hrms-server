@@ -19,10 +19,7 @@ const trainingTopic = db.define('training_topics', {
     validate: {
       notEmpty: true
     }
-  },
-  rating: {
-    type: Sequelize.INTEGER,
-  },
+  }
 }, {
     timestamps: false,
 		underscored: true,

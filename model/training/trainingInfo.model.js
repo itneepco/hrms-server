@@ -3,6 +3,7 @@ const db = require('../../config/db');
 const trainingTopic = require('./trainingTopic.model')
 const trainingInstitute = require('./trainingInstitute.model')
 const trainingParticipant = require('./trainingParticipant.model')
+const trainingFeedback = require('./trainingFeedback.model')
 
 const trainingInfo = db.define('training_infos', {
 	course_title: {
@@ -63,6 +64,7 @@ const trainingInfo = db.define('training_infos', {
 	}
 )
 
+trainingInfo.hasMany(trainingFeedback)
 trainingInfo.hasMany(trainingParticipant)
 trainingInfo.hasMany(trainingParticipant, { as: "employee", foreignKey: 'training_info_id', targetKey: 'id'})
 trainingInfo.hasMany(trainingTopic)

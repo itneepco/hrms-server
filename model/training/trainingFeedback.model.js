@@ -15,10 +15,7 @@ const trainingFeedback = db.define('training_feedbacks', {
     }
   },
   ta_da_incurred:  {
-    type: Sequelize.INTEGER,
-    validate: {
-      notEmpty: true
-    }
+    type: Sequelize.STRING,
   },
   comments: {
     type: Sequelize.STRING,

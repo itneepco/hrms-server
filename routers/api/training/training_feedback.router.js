@@ -32,9 +32,9 @@ router.route('/')
       console.log(result)
       res.status(200).send(result)
     })
-    .catch(error=>{
+    .catch(error =>{
       console.log(error)
-      res.status(500).json({ message: 'Oops! An error occured', error: err })
+      res.status(500).json({ message: 'Oops! An error occured', error: error })
     })
 })
 
