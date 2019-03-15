@@ -10,6 +10,7 @@ const gradeModel = require('../../../model/grade.model')
 const designationModel = require('../../../model/designation.model')
 const employeeModel = require('../../../model/employee.model')
 const trainingFeedback = require('../../../model/training/trainingFeedback.model')
+const topicRating = require('../../../model/training/trainingTopicRating.model')
 
 const codes = require('../../../global/codes')
 
@@ -21,7 +22,7 @@ router.route('/my-training')
 
   trainingInfo.findAndCountAll({ 
     distinct: true,
-    order: [['from_date', 'ASC']],
+    order: [['from_date', 'DESC']],
     limit: limit,
     offset: offset,
     attributes: { exclude: ['training_institute_id'] },
@@ -33,8 +34,11 @@ router.route('/my-training')
     },
     include: [
       { model: trainingInstitute },
-      { model: trainingTopic },
       { model: trainingFeedback },
+      { 
+        model: trainingTopic, 
+        include: [ { model: topicRating } ]
+      },
       { 
         model: trainingParticipant,
         include: [
@@ -60,7 +64,7 @@ router.route('/my-training')
   })  
 })
 
-router.route('/feedback-pending')
+router.route('/my-feedback')
 .get((req, res)=>{
   let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
   let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
@@ -68,7 +72,7 @@ router.route('/feedback-pending')
 
   trainingInfo.findAndCountAll({ 
     distinct: true,
-    order: [['from_date', 'ASC']],
+    order: [['from_date', 'DESC']],
     limit: limit,
     offset: offset,
     attributes: { exclude: ['training_institute_id'] },
@@ -78,8 +82,11 @@ router.route('/feedback-pending')
     },
     include: [
       { model: trainingInstitute },
-      { model: trainingTopic },
       { model: trainingFeedback },
+      { 
+        model: trainingTopic, 
+        include: [ { model: topicRating } ]
+      },
       { 
         model: trainingParticipant,
         include: [
@@ -92,10 +99,7 @@ router.route('/feedback-pending')
       {
         model: trainingParticipant,
         as: 'employee',
-        where: { 
-          emp_code: req.user.emp_code, 
-          present: true
-        },
+        where: { emp_code: req.user.emp_code, present: true },
       }
     ]
   })
@@ -121,8 +125,7 @@ function filterData(req, res, results) {
       training_type: result.training_type,
       training_institute: result.training_institute, 
       status: result.status,
-      training_order_name: result.training_order_name,
-      training_topics: result.training_topics, 
+      training_order_name: result.training_order_name, 
       training_feedbacks: result.training_feedbacks.filter(data => data.emp_code == req.user.emp_code),
       training_participants: result.training_participants.map(data => Object.assign({}, 
         {
@@ -134,7 +137,13 @@ function filterData(req, res, results) {
           emp_code: data.emp_code,
           training_info_id: data.training_info_id
         }
-      ))
+      )),
+      training_topics: result.training_topics.map(data => Object.assign({}, {
+        id: data.id,
+        topic_name: data.topic_name,
+        training_info_id: data.training_info_id,
+        ratings: data.training_topic_ratings.filter(rating => rating.emp_code == req.user.emp_code),
+      })),
     }
   )) 
 

@@ -9,6 +9,7 @@ const projectModel = require('../../../model/project.model')
 const gradeModel = require('../../../model/grade.model')
 const designationModel = require('../../../model/designation.model')
 const employeeModel = require('../../../model/employee.model')
+const trainingFeedback = require('../../../model/training/trainingFeedback.model')
 const codes = require('../../../global/codes')
 
 router.route('/')
@@ -34,6 +35,7 @@ router.route('/')
     include: [
       { model: trainingInstitute },
       { model: trainingTopic },
+      { model: trainingFeedback },
       { 
         model: trainingParticipant,
         include: [
@@ -60,6 +62,7 @@ router.route('/')
         status: result.status,
         training_order_name: result.training_order_name,
         training_topics: result.training_topics, 
+        training_feedbacks: result.training_feedbacks,
         training_participants: result.training_participants.map(data => Object.assign({}, 
           {
             id: data.id,

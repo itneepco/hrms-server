@@ -1,21 +1,20 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
-const topicRatingModel = require('./trainingTopicRating.model');
 
-const trainingTopic = db.define('training_topics', {
-	topic_name: {
+const topicRatingModel = db.define('training_topic_ratings', {
+	emp_code: {
     type: Sequelize.STRING,
     validate: {
       notEmpty: true
     }
   },
-  faculty_name: {
-    type: Sequelize.STRING,
+  training_topic_id: {
+    type: Sequelize.INTEGER,
     validate: {
       notEmpty: true
     }
   },
-  training_info_id: {
+  rating: {
     type: Sequelize.INTEGER,
     validate: {
       notEmpty: true
@@ -24,9 +23,8 @@ const trainingTopic = db.define('training_topics', {
 }, {
     timestamps: false,
 		underscored: true,
-		tableName: 'training_topics'
+		tableName: 'training_topic_ratings'
 	}
 )
 
-trainingTopic.hasMany(topicRatingModel)
-module.exports = trainingTopic
+module.exports = topicRatingModel
