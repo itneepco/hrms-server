@@ -138,12 +138,17 @@ function filterData(req, res, results) {
           training_info_id: data.training_info_id
         }
       )),
-      training_topics: result.training_topics.map(data => Object.assign({}, {
-        id: data.id,
-        topic_name: data.topic_name,
-        training_info_id: data.training_info_id,
-        ratings: data.training_topic_ratings.filter(rating => rating.emp_code == req.user.emp_code),
-      })),
+      training_topics: result.training_topics.map(data => { 
+        let topicRating = data.training_topic_ratings.find(rating => rating.emp_code == req.user.emp_code)
+        return Object.assign({}, {
+          id: data.id,
+          training_info_id: data.training_info_id,
+          faculty_name: data.faculty_name,
+          topic_name: data.topic_name,
+          rating: topicRating ? topicRating.rating : null,
+          emp_code: topicRating ? topicRating.emp_code : null,
+        })
+      }),
     }
   )) 
 
