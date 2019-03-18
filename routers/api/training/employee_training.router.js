@@ -126,6 +126,7 @@ function filterData(req, res, results) {
       training_institute: result.training_institute, 
       status: result.status,
       training_order_name: result.training_order_name, 
+      //Feedback of the current employee
       training_feedbacks: result.training_feedbacks.filter(data => data.emp_code == req.user.emp_code),
       training_participants: result.training_participants.map(data => Object.assign({}, 
         {
@@ -138,6 +139,7 @@ function filterData(req, res, results) {
           training_info_id: data.training_info_id
         }
       )),
+      //Rating of the current employee on the performance of the training faculty
       training_topics: result.training_topics.map(data => { 
         let topicRating = data.training_topic_ratings.find(rating => rating.emp_code == req.user.emp_code)
         return Object.assign({}, {

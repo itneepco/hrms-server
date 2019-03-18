@@ -10,7 +10,91 @@ const gradeModel = require('../../../model/grade.model')
 const designationModel = require('../../../model/designation.model')
 const employeeModel = require('../../../model/employee.model')
 const trainingFeedback = require('../../../model/training/trainingFeedback.model')
+const topicRating = require('../../../model/training/trainingTopicRating.model')
 const codes = require('../../../global/codes')
+
+router.route('/employee/:empCode')
+.get((req, res)=>{
+  let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
+  let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
+  let offset = pageIndex * limit
+
+  trainingInfo.findAndCountAll({ 
+    distinct: true,
+    order: [['from_date', 'DESC']],
+    limit: limit,
+    offset: offset,
+    attributes: { exclude: ['training_institute_id'] },
+    include: [
+      { model: trainingInstitute },
+      { model: trainingFeedback },
+      { 
+        model: trainingTopic, 
+        include: [ { model: topicRating } ]
+      },
+      { 
+        model: trainingParticipant,
+        include: [
+          { model: projectModel },
+          { model: designationModel },
+          { model: gradeModel },
+          { model: employeeModel }
+        ] ,
+        where: { emp_code: req.params.empCode }
+      }
+    ]
+  })
+  .then(results => { 
+    let training = results.rows.map(result => Object.assign({},
+      {
+        id: result.id,
+        course_title: result.course_title,
+        from_date: result.from_date,
+        to_date: result.to_date,
+        venue: result.venue,
+        objective: result.objective,
+        training_type: result.training_type,
+        training_institute: result.training_institute, 
+        status: result.status,
+        training_order_name: result.training_order_name,
+        training_participants: result.training_participants.map(data => Object.assign({}, 
+          {
+            id: data.id,
+            name: data.employee.first_name + " " + data.employee.middle_name + " " + data.employee.last_name,
+            designation: data.designation.name,
+            grade: data.grade.name,
+            project: data.project.name,
+            emp_code: data.emp_code,
+            training_info_id: data.training_info_id,
+            present: data.present
+          }
+        )),
+        //Feedback of the current employee
+        training_feedbacks: result.training_feedbacks.filter(data => data.emp_code == req.params.empCode),
+        //Rating of the current employee on the performance of the training faculty
+        training_topics: result.training_topics.map(data => { 
+          let topicRating = data.training_topic_ratings.find(rating => rating.emp_code == req.params.empCode)
+          return Object.assign({}, {
+            id: data.id,
+            training_info_id: data.training_info_id,
+            faculty_name: data.faculty_name,
+            topic_name: data.topic_name,
+            rating: topicRating ? topicRating.rating : null,
+            emp_code: topicRating ? topicRating.emp_code : null,
+          })
+        }),
+      }
+    )) 
+    res.status(200).json({
+      rows: training,
+      count: results.count
+    }) 
+  })
+  .catch(err=>{
+    console.log(err)
+    res.status(500).json({message:'Opps! Some error happened!!'})
+  })  
+})
 
 router.route('/')
 .get((req, res)=>{
@@ -27,15 +111,18 @@ router.route('/')
 
   trainingInfo.findAndCountAll({ 
     distinct: true,
-    order: [['from_date', 'ASC']],
+    order: [['from_date', 'DESC']],
     limit: limit,
     offset: offset,
     attributes: { exclude: ['training_institute_id'] },
     where: condition,
     include: [
       { model: trainingInstitute },
-      { model: trainingTopic },
       { model: trainingFeedback },
+      { 
+        model: trainingTopic, 
+        include: [ { model: topicRating } ]
+      },
       { 
         model: trainingParticipant,
         include: [
@@ -61,7 +148,7 @@ router.route('/')
         training_institute: result.training_institute, 
         status: result.status,
         training_order_name: result.training_order_name,
-        training_topics: result.training_topics, 
+        //All feedbacks from the participants
         training_feedbacks: result.training_feedbacks,
         training_participants: result.training_participants.map(data => Object.assign({}, 
           {
@@ -74,15 +161,25 @@ router.route('/')
             training_info_id: data.training_info_id,
             present: data.present
           }
-        ))
+        )),
+        //Average rating on the performance of the training faculty
+        training_topics: result.training_topics.map(data => { 
+          let avg_rating = 0
+          data.training_topic_ratings.forEach(rating => avg_rating += rating.rating)
+          return Object.assign({}, {
+            id: data.id,
+            training_info_id: data.training_info_id,
+            faculty_name: data.faculty_name,
+            topic_name: data.topic_name,
+            avg_rating: avg_rating,
+          })
+        }), 
       }
     )) 
-
-    let data = {
+    res.status(200).json({
       rows: training,
       count: results.count
-    }
-    res.status(200).json(data) 
+    }) 
   })
   .catch(err=>{
     console.log(err)
