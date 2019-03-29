@@ -1,6 +1,5 @@
 const router = require('express').Router({mergeParams: true})
 const trainingTopic = require('../../../model/training/trainingTopic.model')
-const codes = require('../../../global/codes')
 
 router.route('/')
 .get((req, res)=>{

@@ -49,4 +49,6 @@ module.exports = {
     TRAINING_CREATED: '01',
     TRAINING_PUBLISHED: '02',
     TRAINING_COMPLETED: '03',
+
+    TRAINING_DIRECTORY: 'public/uploads/trainings/'
 }

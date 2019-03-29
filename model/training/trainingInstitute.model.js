@@ -7,7 +7,19 @@ const trainingInstitute = db.define('training_institutes', {
     validate: {
       notEmpty: true
     }
-	},
+  },
+  address: {
+    type: Sequelize.STRING,
+  },
+  website: {
+    type: Sequelize.STRING,
+  },
+  contact_no: {
+    type: Sequelize.STRING,
+  },
+  contact_person: {
+    type: Sequelize.STRING,
+	}
 }, {
 		underscored: true,
 		tableName: 'training_institutes'

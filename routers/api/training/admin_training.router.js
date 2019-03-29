@@ -1,5 +1,28 @@
 const router = require('express').Router()
+const path = require('path');
 const Op = require('sequelize').Op;
+const codes = require('../../../global/codes')
+
+const multer  = require('multer')
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, codes.TRAINING_DIRECTORY)
+  },
+  filename: function (req, file, cb) {
+    let name = req.params.id ? req.params.id + '.pdf' : file.originalname
+    cb(null, name)
+  }
+})
+const upload = multer({ 
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    console.log(file.mimetype)
+    if (file.mimetype != 'application/pdf') {
+      return cb(new Error('Only pdfs are allowed'))
+    }
+    cb(null, true)
+  } 
+}).single('order')
 
 const trainingInfo = require('../../../model/training/trainingInfo.model')
 const trainingInstitute = require('../../../model/training/trainingInstitute.model')
@@ -11,7 +34,6 @@ const designationModel = require('../../../model/designation.model')
 const employeeModel = require('../../../model/employee.model')
 const trainingFeedback = require('../../../model/training/trainingFeedback.model')
 const topicRating = require('../../../model/training/trainingTopicRating.model')
-const codes = require('../../../global/codes')
 
 router.route('/employee/:empCode')
 .get((req, res)=>{
@@ -56,7 +78,7 @@ router.route('/employee/:empCode')
         training_type: result.training_type,
         training_institute: result.training_institute, 
         status: result.status,
-        training_order_name: result.training_order_name,
+        training_order_name: codes.TRAINING_DIRECTORY + result.training_order_name,
         training_participants: result.training_participants.map(data => Object.assign({}, 
           {
             id: data.id,
@@ -147,7 +169,7 @@ router.route('/')
         training_type: result.training_type,
         training_institute: result.training_institute, 
         status: result.status,
-        training_order_name: result.training_order_name,
+        training_order_name: codes.TRAINING_DIRECTORY + result.training_order_name,
         //All feedbacks from the participants
         training_feedbacks: result.training_feedbacks,
         training_participants: result.training_participants.map(data => Object.assign({}, 
@@ -282,6 +304,38 @@ router.route('/:id/mark-complete')
   .catch(err=>{
     console.log(err)
     res.status(500).json({ message:'Opps! Some error happened!!', error: err })
+  })
+})
+
+router.post('/:id/upload-order', (req, res) => {
+  upload(req, res, (err) => {
+    if(err) {
+      return res.status(500).json({ message: 'Only PDFs are allowed', error: err })
+    } 
+
+    trainingInfo.update({ training_order_name: req.file.filename },
+      { where: {id: req.params.id }
+    })
+    .then(() => {
+      res.status(200).json({ message:'Successfully uploaded the training order' })
+    })
+    .catch(err=>{
+      console.log(err)
+      res.status(500).json({ message:'Opps! Some error happened!!', error: err })
+    })
+  })
+})
+
+router.get('/:id/download-order', (req, res) => {
+  trainingInfo.findById(req.params.id)
+  .then(training => {
+    let path = codes.TRAINING_DIRECTORY + training.training_order_name
+    console.log(path)
+    res.download(path)
+  })
+  .catch(err=>{
+    console.log(err)
+    res.status(500).json({ message:'Cannot find training with that id', error: err })
   })
 })
 
