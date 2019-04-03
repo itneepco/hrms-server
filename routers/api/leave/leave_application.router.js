@@ -1,13 +1,12 @@
-
 const router = require('express').Router()
-const leaveAppModel = require('../../model/leaveApplication.model')
-const leaveDetailModel = require('../../model/leaveDetail.model')
-const leaveAppHistModel = require('../../model/leaveApplicationHist.model')
-const employeeModel = require('../../model/employee.model');
-const joiningReportModel = require('../../model/joiningReport.model');
+const leaveAppModel = require('../../../model/leaveApplication.model')
+const leaveDetailModel = require('../../../model/leaveDetail.model')
+const leaveAppHistModel = require('../../../model/leaveApplicationHist.model')
+const employeeModel = require('../../../model/employee.model');
+const joiningReportModel = require('../../../model/joiningReport.model');
 
-const codes = require('../../global/codes');
-const db = require('../../config/db');
+const codes = require('../../../global/codes');
+const db = require('../../../config/db');
 
 router.get('/employee/:empCode', (req, res) => {
   let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
@@ -53,7 +52,7 @@ router.get('/employee/:empCode', (req, res) => {
   })
   .catch(err => {
     console.log(err)
-    res.status(500).json({ message: 'Opps! Some error happened!!' })
+    res.status(500).json({ message: 'Opps! Some error happened!!', error: err })
   })
 })
 

@@ -1,14 +1,14 @@
 const router = require('express').Router();
 const Op = require('sequelize').Op;
 
-const leaveAppModel = require('../../model/leaveApplication.model');
-const leaveDetailModel = require('../../model/leaveDetail.model');
-const leaveAppHistModel = require('../../model/leaveApplicationHist.model');
-const leaveLedgerModel = require('../../model/leaveLedger.model');
-const employeeModel = require('../../model/employee.model');
-const joiningReportModel = require('../../model/joiningReport.model');
-const Codes = require('../../global/codes');
-const db = require('../../config/db');
+const leaveAppModel = require('../../../model/leaveApplication.model');
+const leaveDetailModel = require('../../../model/leaveDetail.model');
+const leaveAppHistModel = require('../../../model/leaveApplicationHist.model');
+const leaveLedgerModel = require('../../../model/leaveLedger.model');
+const employeeModel = require('../../../model/employee.model');
+const joiningReportModel = require('../../../model/joiningReport.model');
+const Codes = require('../../../global/codes');
+const db = require('../../../config/db');
 const checkRole = require('./check_roles');
 
 router.route('/officer/:empCode/count')

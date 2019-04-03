@@ -1,11 +1,11 @@
 const router = require('express').Router()
-const ledgerModel = require('../../model/leaveLedger.model')
-const leaveYearEndInfo = require('../../model/leaveYearEndInfo.model')
-const leaveCreditInfo = require('../../model/leaveCreditInfo.model')
-const employeeModel = require('../../model/employee.model')
-const db = require('../../config/db');
+const ledgerModel = require('../../../model/leaveLedger.model')
+const leaveYearEndInfo = require('../../../model/leaveYearEndInfo.model')
+const leaveCreditInfo = require('../../../model/leaveCreditInfo.model')
+const employeeModel = require('../../../model/employee.model')
+const db = require('../../../config/db');
 const Op = require('sequelize').Op;
-const codes = require('../../global/codes');
+const codes = require('../../../global/codes');
 const Sequelize = require('sequelize');
 
 router.route('/yearly/cl')

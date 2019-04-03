@@ -2,12 +2,12 @@
 const router = require('express').Router()
 const Op = require('sequelize').Op;
 
-const ProjectModel = require('../../model/project.model')
-const HolidayModel = require('../../model/holiday.model')
-const codes = require('../../global/codes');
-const LeaveAppModel = require('../../model/leaveApplication.model')
-const LeaveDetailModel = require('../../model/leaveDetail.model')
-const EmployeeModel = require('../../model/employee.model');
+const ProjectModel = require('../../../model/project.model')
+const HolidayModel = require('../../../model/holiday.model')
+const codes = require('../../../global/codes');
+const LeaveAppModel = require('../../../model/leaveApplication.model')
+const LeaveDetailModel = require('../../../model/leaveDetail.model')
+const EmployeeModel = require('../../../model/employee.model');
 
 router.get('/', (req, res) => {
 	ProjectModel.findAll({
@@ -146,6 +146,6 @@ router.route('/:id/approved-leave/update-timeoffice')
     })
   })
 
-router.use('/:id/holidays', require('./holiday.router'))
+// router.use('/:id/holidays', require('./holiday.router'))
 
 module.exports = router

@@ -1,8 +1,8 @@
 
 const router = require('express').Router()
-const ledgerModel = require('../../model/leaveLedger.model')
+const ledgerModel = require('../../../model/leaveLedger.model')
 const Sequelize = require('sequelize');
-const codes = require('../../global/codes');
+const codes = require('../../../global/codes');
 
 router.route('/ledger/employee/:emp_code')
   .get((req, res) => {

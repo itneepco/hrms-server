@@ -1,7 +1,7 @@
 const router = require('express').Router()
-const employeeModel = require('../../model/employee.model')
-const projectModel = require('../../model/project.model')
-const designationModel = require('../../model/designation.model')
+const employeeModel = require('../../../model/employee.model')
+const projectModel = require('../../../model/project.model')
+const designationModel = require('../../../model/designation.model')
 const Op = require('sequelize').Op
 
 router.route('/search/')
