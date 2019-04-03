@@ -25,7 +25,7 @@ sequelize.authenticate()
 const AuthRouter = require('./routers/auth.router')
 app.use('/auth', AuthRouter);
 
-app.use('/api', jwtExtractor, require('./routers/api/leave/api.router'))
+app.use('/api', jwtExtractor, require('./routers/api/api.router'))
 
 app.use('/', compression(), express.static('public'));
 
