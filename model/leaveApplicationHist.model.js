@@ -7,13 +7,22 @@ const leaveApplication = require('../model/leaveApplication.model');
 
 const leaveApplicationHist = db.define('leaveApplicationHist', {
 	leave_application_id: {
-		type: Sequelize.INTEGER
+    type: Sequelize.INTEGER,
+    validate: {
+      notEmpty: true
+    }
 	},
 	officer_emp_code: {
-		type: Sequelize.STRING
+    type: Sequelize.STRING,
+    validate: {
+      notEmpty: true
+    }
 	},
 	workflow_action: {
-		type: Sequelize.STRING
+    type: Sequelize.STRING,
+    validate: {
+      notEmpty: true
+    }
 	},
 	remarks: {
 		type: Sequelize.STRING

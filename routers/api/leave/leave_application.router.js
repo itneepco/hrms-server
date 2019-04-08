@@ -4,6 +4,7 @@ const leaveDetailModel = require('../../../model/leaveDetail.model')
 const leaveAppHistModel = require('../../../model/leaveApplicationHist.model')
 const employeeModel = require('../../../model/employee.model');
 const joiningReportModel = require('../../../model/joiningReport.model');
+const getLeavesAlreadyApplied = require('./functions/getLeavesAlreadyApplied')
 
 const codes = require('../../../global/codes');
 const db = require('../../../config/db');
@@ -57,13 +58,36 @@ router.get('/employee/:empCode', (req, res) => {
 })
 
 router.route('/')
-  .post((req, res) => {
-    console.log("\nRequest\n",req.body)
+  .post(async (req, res) => {
+    console.log("\nRequest\n", req.body)
     let leaveDetails = req.body.leave_details
     let prefix_from = req.body.prefix_from
     let prefix_to = req.body.prefix_to
     let suffix_from = req.body.suffix_from
     let suffix_to = req.body.suffix_to
+
+    //Get list of leaves already applied by the concerned employee
+    let leavesAlreadyApplied = await getLeavesAlreadyApplied(req, res)
+
+    //Check for date which has already been applied for leave
+    leaveDetails.forEach(leave => {
+      let match = leavesAlreadyApplied.find(alreadyApplied => { 
+        let curr_from_date = formatDate(leave.from_date)
+        let prev_from_date = formatDate(alreadyApplied.from_date)
+        let prev_to_date = formatDate(alreadyApplied.to_date)
+
+        if(leave.leave_type == codes.EL_CODE || leave.leave_type == codes.HPL_CODE) 
+          return curr_from_date >= prev_from_date && curr_from_date <= prev_to_date
+        else
+          return prev_from_date == curr_from_date
+      })
+      
+      if(match) {
+        let msg = "You have already applied for leave on " + formatDate(leave.from_date)
+        console.log(msg)
+        return res.status(409).json({ message: msg })
+      }
+    })
 
     db.transaction().then(t => {
       return leaveAppModel.create({
@@ -185,6 +209,18 @@ function findAdressee(addressee) {
     }
   })
 }
-  
+
+function formatDate(date) {
+  var d = new Date(date),
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear();
+
+  if (month.length < 2) month = '0' + month;
+  if (day.length < 2) day = '0' + day;
+
+  return [year, month, day].join('-');
+}
+
 module.exports = router
 
