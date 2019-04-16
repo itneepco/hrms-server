@@ -5,20 +5,23 @@ const validateItAdmin = require('../../middlewares/validateItAdmin');
 
 //Routes Validation for Admin
 router.use('/leave/ledger', validateAdmin)
-router.use('/projects/:id/holidays', validateAdmin)
+// router.use('/projects/:id/holidays', validateAdmin)
 
 //Routes Validation for Super Admin
-router.use('/rolemapper', validateSuperAdmin, require('./role_mapper.router'))
-router.use('/leave/credit', validateItAdmin, require('./periodic_leave_credit'))
+router.use('/rolemapper', validateSuperAdmin, require('./leave/role_mapper.router'))
+router.use('/leave/credit', validateItAdmin, require('./leave/periodic_leave_credit'))
+router.use('/projects/:id/holidays', validateAdmin, require('./leave/holiday.router'))
 
-router.use('/projects', require('./projects.router'))
-router.use('/employees', require('./employee.router'))
-router.use('/leave', require('./leave.router'))
-router.use('/leave/apply', require('./leave_application.router'))
-router.use('/leave/request', require('./leave_request_process'))
-router.use('/pay-image', require('./pay_image.router'))
-router.use('/hierarchy', require('./hierarchy.router'))
-router.use('/joining-report', require('./joining_report.router'))
+router.use('/projects', require('./leave/projects.router'))
+router.use('/employees', require('./leave/employee.router'))
+router.use('/leave', require('./leave/leave_ledger.router'))
+router.use('/leave/detail', require('./leave/leave_detail.router'))
+router.use('/leave/apply', require('./leave/leave_application.router'))
+router.use('/leave/request', require('./leave/leave_request_process.router'))
+
+router.use('/pay-image', require('./leave/pay_image.router'))
+router.use('/hierarchy', require('./leave/hierarchy.router'))
+router.use('/joining-report', require('./leave/joining_report.router'))
 
 //Training Router
 router.use('/training', require('./training/api.training.router'))

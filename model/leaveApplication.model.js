@@ -36,7 +36,10 @@ const leaveApplication = db.define('leaveApplication', {
 		type: Sequelize.STRING
 	},
 	status: {
-		type: Sequelize.STRING
+    type: Sequelize.STRING,
+    validate: {
+      notEmpty: true
+    }
 	},
   prefix_from: {
 		type: Sequelize.DATEONLY

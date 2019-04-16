@@ -1,11 +1,11 @@
 
 
 const router = require('express').Router()
-const hierarchyModel = require('../../model/hierarchy.model')
-const employeeModel = require('../../model/employee.model')
-const designationModel = require('../../model/designation.model')
-const projectModel = require('../../model/project.model')
-const validateAdmin = require('../../middlewares/validateAdmin');
+const hierarchyModel = require('../../../model/hierarchy.model')
+const employeeModel = require('../../../model/employee.model')
+const designationModel = require('../../../model/designation.model')
+const projectModel = require('../../../model/project.model')
+const validateAdmin = require('../../../middlewares/validateAdmin');
 const Op = require('sequelize').Op
 
 //Authorization for all routes except parents/:empCode route
