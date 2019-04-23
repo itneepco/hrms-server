@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
-
+const labelModel = require('./trainingLabel.model')
 const executiveNeed = db.define('training_executive_needs', {
 	need_type: {
     type: Sequelize.STRING,
@@ -46,5 +46,7 @@ const executiveNeed = db.define('training_executive_needs', {
 		tableName: 'training_executive_needs'
 	}
 )
+
+executiveNeed.belongsTo(labelModel)
 
 module.exports = executiveNeed

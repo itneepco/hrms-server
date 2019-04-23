@@ -26,8 +26,8 @@ router.route('/')
       console.log(result)
       res.status(200).send(result)
     })
-    .catch(error=>{
-      console.log(error)
+    .catch(err => {
+      console.log(err)
       res.status(500).json({ message: 'Oops! An error occured', error: err })
     })
 })

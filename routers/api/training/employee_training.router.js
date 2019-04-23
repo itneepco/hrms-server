@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const Op = require('sequelize').Op
+const labelModel = require('../../../model/training/trainingLabel.model')
 
 const trainingInfo = require('../../../model/training/trainingInfo.model')
 const trainingInstitute = require('../../../model/training/trainingInstitute.model')
@@ -160,5 +161,17 @@ function filterData(req, res, results) {
   }
   res.status(200).json(data)
 }
+
+router.route('/training-label')
+.get((req, res)=>{
+  labelModel.findAll({ 
+      order: [['name', 'ASC']]
+    })
+    .then(result => res.status(200).json(result))
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ message:'Opps! Some error happened!!', error: err })
+    })
+})
 
 module.exports = router

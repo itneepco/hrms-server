@@ -46,9 +46,9 @@ router.route('/')
       res.status(200).json(result)
       return t.commit();
     })
-    .catch(error =>{
-      console.log(error)
-      res.status(500).json({ message: 'Oops! An error occured', error: error })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ message: 'Oops! An error occured', error: err })
       return t.rollback();
     })
   })
