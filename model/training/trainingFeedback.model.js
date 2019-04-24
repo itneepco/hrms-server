@@ -1,7 +1,8 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
+const trainingInfo = require('./trainingInfo.model')
 
-const trainingFeedback = db.define('training_feedbacks', {
+const trainingFeedback = db.define('training_feedback', {
 	training_info_id: {
     type: Sequelize.INTEGER,
     validate: {

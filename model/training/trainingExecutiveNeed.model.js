@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
 const labelModel = require('./trainingLabel.model')
-const executiveNeed = db.define('training_executive_needs', {
+const executiveNeed = db.define('training_executive_need', {
 	need_type: {
     type: Sequelize.STRING,
     validate: {

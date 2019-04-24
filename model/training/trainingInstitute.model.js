@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
 
-const trainingInstitute = db.define('training_institutes', {
+const trainingInstitute = db.define('training_institute', {
 	name: {
     type: Sequelize.STRING,
     validate: {

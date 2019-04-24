@@ -5,7 +5,7 @@ const trainingInstitute = require('./trainingInstitute.model')
 const trainingParticipant = require('./trainingParticipant.model')
 const trainingFeedback = require('./trainingFeedback.model')
 
-const trainingInfo = db.define('training_infos', {
+const trainingInfo = db.define('training_info', {
 	course_title: {
     type: Sequelize.STRING,
     validate: {
@@ -57,7 +57,10 @@ const trainingInfo = db.define('training_infos', {
       notEmpty: true
     }
   },
-  
+  feedback_status: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: false
+  },
 }, {
 		underscored: true,
 		tableName: 'training_infos'
@@ -65,9 +68,11 @@ const trainingInfo = db.define('training_infos', {
 )
 
 trainingInfo.hasMany(trainingFeedback)
+trainingFeedback.belongsTo(trainingInfo)
+
 trainingInfo.hasMany(trainingParticipant)
-trainingInfo.hasMany(trainingParticipant, { as: "employee", foreignKey: 'training_info_id', targetKey: 'id'})
 trainingInfo.hasMany(trainingTopic)
+trainingInfo.hasMany(trainingParticipant, { as: "employee", foreignKey: 'training_info_id', targetKey: 'id'})
 trainingInfo.hasOne(trainingInstitute, { foreignKey: 'id', sourceKey: 'training_institute_id'})
 
 module.exports = trainingInfo

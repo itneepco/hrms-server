@@ -1,6 +1,7 @@
 const router = require('express').Router({mergeParams: true})
 const trainingFeedback = require('../../../model/training/trainingFeedback.model')
 const trngTopicRating = require('../../../model/training/trainingTopicRating.model')
+const trainingInfo = require('../../../model/training/trainingInfo.model')
 const db = require('../../../config/db');
 
 router.route('/')
@@ -40,6 +41,12 @@ router.route('/')
         overall_utility_rating: req.body.overall_utility_rating,     
         training_info_id: parseInt(req.params.trainingId)
       }, { transaction: t })
+    })
+    .then(() => {
+      return trainingInfo.update(
+        { feedback_status: true}, 
+        { where: { id: parseInt(req.params.trainingId) }}, 
+        { transaction: t })
     })
     .then(result => {
       console.log(result)
@@ -95,6 +102,12 @@ router.route('/:feedbackId')
       }, 
       { where: { id: req.params.feedbackId }}, 
       { transaction: t })
+    })
+    .then(() => {
+      return trainingInfo.update(
+        { feedback_status: true }, 
+        { where: { id: parseInt(req.params.trainingId) }}, 
+        { transaction: t })
     })
     .then(() => t.commit())
     .then(() => trainingFeedback.findById(req.params.feedbackId).then(result => res.status(200).json(result)))

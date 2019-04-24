@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const Op = require('sequelize').Op
+const db = require('../../../config/db')
 const labelModel = require('../../../model/training/trainingLabel.model')
 
 const trainingInfo = require('../../../model/training/trainingInfo.model')
@@ -35,7 +36,7 @@ router.route('/my-training')
     },
     include: [
       { model: trainingInstitute },
-      { model: trainingFeedback },
+      // { model: trainingFeedback },
       { 
         model: trainingTopic, 
         include: [ { model: topicRating } ]
@@ -66,21 +67,28 @@ router.route('/my-training')
 })
 
 router.route('/my-feedback')
-.get((req, res)=>{
+.get((req, res) => {
   let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
   let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
   let offset = pageIndex * limit
+  
+  //Feedback pending
+  let condition = { status: codes.TRAINING_COMPLETED }
+  if(req.query.status == 'pending') {
+    condition['feedback_status'] = false
+  } else {
+    condition['feedback_status'] = true
+  }
 
   trainingInfo.findAndCountAll({ 
     distinct: true,
     order: [['from_date', 'DESC']],
     limit: limit,
     offset: offset,
-    attributes: { exclude: ['training_institute_id'] },
-    where: { 
-      project_id: req.user.project_id, 
-      status: codes.TRAINING_COMPLETED
+    attributes: { 
+      exclude: ['training_institute_id']
     },
+    where: condition,
     include: [
       { model: trainingInstitute },
       { model: trainingFeedback },
@@ -105,6 +113,7 @@ router.route('/my-feedback')
     ]
   })
   .then(results => { 
+    console.log(results)
     filterData(req, res, results)
   })
   .catch(err=>{
@@ -128,7 +137,9 @@ function filterData(req, res, results) {
       status: result.status,
       training_order_name: result.training_order_name, 
       //Feedback of the current employee
-      training_feedbacks: result.training_feedbacks.filter(data => data.emp_code == req.user.emp_code),
+      training_feedbacks: !result.training_feedbacks ? [] :
+        result.training_feedbacks.filter(data => data.emp_code == req.user.emp_code),
+      
       training_participants: result.training_participants.map(data => Object.assign({}, 
         {
           id: data.id,

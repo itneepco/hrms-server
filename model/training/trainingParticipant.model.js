@@ -6,7 +6,7 @@ const designationModel = require('../designation.model')
 const gradeModel = require('../grade.model')
 const employeeModel = require('../employee.model')
 
-const participantModel = db.define('training_participants', {
+const participantModel = db.define('training_participant', {
 	emp_code: {
     type: Sequelize.STRING,
     validate: {

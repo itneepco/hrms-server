@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 const db = require('../../config/db');
 const topicRatingModel = require('./trainingTopicRating.model');
 
-const trainingTopic = db.define('training_topics', {
+const trainingTopic = db.define('training_topic', {
 	topic_name: {
     type: Sequelize.STRING,
     validate: {

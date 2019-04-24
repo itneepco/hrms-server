@@ -4,22 +4,24 @@ const labelModel = require('../../../model/training/trainingLabel.model')
 
 router.route('/employee/:empCode')
 .get((req, res) => {
+  let finYear = getCurrFinYear()
   let condition = {
     emp_code: req.params.empCode
   }
 
   if(req.query.year) {
-    condition['year'] = req.query.year ? req.query.year : getCurrFinYear()
+    condition['year'] = (req.query.year && !req.query.year) ? req.query.year : finYear
   }
   
   executiveNeed.findAll({
     order: [['year', "DESC"]],
     where: condition,
-    include: [
-      labelModel
-    ]
+    include: [ labelModel ]
   })
-  .then(result => res.status(200).json(result))
+  .then(result => res.status(200).json({
+    data: result,
+    finYear: finYear
+  }))
   .catch(err => {
     console.log(err)
     res.status(500).json({message: 'Opps! Some error happened!!'})
