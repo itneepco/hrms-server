@@ -72,10 +72,10 @@ router.route('/my-feedback')
   let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
   let offset = pageIndex * limit
   
-  //Feedback pending
-  let condition = { status: codes.TRAINING_COMPLETED }
+  //Feedback pending for participants
+  let condition = { emp_code: req.user.emp_code, present: true }
   if(req.query.status == 'pending') {
-    condition['feedback_status'] = false
+    condition['feedback_status'] = false 
   } else {
     condition['feedback_status'] = true
   }
@@ -88,7 +88,7 @@ router.route('/my-feedback')
     attributes: { 
       exclude: ['training_institute_id']
     },
-    where: condition,
+    where: { status: codes.TRAINING_COMPLETED },
     include: [
       { model: trainingInstitute },
       { model: trainingFeedback },
@@ -105,11 +105,7 @@ router.route('/my-feedback')
           { model: employeeModel }
         ] 
       }, 
-      {
-        model: trainingParticipant,
-        as: 'employee',
-        where: { emp_code: req.user.emp_code, present: true },
-      }
+      { model: trainingParticipant, as: 'employee', where: condition }
     ]
   })
   .then(results => { 

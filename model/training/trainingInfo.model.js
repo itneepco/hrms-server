@@ -56,11 +56,7 @@ const trainingInfo = db.define('training_info', {
     validate: {
       notEmpty: true
     }
-  },
-  feedback_status: {
-    type: Sequelize.BOOLEAN,
-    defaultValue: false
-  },
+  }
 }, {
 		underscored: true,
 		tableName: 'training_infos'

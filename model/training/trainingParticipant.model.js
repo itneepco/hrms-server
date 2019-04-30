@@ -44,6 +44,10 @@ const participantModel = db.define('training_participant', {
     },
     defaultValue: false
   },
+  feedback_status: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: false
+  },
   
 }, {
     timestamps: false,

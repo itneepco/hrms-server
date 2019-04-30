@@ -1,7 +1,7 @@
 const router = require('express').Router({mergeParams: true})
 const trainingFeedback = require('../../../model/training/trainingFeedback.model')
 const trngTopicRating = require('../../../model/training/trainingTopicRating.model')
-const trainingInfo = require('../../../model/training/trainingInfo.model')
+const trainingParticipant = require('../../../model/training/trainingParticipant.model')
 const db = require('../../../config/db');
 
 router.route('/')
@@ -43,9 +43,9 @@ router.route('/')
       }, { transaction: t })
     })
     .then(() => {
-      return trainingInfo.update(
+      return trainingParticipant.update(
         { feedback_status: true}, 
-        { where: { id: parseInt(req.params.trainingId) }}, 
+        { where: { training_info_id: parseInt(req.params.trainingId), emp_code: req.body.emp_code }}, 
         { transaction: t })
     })
     .then(result => {
@@ -104,9 +104,10 @@ router.route('/:feedbackId')
       { transaction: t })
     })
     .then(() => {
-      return trainingInfo.update(
+      // console.log("Employee", req.body.emp_code, req.params.trainingId)
+      return trainingParticipant.update(
         { feedback_status: true }, 
-        { where: { id: parseInt(req.params.trainingId) }}, 
+        { where: { training_info_id: parseInt(req.params.trainingId), emp_code: req.body.emp_code }}, 
         { transaction: t })
     })
     .then(() => t.commit())

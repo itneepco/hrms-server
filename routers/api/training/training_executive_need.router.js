@@ -2,29 +2,24 @@ const router = require('express').Router()
 const executiveNeed = require('../../../model/training/trainingExecutiveNeed.model')
 const labelModel = require('../../../model/training/trainingLabel.model')
 
-router.route('/employee/:empCode')
+router.route('/year/:year/employee/:empCode')
 .get((req, res) => {
-  let finYear = getCurrFinYear()
-  let condition = {
-    emp_code: req.params.empCode
-  }
-
-  if(req.query.year) {
-    condition['year'] = (req.query.year && !req.query.year) ? req.query.year : finYear
-  }
-  
+  console.log("!!!!!! Request Parameters !!!!!!", req.params)
   executiveNeed.findAll({
     order: [['year', "DESC"]],
-    where: condition,
+    where: {
+      emp_code: req.params.empCode,
+      year: req.params.year
+    },
     include: [ labelModel ]
   })
-  .then(result => res.status(200).json({
-    data: result,
-    finYear: finYear
-  }))
+  .then(result => {
+    console.log(result)
+    res.status(200).json(result) 
+  })
   .catch(err => {
     console.log(err)
-    res.status(500).json({message: 'Opps! Some error happened!!'})
+    res.status(500).json({message: 'Opps! Some error happened!!', error: err })
   })  
 })
 
@@ -37,7 +32,7 @@ router.route('/')
       training_label_id: req.body.training_label_id,
       topic: req.body.topic,
       emp_code: req.body.emp_code,
-      year: getCurrFinYear(),
+      year: req.body.year,
     }) 
     .save()
     .then(async (result) => {
@@ -76,7 +71,7 @@ router.route('/:needId')
       training_label_id: req.body.training_label_id,
       topic: req.body.topic,
       emp_code: req.body.emp_code,
-      // year: req.body.year,
+      year: req.body.year,
     },
     { where: { id: req.params.needId }
   })
