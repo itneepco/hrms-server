@@ -1,5 +1,3 @@
-
-
 const router = require('express').Router()
 const hierarchyModel = require('../../../model/hierarchy.model')
 const employeeModel = require('../../../model/employee.model')
@@ -257,7 +255,8 @@ function getParent(empCode) {
 			if (emp && emp.parent) {
 				parent = {
 					emp_code: emp.parent.emp_code,
-					first_name: emp.parent.first_name,
+          first_name: emp.parent.first_name,
+          middle_name: emp.parent.middle_name,
 					last_name: emp.parent.last_name,
 					designation: emp.parent.designation.name
 				}

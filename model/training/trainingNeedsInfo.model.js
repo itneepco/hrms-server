@@ -20,11 +20,8 @@ const trainingNeedsInfo = db.define('training_needs_info', {
       notEmpty: true
     }
   },
-  status: {
-    type: Sequelize.STRING,
-    validate: {
-      notEmpty: true
-    }
+  addressee: {
+    type: Sequelize.STRING
   },
   cadre: {
     type: Sequelize.STRING,

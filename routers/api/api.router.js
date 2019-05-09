@@ -20,7 +20,7 @@ router.use('/leave/apply', require('./leave/leave_application.router'))
 router.use('/leave/request', require('./leave/leave_request_process.router'))
 
 router.use('/pay-image', require('./leave/pay_image.router'))
-router.use('/hierarchy', require('./leave/hierarchy.router'))
+router.use('/hierarchy', require('./shared/hierarchy.router'))
 router.use('/joining-report', require('./leave/joining_report.router'))
 
 //Training Router
