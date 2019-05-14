@@ -1,15 +1,13 @@
-const router = require('express').Router()
+const router = require('express').Router({mergeParams: true})
 const executiveNeed = require('../../../model/training/trainingExecutiveNeed.model')
 const labelModel = require('../../../model/training/trainingLabel.model')
 
-router.route('/year/:year/employee/:empCode')
+router.route('/')
 .get((req, res) => {
   console.log("!!!!!! Request Parameters !!!!!!", req.params)
   executiveNeed.findAll({
-    order: [['year', "DESC"]],
     where: {
-      emp_code: req.params.empCode,
-      year: req.params.year
+      training_need_info_id: req.params.needInfoId
     },
     include: [ labelModel ]
   })
@@ -31,8 +29,7 @@ router.route('/')
       duration: req.body.duration,
       training_label_id: req.body.training_label_id,
       topic: req.body.topic,
-      emp_code: req.body.emp_code,
-      year: req.body.year,
+      training_need_info_id: req.body.training_need_info_id
     }) 
     .save()
     .then(async (result) => {
@@ -70,8 +67,6 @@ router.route('/:needId')
       duration: req.body.duration,
       training_label_id: req.body.training_label_id,
       topic: req.body.topic,
-      emp_code: req.body.emp_code,
-      year: req.body.year,
     },
     { where: { id: req.params.needId }
   })

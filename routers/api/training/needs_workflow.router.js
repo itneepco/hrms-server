@@ -1,9 +1,10 @@
-const router = require('express').Router();
+const router = require('express').Router({mergeParams: true});
 const Codes = require('../../../global/codes');
 const db = require('../../../config/db');
 const TrainingNeedsInfo = require('../../../model/training/trainingNeedsInfo.model')
+const NeedInfoHist = require('../../../model/training/needsInfoHist.model')
 
-router.route('/:needsInfoId/actions')
+router.route('/')
   .post((req, res) => {
     let action = req.body.workflow_action
     if (action === Codes.NEEDS_INFO_SUBMITTED) { 
@@ -18,19 +19,27 @@ router.route('/:needsInfoId/actions')
   })
 
 function trainingNeedsSubmit(req, res) {
-  db.transaction().then(t => { 
-    TrainingNeedsInfo.find({ where: { id: req.params.needsInfoId }})
-    .then(result => {
-      if(!result) return;
-
-      return TrainingNeedsInfo.update({
-        addresse: req.body.addressee,
-        status: Codes.NEEDS_INFO_SUBMITTED
+  db.transaction().then(t => {
+    TrainingNeedsInfo.findById(req.params.needInfoId)
+    .then(needInfo => {
+      if(!needInfo) return;
+      
+      return NeedInfoHist.create({
+        training_need_info_id: needInfo.id,
+        officer_emp_code: req.body.officer_emp_code,
+        workflow_action: Codes.NEEDS_INFO_SUBMITTED
       }, {transaction: t})
+
+      .then(() => {
+        return needInfo.update({
+          addressee: req.body.addressee,
+          status: Codes.NEEDS_INFO_SUBMITTED
+        }, {transaction: t})
+      })
     })
     .then(() => {
       t.commit();
-      res.status(200).json({message: "Training Needs Info processing successful", error: err })
+      res.status(200).json({message: "Training Needs Info processing successful"})
     })
     .catch((err) => {
       res.status(500).json({message: "Training Needs Info processing unsuccessful", error: err })

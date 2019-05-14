@@ -4,9 +4,9 @@ const validateTrainingAdmin = require('../../../middlewares/validateTrainingAdmi
 //Router for employee access
 router.use('/employee', require('./employee_training.router'))
 router.use('/info/:trainingId/feedback/', require('./training_feedback.router'))
-router.use('/executive-needs', require('./training_executive_need.router'))
 router.use('/needs-info', require('./training_needs_info.router'))
-router.use('/needs-workflow', require('./needs_workflow.router'))
+router.use('/needs-info/:needInfoId/executive-needs', require('./training_executive_need.router'))
+router.use('/needs-info/:needInfoId/workflow', require('./needs_workflow.router'))
 
 //Router for training admin access
 router.use('/label', validateTrainingAdmin, require('./training_label.router'))

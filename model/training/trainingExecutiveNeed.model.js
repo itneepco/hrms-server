@@ -2,7 +2,13 @@ const Sequelize = require('sequelize');
 const db = require('../../config/db');
 const labelModel = require('./trainingLabel.model')
 const executiveNeed = db.define('training_executive_need', {
-	need_type: {
+  training_need_info_id: {
+    type: Sequelize.STRING,
+    validate: {
+      notEmpty: true
+    }
+  },
+  need_type: {
     type: Sequelize.STRING,
     validate: {
       notEmpty: true
@@ -21,18 +27,6 @@ const executiveNeed = db.define('training_executive_need', {
     }
   },
   topic: {
-    type: Sequelize.STRING,
-    validate: {
-      notEmpty: true
-    }
-  },
-  emp_code: {
-    type: Sequelize.STRING,
-    validate: {
-      notEmpty: true
-    }
-  },
-  year: {
     type: Sequelize.STRING,
     validate: {
       notEmpty: true

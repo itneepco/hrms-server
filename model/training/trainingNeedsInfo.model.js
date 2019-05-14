@@ -1,7 +1,8 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
+const employeeModel = require('../employee.model')
 
-const trainingNeedsInfo = db.define('training_needs_info', {
+const trainingNeedsInfo = db.define('training_need_info', {
 	year: {
     type: Sequelize.STRING,
     validate: {
@@ -31,8 +32,10 @@ const trainingNeedsInfo = db.define('training_needs_info', {
 	}
 }, {
 		underscored: true,
-		tableName: 'training_needs_infos'
+		tableName: 'training_need_infos'
 	}
 )
+
+trainingNeedsInfo.belongsTo(employeeModel, { foreignKey: 'emp_code', targetKey: 'emp_code'})
 
 module.exports = trainingNeedsInfo
