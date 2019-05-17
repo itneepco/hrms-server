@@ -13,12 +13,24 @@ router.route('/')
     if (action === Codes.NEEDS_INFO_RECOMMENDED) { 
       trainingNeedsRecommended(req, res)
     }
-    if (action === Codes.NEEDS_INFO_APPROVED) { 
-      trainingNeedsApproved(req, res)
+    if (action === Codes.NEEDS_INFO_RETURNED) { 
+      trainingNeedsReturned(req, res)
     }
   })
 
 function trainingNeedsSubmit(req, res) {
+  processWorkflow(req, res, Codes.NEEDS_INFO_SUBMITTED)
+}  
+
+function trainingNeedsRecommended(req, res) {
+  processWorkflow(req, res, Codes.NEEDS_INFO_RECOMMENDED)
+}
+
+function trainingNeedsReturned(req, res) {
+  processWorkflow(req, res, Codes.NEEDS_INFO_RETURNED)
+}
+
+function processWorkflow(req, res, action) {
   db.transaction().then(t => {
     TrainingNeedsInfo.findById(req.params.needInfoId)
     .then(needInfo => {
@@ -27,13 +39,14 @@ function trainingNeedsSubmit(req, res) {
       return NeedInfoHist.create({
         training_need_info_id: needInfo.id,
         officer_emp_code: req.body.officer_emp_code,
-        workflow_action: Codes.NEEDS_INFO_SUBMITTED
+        workflow_action: action,
+        remarks: req.body.remarks
       }, {transaction: t})
 
       .then(() => {
         return needInfo.update({
           addressee: req.body.addressee,
-          status: Codes.NEEDS_INFO_SUBMITTED
+          status: action
         }, {transaction: t})
       })
     })
@@ -46,21 +59,6 @@ function trainingNeedsSubmit(req, res) {
       console.log(err)
       t.rollback()
     })
-  })
-}  
-
-function trainingNeedsRecommended(req, res) {
-  db.transaction().then(t => { 
-    TrainingNeedsInfo.find({ where: { id: req.params.needsInfoId }})
-    .then(result => {
-
-    })
-  })
-}
-
-function trainingNeedsApproved(req, res) {
-  db.transaction().then(t => { 
-    
   })
 }
 
