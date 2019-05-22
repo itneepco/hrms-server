@@ -12,6 +12,9 @@ const trainingInfo = db.define('training_info', {
       notEmpty: true
     }
   },
+  training_institute_id: {
+    type: Sequelize.INTEGER,
+  },
   from_date: {
     type: Sequelize.DATEONLY,
     validate: {
@@ -39,9 +42,6 @@ const trainingInfo = db.define('training_info', {
       notEmpty: true
     }
   },
-  training_institute_id: {
-    type: Sequelize.INTEGER,
-  },
   status: {
     type: Sequelize.STRING,
     validate: {
@@ -65,10 +65,9 @@ const trainingInfo = db.define('training_info', {
 
 trainingInfo.hasMany(trainingFeedback)
 trainingFeedback.belongsTo(trainingInfo)
-
 trainingInfo.hasMany(trainingParticipant)
 trainingInfo.hasMany(trainingTopic)
 trainingInfo.hasMany(trainingParticipant, { as: "employee", foreignKey: 'training_info_id', targetKey: 'id'})
-trainingInfo.hasOne(trainingInstitute, { foreignKey: 'id', sourceKey: 'training_institute_id'})
+
 
 module.exports = trainingInfo

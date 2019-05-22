@@ -2,6 +2,24 @@ const router = require('express').Router()
 const labelModel = require('../../../model/training/trainingLabel.model')
 const Op = require('sequelize').Op
 
+router.route('/paginate')
+.get((req,res)=>{
+    let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0
+    let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50
+    let offset = pageIndex * limit
+
+    labelModel.findAndCountAll({ 
+      order: [['name', 'ASC']],
+      limit: limit,
+      offset: offset
+    })
+    .then(result => res.status(200).json(result))
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ message:'Opps! Some error happened!!', error: err })
+    })
+})
+
 router.route('/')
 .get((req, res)=>{
   labelModel.findAll({ 
@@ -15,7 +33,7 @@ router.route('/')
 })
 .post((req,res)=>{
   labelModel
-    .save({
+    .create({
       name: req.body.name
     })
     .then(result=>{

@@ -27,7 +27,6 @@ router.route('/my-training')
     order: [['from_date', 'DESC']],
     limit: limit,
     offset: offset,
-    attributes: { exclude: ['training_institute_id'] },
     where: { 
       project_id: req.user.project_id, 
       status: {
@@ -35,7 +34,6 @@ router.route('/my-training')
       } 
     },
     include: [
-      { model: trainingInstitute },
       // { model: trainingFeedback },
       { 
         model: trainingTopic, 
@@ -85,12 +83,8 @@ router.route('/my-feedback')
     order: [['from_date', 'DESC']],
     limit: limit,
     offset: offset,
-    attributes: { 
-      exclude: ['training_institute_id']
-    },
     where: { status: codes.TRAINING_COMPLETED },
     include: [
-      { model: trainingInstitute },
       { model: trainingFeedback },
       { 
         model: trainingTopic, 
@@ -129,7 +123,7 @@ function filterData(req, res, results) {
       venue: result.venue,
       objective: result.objective,
       training_type: result.training_type,
-      training_institute: result.training_institute, 
+      training_institute_id: result.training_institute_id,
       status: result.status,
       training_order_name: result.training_order_name, 
       //Feedback of the current employee
@@ -179,6 +173,16 @@ router.route('/training-label')
       console.log(err)
       res.status(500).json({ message:'Opps! Some error happened!!', error: err })
     })
+})
+
+router.route('/training-institute/:id')
+.get((req, res)=>{
+  trainingInstitute.findById(req.params.id)
+  .then(result => res.status(200).json(result))
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({ message:'Opps! Some error happened!!', error: err })
+  })
 })
 
 module.exports = router

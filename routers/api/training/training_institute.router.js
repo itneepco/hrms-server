@@ -60,9 +60,14 @@ router.route('/')
     .build({
       name: req.body.name,
       address: req.body.address,
+      city: req.body.city,
+      state: req.body.state,
+      country: req.body.country,
+      pin: req.body.pin,
       website: req.body.website,
+      contact_person: req.body.contact_person, 
       contact_no: req.body.contact_no,
-      contact_person: req.body.contact_person
+      contact_no2: req.body.contact_no2,
     }) 
     .save()
     .then(result=>{
@@ -96,9 +101,14 @@ router.route('/:id')
   instituteModel.update({ 
       name: req.body.name,
       address: req.body.address,
+      city: req.body.city,
+      state: req.body.state,
+      country: req.body.country,
+      pin: req.body.pin,
       website: req.body.website,
+      contact_person: req.body.contact_person, 
       contact_no: req.body.contact_no,
-      contact_person: req.body.contact_person 
+      contact_no2: req.body.contact_no2,
     },
     { where: {id: req.params.id } })
   .then(() => {

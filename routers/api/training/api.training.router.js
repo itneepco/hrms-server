@@ -13,6 +13,6 @@ router.use('/label', validateTrainingAdmin, require('./training_label.router'))
 router.use('/institute', validateTrainingAdmin, require('./training_institute.router'))
 router.use('/info/:trainingId/topic', validateTrainingAdmin, require('./training_topic.router'))
 router.use('/info/:trainingId/participant', validateTrainingAdmin, require('./training_participant.router'))
-router.use('/info', validateTrainingAdmin, require('./admin_training.router'))
+router.use('/info', validateTrainingAdmin, require('./training_info.router'))
 
 module.exports = router
