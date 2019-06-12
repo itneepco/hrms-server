@@ -46,9 +46,7 @@ router.route('/employee/:empCode')
     order: [['from_date', 'DESC']],
     limit: limit,
     offset: offset,
-    attributes: { exclude: ['training_institute_id'] },
     include: [
-      { model: trainingInstitute },
       { model: trainingFeedback },
       { 
         model: trainingTopic, 
@@ -76,7 +74,7 @@ router.route('/employee/:empCode')
         venue: result.venue,
         objective: result.objective,
         training_type: result.training_type,
-        training_institute: result.training_institute, 
+        training_institute_id: result.training_institute_id, 
         status: result.status,
         training_order_name: codes.TRAINING_DIRECTORY + result.training_order_name,
         training_participants: result.training_participants.map(data => Object.assign({}, 
