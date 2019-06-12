@@ -1,6 +1,6 @@
 
 const router = require('express').Router()
-const ledgerModel = require('../../../model/leaveLedger.model')
+const ledgerModel = require('../../../model/leave/leaveLedger.model')
 const Sequelize = require('sequelize');
 const codes = require('../../../global/codes');
 

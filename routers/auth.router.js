@@ -1,11 +1,11 @@
 const express = require('express');
-const User = require('../model/user.model');
-const Employee = require('../model/employee.model')
-const Grade= require('../model/grade.model')
+const User = require('../model/shared/user.model');
+const Employee = require('../model/shared/employee.model')
+const Grade= require('../model/shared/grade.model')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt-nodejs');
 const secret = require('../config/secret');
-const roleMapper = require('../model/roleMapper.model');
+const roleMapper = require('../model/shared/roleMapper.model');
 const jwtExtractor = require('../middlewares/jwtExtractor');
 
 const AuthRouter = express.Router();

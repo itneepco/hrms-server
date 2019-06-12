@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const db = require('../../config/db');
 const Employee = require('./employee.model')
 const Hierarchy = db.define('hierarchy', {
 	emp_code: {

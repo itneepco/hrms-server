@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
-const employeeModel = require('../employee.model')
+const employeeModel = require('../shared/employee.model')
 
 const trainingNeedsInfo = db.define('training_need_info_hist', {
   training_need_info_id: {

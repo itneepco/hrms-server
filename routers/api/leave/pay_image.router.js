@@ -1,9 +1,9 @@
 const router = require('express').Router()
-const payImageModel = require('../../../model/payImage.model')
-const payCode = require('../../../model/payCodes.model')
-const employeeModel = require('../../../model/employee.model')
-const projectModel = require('../../../model/project.model')
-const designationModel = require('../../../model/designation.model')
+const payImageModel = require('../../../model/shared/payImage.model')
+const payCode = require('../../../model/shared/payCodes.model')
+const employeeModel = require('../../../model/shared/employee.model')
+const projectModel = require('../../../model/shared/project.model')
+const designationModel = require('../../../model/shared/designation.model')
 
 router.route('/:empCode')
 .get(async(req,res)=>{

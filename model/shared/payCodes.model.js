@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const db = require('../../config/db');
 
 const payCode = db.define('pay_code', {
 	pay_code: {

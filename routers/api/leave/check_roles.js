@@ -1,4 +1,4 @@
-const roleMapperModel = require('../../../model/roleMapper.model');
+const roleMapperModel = require('../../../model/shared/roleMapper.model');
 const Codes = require('../../../global/codes')
 
 var exports = module.exports = {};

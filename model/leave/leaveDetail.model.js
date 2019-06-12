@@ -1,6 +1,6 @@
 
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const db = require('../../config/db');
 
 const leaveDetail = db.define('leaveDetail', {
 	leave_application_id: {

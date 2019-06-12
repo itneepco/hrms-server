@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const db = require('../../config/db');
 
 const leaveYearEndInfo = db.define('leave_year_end_info', {
 	cal_year: {

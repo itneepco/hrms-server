@@ -2,10 +2,10 @@ const router = require('express').Router({mergeParams: true})
 const Op = require('sequelize').Op;
 
 const participantModel = require('../../../model/training/trainingParticipant.model')
-const projectModel = require('../../../model/project.model')
-const gradeModel = require('../../../model/grade.model')
-const designationModel = require('../../../model/designation.model')
-const employeeModel = require('../../../model/employee.model')
+const projectModel = require('../../../model/shared/project.model')
+const gradeModel = require('../../../model/shared/grade.model')
+const designationModel = require('../../../model/shared/designation.model')
+const employeeModel = require('../../../model/shared/employee.model')
 
 router.route('/')
 .get((req, res) => {

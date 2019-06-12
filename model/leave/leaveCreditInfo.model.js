@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const db = require('../../config/db');
 
 const leaveCreditInfo = db.define('leave_credit_info', {
 	cal_year: {

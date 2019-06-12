@@ -1,9 +1,9 @@
 const router = require('express').Router()
-const leaveAppModel = require('../../../model/leaveApplication.model')
-const leaveDetailModel = require('../../../model/leaveDetail.model')
-const leaveAppHistModel = require('../../../model/leaveApplicationHist.model')
-const employeeModel = require('../../../model/employee.model');
-const joiningReportModel = require('../../../model/joiningReport.model');
+const leaveAppModel = require('../../../model/leave/leaveApplication.model')
+const leaveDetailModel = require('../../../model/leave/leaveDetail.model')
+const leaveAppHistModel = require('../../../model/leave/leaveApplicationHist.model')
+const employeeModel = require('../../../model/shared/employee.model');
+const joiningReportModel = require('../../../model/leave/joiningReport.model');
 const getLeavesAlreadyApplied = require('./functions/getLeavesAlreadyApplied')
 
 const codes = require('../../../global/codes');

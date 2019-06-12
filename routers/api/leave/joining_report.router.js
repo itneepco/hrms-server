@@ -3,10 +3,10 @@ const router = require('express').Router()
 const Op = require('sequelize').Op
 
 const codes = require('../../../global/codes');
-const LeaveAppModel = require('../../../model/leaveApplication.model')
-const LeaveDetailModel = require('../../../model/leaveDetail.model')
-const EmployeeModel = require('../../../model/employee.model')
-const JoiningReport = require('../../../model/joiningReport.model')
+const LeaveAppModel = require('../../../model/leave/leaveApplication.model')
+const LeaveDetailModel = require('../../../model/leave/leaveDetail.model')
+const EmployeeModel = require('../../../model/shared/employee.model')
+const JoiningReport = require('../../../model/leave/joiningReport.model')
 const checkRole = require('./check_roles')
 
 router.route('/employee/:empCode')

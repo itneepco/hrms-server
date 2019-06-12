@@ -1,7 +1,6 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
 const trainingTopic = require('./trainingTopic.model')
-const trainingInstitute = require('./trainingInstitute.model')
 const trainingParticipant = require('./trainingParticipant.model')
 const trainingFeedback = require('./trainingFeedback.model')
 

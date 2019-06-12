@@ -1,6 +1,6 @@
 
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const db = require('../../config/db');
 
 const leaveLedger = db.define('leaveLedger', {
 	emp_code: {

@@ -1,6 +1,5 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
-const trainingInfo = require('./trainingInfo.model')
 
 const trainingFeedback = db.define('training_feedback', {
 	training_info_id: {

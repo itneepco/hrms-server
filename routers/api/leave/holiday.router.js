@@ -1,6 +1,6 @@
 
 const router = require('express').Router({mergeParams:true})
-const holidayModel = require('../../../model/holiday.model')
+const holidayModel = require('../../../model/shared/holiday.model')
 
 router.route('/')
 .get((req,res)=>{

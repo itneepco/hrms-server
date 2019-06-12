@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
-const payCodes = require('../model/payCodes.model')
+const db = require('../../config/db');
+const payCodes = require('./payCodes.model')
 const payImage = db.define('pay_image', {
   emp_num: {
     type: Sequelize.STRING

@@ -1,6 +1,6 @@
 const router = require('express').Router()
 const needsInfoModel = require('../../../model/training/trainingNeedsInfo.model')
-const employeeModel = require('../../../model/employee.model')
+const employeeModel = require('../../../model/shared/employee.model')
 const needsInfoHist = require('../../../model/training/needsInfoHist.model')
 
 router.route('/employee/:empCode')

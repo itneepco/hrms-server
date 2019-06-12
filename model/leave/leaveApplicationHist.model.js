@@ -1,9 +1,8 @@
 
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const db = require('../../config/db');
 
-const employeeModel = require('./employee.model');
-const leaveApplication = require('../model/leaveApplication.model');
+const employeeModel = require('../shared/employee.model');
 
 const leaveApplicationHist = db.define('leaveApplicationHist', {
 	leave_application_id: {

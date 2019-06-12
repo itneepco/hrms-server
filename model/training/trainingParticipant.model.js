@@ -1,10 +1,10 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
 
-const projectModel = require('../project.model')
-const designationModel = require('../designation.model')
-const gradeModel = require('../grade.model')
-const employeeModel = require('../employee.model')
+const projectModel = require('../shared/project.model')
+const designationModel = require('../shared/designation.model')
+const gradeModel = require('../shared/grade.model')
+const employeeModel = require('../shared/employee.model')
 
 const participantModel = db.define('training_participant', {
 	emp_code: {

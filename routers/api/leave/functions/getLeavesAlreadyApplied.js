@@ -1,5 +1,5 @@
-const leaveAppModel = require('../../../../model/leaveApplication.model')
-const leaveDetailModel = require('../../../../model/leaveDetail.model')
+const leaveAppModel = require('../../../../model/leave/leaveApplication.model')
+const leaveDetailModel = require('../../../../model/leave/leaveDetail.model')
 const codes = require('../../../../global/codes');
 const Op = require('sequelize').Op
 

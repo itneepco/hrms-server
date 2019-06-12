@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const db = require('../../config/db');
 const projectModel = require('./project.model')
 const designationModel = require('./designation.model')
 const gradeModel = require('./grade.model')

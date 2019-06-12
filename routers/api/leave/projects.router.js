@@ -1,13 +1,13 @@
 
 const router = require('express').Router()
 const Op = require('sequelize').Op;
-
-const ProjectModel = require('../../../model/project.model')
-const HolidayModel = require('../../../model/holiday.model')
 const codes = require('../../../global/codes');
-const LeaveAppModel = require('../../../model/leaveApplication.model')
-const LeaveDetailModel = require('../../../model/leaveDetail.model')
-const EmployeeModel = require('../../../model/employee.model');
+
+const ProjectModel = require('../../../model/shared/project.model')
+const HolidayModel = require('../../../model/shared/holiday.model')
+const EmployeeModel = require('../../../model/shared/employee.model');
+const LeaveAppModel = require('../../../model/leave/leaveApplication.model')
+const LeaveDetailModel = require('../../../model/leave/leaveDetail.model')
 
 router.get('/', (req, res) => {
 	ProjectModel.findAll({

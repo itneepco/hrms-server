@@ -1,10 +1,10 @@
 
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const db = require('../../config/db');
 
-const leaveAppHistModel = require('../model/leaveApplicationHist.model');
-const leaveDetailModel = require('../model/leaveDetail.model');
-const employeeModel = require('../model/employee.model');
+const leaveAppHistModel = require('./leaveApplicationHist.model');
+const leaveDetailModel = require('./leaveDetail.model');
+const employeeModel = require('../shared/employee.model');
 const joiningReportModel = require('./joiningReport.model');
 
 const leaveApplication = db.define('leaveApplication', {

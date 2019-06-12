@@ -1,8 +1,8 @@
 
 const jwt = require('jsonwebtoken');
 const secret = require('../config/secret');
-const User = require('../model/user.model');
-const RoleMapper = require('../model/roleMapper.model');
+const User = require('../model/shared/user.model');
+const RoleMapper = require('../model/shared/roleMapper.model');
 
 module.exports = (req, res, next) => {
   // console.log(req.headers.authorization)

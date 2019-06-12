@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
-employeeModel = require('../model/employee.model')
-projectModel = require('../model/project.model')
+const db = require('../../config/db');
+employeeModel = require('./employee.model')
+projectModel = require('./project.model')
 
 const roleMapper = db.define('role_mapper', {
 	role: {
