@@ -84,16 +84,29 @@ router.route('/:needId')
   })
 })
 
-function getCurrFinYear() {
-  let today = new Date()
-  let year = today.getFullYear()
-  let curr_month = today.getMonth() + 1
+router.route('/:needId/remarks')
+.put((req, res) => {
+  console.log(req.body)
+  executiveNeed.update({ hod_remarks: req.body.hod_remarks },
+    { where: { id: req.params.needId }
+  })
+  .then(result => res.status(200).json(result))
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({ message: 'Opps! Some error happened!!', error: err })
+  })
+})
 
-  if(curr_month <= 3) {
-    return (year - 1).toString() + '-' + year.toString()
-  }
+// function getCurrFinYear() {
+//   let today = new Date()
+//   let year = today.getFullYear()
+//   let curr_month = today.getMonth() + 1
 
-  return year.toString() + '-' + (year + 1).toString()
-}
+//   if(curr_month <= 3) {
+//     return (year - 1).toString() + '-' + year.toString()
+//   }
+
+//   return year.toString() + '-' + (year + 1).toString()
+// }
 
 module.exports = router
