@@ -14,5 +14,6 @@ router.use('/institute', validateTrainingAdmin, require('./training_institute.ro
 router.use('/info/:trainingId/topic', validateTrainingAdmin, require('./training_topic.router'))
 router.use('/info/:trainingId/participant', validateTrainingAdmin, require('./training_participant.router'))
 router.use('/info', validateTrainingAdmin, require('./training_info.router'))
+router.use('/calendar', validateTrainingAdmin, require('./training_calendar.router'))
 
 module.exports = router

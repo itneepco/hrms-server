@@ -3,6 +3,7 @@ const needsInfoModel = require('../../../model/training/trainingNeedsInfo.model'
 const employeeModel = require('../../../model/shared/employee.model')
 const needsInfoHist = require('../../../model/training/needsInfoHist.model')
 
+// Get the all training needs info of the specified employee 
 router.route('/employee/:empCode')
 .get((req, res) => { 
   needsInfoModel.findAll({
@@ -21,6 +22,7 @@ router.route('/employee/:empCode')
   })  
 })
 
+// Get all pending request for the specified employee (Training needs workflow)
 router.route('/pending/:empCode')
 .get((req, res) => { 
   needsInfoModel.findAll({
@@ -39,6 +41,20 @@ router.route('/pending/:empCode')
   })  
 })
 
+// Get all pending request count for the specified employee (Training needs workflow)
+router.route('/pending/:empCode/count')
+.get((req, res) => { 
+  needsInfoModel.count({
+    where: { addressee: req.params.empCode }
+  })
+  .then(count => res.status(200).json(count))
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({message: 'Opps! Some error happened!!', error: err })
+  })  
+})
+
+// Get the training needs info based on the specified id
 router.route('/:needsInfoId')
 .get((req,res)=>{
   needsInfoModel.findById(req.params.needsInfoId, {

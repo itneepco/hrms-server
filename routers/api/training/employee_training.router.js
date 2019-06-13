@@ -163,8 +163,32 @@ function filterData(req, res, results) {
   res.status(200).json(data)
 }
 
+router.route('/my-feedback/count')
+.get((req, res) => {
+  trainingInfo.count({ 
+    distinct: true,
+    where: { status: codes.TRAINING_COMPLETED },
+    include: [
+      { 
+        model: trainingParticipant, 
+        as: 'employee', 
+        where: {
+          emp_code: req.user.emp_code, 
+          present: true, 
+          feedback_status: false 
+        }  
+      }
+    ]
+  })
+  .then(count => res.status(200).json(count))
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({message:'Opps! Some error happened!!'})
+  })  
+});
+
 router.route('/training-label')
-.get((req, res)=>{
+.get((req, res) => {
   labelModel.findAll({ 
       order: [['name', 'ASC']]
     })

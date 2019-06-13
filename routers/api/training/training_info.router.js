@@ -25,7 +25,6 @@ const upload = multer({
 }).single('order')
 
 const trainingInfo = require('../../../model/training/trainingInfo.model')
-const trainingInstitute = require('../../../model/training/trainingInstitute.model')
 const trainingTopic = require('../../../model/training/trainingTopic.model')
 const trainingParticipant = require('../../../model/training/trainingParticipant.model')
 const projectModel = require('../../../model/shared/project.model')
