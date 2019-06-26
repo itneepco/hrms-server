@@ -9,11 +9,6 @@ const compression = require('compression')
 app.use(bodyParser.json());
 app.use(cors());
 
-// app.use(cors({
-//   origin: 'http://10.3.0.10',
-//   optionsSuccessStatus: 200
-// }));
-
 sequelize.authenticate()
   .then(() => {
     console.log('Connection has been established successfully.');
@@ -39,7 +34,7 @@ app.use(function(err, req, res, next) {
 	res.locals.message = err.message;
 	res.locals.error = req.app.get('env') === 'development' ? err : {};
   
-	// render the error page
+// render the error page
 	res.status(err.status || 500);
 	res.json(err);
 });

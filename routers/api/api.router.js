@@ -22,7 +22,8 @@ router.use('/leave/request', require('./leave/leave_request_process.router'))
 router.use('/pay-image', require('./salary/pay_image.router'))
 router.use('/hierarchy', require('./shared/hierarchy.router'))
 router.use('/joining-report', require('./leave/joining_report.router'))
-
+//---Atendance  Routes
+router.use('/attendance', require('./attendance/api.attendance.router'))
 //Training Router
 router.use('/training', require('./training/api.training.router'))
 
