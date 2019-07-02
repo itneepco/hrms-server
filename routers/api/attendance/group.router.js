@@ -4,6 +4,7 @@ const groups = require("../../../model/attendance/group.model")
 
 router.route('/')
 .get((req, res) => {
+ 
   groups
     .findAll({
       where: { project_id: req.params.projectId }

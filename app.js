@@ -7,6 +7,7 @@ const jwtExtractor = require('./middlewares/jwtExtractor')
 const compression = require('compression')
 
 app.use(bodyParser.json());
+//app.use(cors());
 app.use(cors());
 
 sequelize.authenticate()
