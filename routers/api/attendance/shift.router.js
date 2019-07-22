@@ -22,10 +22,11 @@ router.route('/')
     in_time_start: req.body.in_time_start,
     in_time_end: req.body.in_time_end,
     out_time_start: req.body.out_time_start,
+    out_time_end:req.body.out_time_end,
     late_time: req.body.late_time,
     half_time: req.body.half_time,
     is_night_shift: req.body.is_night_shift,
-    created_by: req.body.created_by
+    created_by: req.user.emp_code
   })
   .save()
   .then(result=>{
@@ -54,6 +55,7 @@ router.route('/:id')
       in_time_start: req.body.in_time_start,
       in_time_end: req.body.in_time_end,
       out_time_start: req.body.out_time_start,
+      out_time_end: req.body.out_time_end,
       late_time: req.body.late_time,
       half_time: req.body.half_time,
       is_night_shift: req.body.is_night_shift,

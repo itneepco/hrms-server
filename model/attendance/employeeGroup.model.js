@@ -7,13 +7,15 @@ const employee = require('../shared/employee.model')
 const employeeGroup = db.define('employeeGroup',{
     emp_code:{
     type: Sequelize.STRING,
-    allowNull: false
+    allowNull: false,
+    unique: true
   },
   group_id:{
     type: Sequelize.INTEGER,
     allowNull: false,
-    unique: true
+    
   }
+  
 },
   {
     underscored: true,

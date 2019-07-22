@@ -18,6 +18,9 @@ const Shift = db.define('shift',{
   out_time_start:{
     type: Sequelize.TIME
   },
+  out_time_end:{
+    type: Sequelize.TIME
+  },
   late_time:{
     type: Sequelize.TIME
   },
