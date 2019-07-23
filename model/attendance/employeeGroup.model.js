@@ -12,10 +12,8 @@ const employeeGroup = db.define('employeeGroup',{
   },
   group_id:{
     type: Sequelize.INTEGER,
-    allowNull: false,
-    
-  }
-  
+    allowNull: false    
+  }  
 },
   {
     underscored: true,

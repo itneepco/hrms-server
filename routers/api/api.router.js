@@ -10,7 +10,7 @@ router.use('/leave/ledger', validateAdmin)
 //Routes Validation for Super Admin
 router.use('/rolemapper', validateSuperAdmin, require('./leave/role_mapper.router'))
 router.use('/leave/credit', validateItAdmin, require('./leave/periodic_leave_credit'))
-router.use('/projects/:id/holidays', validateAdmin, require('./shared/holiday.router'))
+router.use('/projects/:id/holidays', require('./shared/holiday.router'))
 
 router.use('/projects', require('./leave/projects.router'))
 router.use('/employees', require('./shared/employee.router'))
