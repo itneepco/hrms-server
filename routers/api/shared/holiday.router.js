@@ -54,12 +54,14 @@ router
 
   router.route("/period")
   .get((req, res) => {
+    fromDate = formatDate(req.query.from_date)
+    toDate = formatDate(req.query.to_date)
     holidayModel
     .findAll({
       where: {
         project_id: req.params.id,
         day: {
-          [Op.between]: [formatDate(req.query.from_date), formatDate(req.query.to_date)]
+          [Op.between]: [fromDate,toDate]
         }
       },
       order: [["day", "ASC"]]

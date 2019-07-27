@@ -1,12 +1,12 @@
 const router = require("express").Router({mergeParams: true})
-const db = require("../../../config/db")
-const groups = require("../../../model/attendance/group.model")
+const generalRosterModel = require("../../../model/attendance/generalRoster.model")
+const groupModel = require('../../../model/attendance/group.model')
 
 router.route('/')
 .get((req, res) => { 
-  groups
+    generalRosterModel
     .findAll({
-      where: { project_id: req.params.projectId }
+      include:[{model:groupModel,as:'group',  where: { project_id: req.params.projectId }}]     
     })
 
     .then(result => res.status(200).json(result))
@@ -16,10 +16,9 @@ router.route('/')
     })
 })
 .post((req,res) =>{
-  groups.build({
-    name: req.body.name,
-    project_id: req.params.projectId,
-    is_general: req.body.is_general
+  generalRosterModel.build({
+    shift_id: req.body.shift_id,
+    group_id: req.body.group_id   
   })
   .save()
   .then(result=>{
@@ -34,7 +33,7 @@ router.route('/')
 
 router.route('/:id')
 .get((req,res)=>{
-  groups.findById(req.params.id)
+  generalRosterModel.findById(req.params.id)
   .then(result=>res.status(200).json(result))
   .catch(err=>{
     console.log(err)
@@ -43,10 +42,10 @@ router.route('/:id')
 })
 
 .put((req,res)=>{
-    groups.update({name:req.body.name,is_general:req.body.is_general},
+        generalRosterModel.update({shift_id:req.body.shiftId,group_id:req.body.groupId},
         {where: {id:req.params.id}})
     .then(() => {
-        groups.findById(req.params.id)
+        generalRosterModel.findById(req.params.id)
         .then(result=>res.status(200).json(result))
         .catch(err =>{
             console.log(err) 
@@ -60,7 +59,7 @@ router.route('/:id')
     )
 })
 .delete((req,res)=>{
-  groups.destroy({where: {id:req.params.id}})
+  generalRosterModel.destroy({where: {id:req.params.id}})
   .then(result=>res.status(200).json(result))
   .catch(err=>{
       console.log(err)

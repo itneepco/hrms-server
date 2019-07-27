@@ -1,10 +1,9 @@
 const router = require("express").Router({mergeParams: true})
-const db = require("../../../config/db")
-const groups = require("../../../model/attendance/group.model")
+const genWorkDayModel = require("../../../model/attendance/generalWorkingDay.model")
 
 router.route('/')
 .get((req, res) => { 
-  groups
+  genWorkDayModel
     .findAll({
       where: { project_id: req.params.projectId }
     })
@@ -16,10 +15,9 @@ router.route('/')
     })
 })
 .post((req,res) =>{
-  groups.build({
-    name: req.body.name,
-    project_id: req.params.projectId,
-    is_general: req.body.is_general
+  genWorkDayModel.build({
+    day: req.body.day,
+    project_id: req.params.projectId   
   })
   .save()
   .then(result=>{
@@ -34,7 +32,7 @@ router.route('/')
 
 router.route('/:id')
 .get((req,res)=>{
-  groups.findById(req.params.id)
+  genWorkDayModel.findById(req.params.id)
   .then(result=>res.status(200).json(result))
   .catch(err=>{
     console.log(err)
@@ -43,10 +41,10 @@ router.route('/:id')
 })
 
 .put((req,res)=>{
-    groups.update({name:req.body.name,is_general:req.body.is_general},
+       genWorkDayModel.update({day:req.body.day},
         {where: {id:req.params.id}})
     .then(() => {
-        groups.findById(req.params.id)
+       genWorkDayModel.findById(req.params.id)
         .then(result=>res.status(200).json(result))
         .catch(err =>{
             console.log(err) 
@@ -60,7 +58,7 @@ router.route('/:id')
     )
 })
 .delete((req,res)=>{
-  groups.destroy({where: {id:req.params.id}})
+  genWorkDayModel.destroy({where: {id:req.params.id}})
   .then(result=>res.status(200).json(result))
   .catch(err=>{
       console.log(err)
