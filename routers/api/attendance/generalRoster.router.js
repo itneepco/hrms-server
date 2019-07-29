@@ -42,7 +42,7 @@ router.route('/:id')
 })
 
 .put((req,res)=>{
-        generalRosterModel.update({shift_id:req.body.shiftId,group_id:req.body.groupId},
+        generalRosterModel.update({shift_id:req.body.shift_id,group_id:req.body.group_id},
         {where: {id:req.params.id}})
     .then(() => {
         generalRosterModel.findById(req.params.id)

@@ -38,6 +38,9 @@ const Shift = db.define('shift',{
   },
   is_night_shift: {
     type: Sequelize.TINYINT
+  },
+  is_general:{
+    type: Sequelize.TINYINT
   }
 },
 {

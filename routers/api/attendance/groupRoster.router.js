@@ -23,26 +23,22 @@ router.route('/')
       order: [["day", "ASC"]]
     })
     .then(results => {
-      let data = results.map(result=>{
+      const data = results.map(result=>{
         return Object.assign({},{
           day:result.day,
           group_id:result.group_id,
           shift_id:result.shift_id
         })
       })
-      arr =[ data.reduce((l,n)=>{
-           {
-              let t = n.day
-
-              l[t]=l[t]||[]
-              l[t].push({group_id:n.group_id,shift_id:n.shift_id})
-              return l
-            }
-      },{})]
+      const output =  Object.values(data.reduce((a,{day,group_id,shift_id})=> {
+        if(!a[day]) a[day]= {day,group_shifts:[]}
+         const aw = Object.assign({},{group_id,shift_id})
+         a[day].group_shifts.push(aw)       
+        return a
+    }, {}))
+   
      
-    
-     
-      res.status(200).json(arr)
+      res.status(200).json(output)
     })
     .catch(err => {
       console.log(err);

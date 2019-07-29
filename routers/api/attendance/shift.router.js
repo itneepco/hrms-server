@@ -26,6 +26,7 @@ router.route('/')
     late_time: req.body.late_time,
     half_time: req.body.half_time,
     is_night_shift: req.body.is_night_shift,
+    is_general: req.body.is_general,
     created_by: req.user.emp_code
   })
   .save()
@@ -59,6 +60,7 @@ router.route('/:id')
       late_time: req.body.late_time,
       half_time: req.body.half_time,
       is_night_shift: req.body.is_night_shift,
+      is_general: req.body.is_general,
       created_by: req.body.created_by,
       updated_by: req.body.updated_by,
     },
