@@ -8,7 +8,7 @@ const compression = require('compression')
 
 app.use(bodyParser.json());
 //app.use(cors());
-app.use(cors());
+app.use(cors({credentials: true, origin: 'http://10.8.1.4:4200'}));
 
 sequelize.authenticate()
   .then(() => {
