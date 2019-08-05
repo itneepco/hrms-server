@@ -38,7 +38,7 @@ AuthRouter.route('/login')
               roleMapper: results
             };
             
-            const token = jwt.sign(data, secret, { expiresIn: '3000s' })
+            const token = jwt.sign(data, secret, { expiresIn: '3000000s' })
             console.log("Login successful")
             res.status(200).json({ token, message: "Success" })
           })

@@ -3,8 +3,8 @@ const db = require("../../config/db")
 const group = require("./group.model")
 const shift = require("./shift.model")
 
-const groupRoster = db.define(
-  "groupRoster",
+const shiftRoster = db.define(
+  "shiftRoster",
   {
     day: {
       type: Sequelize.DATEONLY,
@@ -30,11 +30,11 @@ const groupRoster = db.define(
   },
   {
     underscored: true,
-    tableName: "group_roster"
+    tableName: "shift_rosters"
   }
 )
 
-groupRoster.belongsTo(group, { as: "group", foreignKey: "group_id" })
-groupRoster.belongsTo(shift, { as: "shift", foreignKey: "shift_id" })
+shiftRoster.belongsTo(group, { as: "group", foreignKey: "group_id" })
+shiftRoster.belongsTo(shift, { as: "shift", foreignKey: "shift_id" })
 
-module.exports = groupRoster
+module.exports = shiftRoster
