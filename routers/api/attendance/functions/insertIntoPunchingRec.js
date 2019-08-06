@@ -34,7 +34,7 @@ function insertIntoPunchingRec(file, user) {
         };
         recArray.push(rec);
       })
-      .on("close", async () => {
+      .on("close",  () => {
         recArray = recArray.filter((row, index, self) => {
           return (
             index ===

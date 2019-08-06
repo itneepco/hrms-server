@@ -32,16 +32,7 @@ router
             }
           );
         });
-        const output = Object.values(
-          data.reduce((a, { day, group_id, shift_id }) => {
-            if (!a[day]) a[day] = { day, group_shifts: [] };
-            const aw = Object.assign({}, { group_id, shift_id });
-            a[day].group_shifts.push(aw);
-            return a;
-          }, {})
-        );
-
-        res.status(200).json(output);
+        res.status(200).json(formatAttendanceData(data));
       })
       .catch(err => {
         console.log(err);
@@ -67,11 +58,22 @@ router
 
     shiftRoster
       .bulkCreate(groupDutyRoster, { updateOnDuplicate: true })
-      .then(result => res.status(200).json(result))
+      .then(result => res.status(200).json(formatAttendanceData(result)))
       .catch(err => {
         console.log(err);
         res.status(500).json({ message: "Opps! Some error occured!!" });
       });
   });
+
+function formatAttendanceData(data) {
+  return Object.values(
+    data.reduce((a, { day, group_id, shift_id }) => {
+      if (!a[day]) a[day] = { day, group_shifts: [] };
+      const aw = Object.assign({}, { group_id, shift_id });
+      a[day].group_shifts.push(aw);
+      return a;
+    }, {})
+  );
+}
 
 module.exports = router;
