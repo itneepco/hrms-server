@@ -1,10 +1,15 @@
 const Sequelize = require("sequelize");
 const db = require("../../config/db");
+const shiftModel = require('./shift.model');
 
 const empWiseRoster = db.define(
   "empWiseRoster",
   {
     emp_code: {
+      type: Sequelize.INTEGER,
+      allowNull: false
+    },
+    project_id: {
       type: Sequelize.INTEGER,
       allowNull: false
     },
@@ -44,5 +49,7 @@ const empWiseRoster = db.define(
     tableName: "employee_wise_rosters"
   }
 );
+
+empWiseRoster.belongsTo(shiftModel);
 
 module.exports = empWiseRoster;

@@ -8,5 +8,6 @@ router.use('/project/:projectId/working-day', require('./generalWorkingDay.route
 router.use('/project/:projectId/general-roster', require('./generalRoster.router'))
 router.use('/project/:projectId/attendance-data', require('./attendanceData.router'))
 router.use('/project/:projectId/employee-wise-roster', require('./empWiseRoster.router'))
+router.use('/project/:projectId/process-attendance', require('./processAttendanceData.router'))
 
 module.exports = router

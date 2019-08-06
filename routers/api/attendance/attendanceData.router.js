@@ -1,6 +1,7 @@
-const router = require("express").Router();
+const router = require("express").Router({mergeParams: true});
 const path = require("path");
 const insertIntoPunchingRec = require("./functions/insertIntoPunchingRec");
+const PunchingRecModel = require('../../../model/attendance/punchingRec.model')
 
 const multer = require("multer");
 const storage = multer.diskStorage({
@@ -41,12 +42,21 @@ router.route("/upload").post((req, res) => {
 
     req.files.forEach(file => {
       console.log(file);
-      promiseArr.push(insertIntoPunchingRec(file, req.user.emp_code));
+      promiseArr.push(insertIntoPunchingRec(file, req.user.emp_code, req.params.projectId));
     });
 
     Promise.all(promiseArr)
-      .then(() => {
-        res.status(200).json({ message: "Successfully uploaded the dat file" });
+      .then(results => {
+        resultArr = [];
+        results.forEach(result => {
+          resultArr.push(...result);
+        });
+        return PunchingRecModel.bulkCreate(resultArr, {
+          updateOnDuplicate: ["punching_date", "emp_code", "punching_time"]
+        })
+        .then(() => {
+          res.status(200).json({ message: "Successfully uploaded the dat file" });
+        })
       })
       .catch(err => {
         console.log(err);
@@ -56,4 +66,7 @@ router.route("/upload").post((req, res) => {
       });
   });
 });
+
+router.route("/upload-status").get((req, res) => {});
+
 module.exports = router;

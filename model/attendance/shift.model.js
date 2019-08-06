@@ -48,6 +48,7 @@ const Shift = db.define('shift',{
   tableName: "shifts"
 }
 )
+
 Shift.belongsTo(projectModel)
 Shift.belongsTo(employeeModel, { as: "creator", foreignKey: 'created_by', targetKey: 'emp_code' })
 module.exports = Shift
