@@ -8,12 +8,7 @@ const wageMon = db.define(
       type: Sequelize.INTEGER,
       allowNull: false
     },
-    wage_mon: {
-      type: Sequelize.STRING,
-      unique: true,
-      allowNull: false
-    },
-    from_date: {
+   from_date: {
       type: Sequelize.DATEONLY,
       allowNull: false
     },
@@ -22,7 +17,13 @@ const wageMon = db.define(
       allowNull: false
     },
     is_active: {
-      type: Sequelize.TINYINT
+      type: Sequelize.BOOLEAN
+    },
+    shift_roster_status:{
+      type: Sequelize.BOOLEAN
+    },
+    gen_roster_status:{
+      type: Sequelize.BOOLEAN
     }
   },
   {

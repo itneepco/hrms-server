@@ -7,7 +7,8 @@ router.use('/project/:projectId/shift-roster', require('./shiftRoster.router'))
 router.use('/project/:projectId/working-day', require('./generalWorkingDay.router'))
 router.use('/project/:projectId/general-roster', require('./generalRoster.router'))
 router.use('/project/:projectId/attendance-data', require('./attendanceData.router'))
-router.use('/project/:projectId/employee-wise-roster', require('./empWiseRoster.router'))
+router.use('/project/:projectId/emp-wise-roster', require('./empWiseRoster.router'))
 router.use('/project/:projectId/process-attendance', require('./processAttendanceData.router'))
+router.use('/project/:projectId/wage-month', require('./wageMonth.router'))
 
 module.exports = router
