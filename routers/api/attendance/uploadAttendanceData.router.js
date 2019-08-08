@@ -29,7 +29,7 @@ const upload = multer({
   }
 }).array("dataFile");
 
-router.route("/upload").post((req, res) => {
+router.route("/").post((req, res) => {
   upload(req, res, err => {
     if (err) {
       console.log(err);

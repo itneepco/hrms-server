@@ -11,10 +11,23 @@ const enumerateDaysBetweenDates = require('./functions/enumerateDaysBetweenDates
 
 
 router.route("/shift").get(async (req, res) => {
-  fromDate = req.query.from_date;
-  toDate = req.query.to_date;
-
   try {
+    const fromDate = new Date(req.query.from_date);
+    const toDate = new Date(req.query.to_date);
+  
+    const currWageMonth = await wageMonthModel.findOne({
+      where: {
+        from_date: fromDate,
+        to_date: toDate,
+        project_id: req.params.projectId
+      }
+    })
+
+    if(!currWageMonth) {
+      res.status(200).json({ message: "Wage month does not exist for that period"})
+      return;
+    }
+
     empGroups = await employeeGroup.findAll({
       include: [
         {
@@ -37,7 +50,7 @@ router.route("/shift").get(async (req, res) => {
         }
       ],
       where: {
-        day: { [Op.between]: [fromDate, toDate] }
+        day: { [Op.between]: [currWageMonth.from_date, currWageMonth.to_date] }
       }
     });
 
@@ -59,15 +72,8 @@ router.route("/shift").get(async (req, res) => {
       .bulkCreate(empWiseRosters, {
         updateOnDuplicate: ["emp_code", "day", "shift_id"]
       })
-      .then(() => {
-        //  wageMonthModel.update({
-        //   shift_roster_status:true,
-        //   where:{
-        //     from_date:fromDate,
-        //     to_date: toDate,
-        //     project_id: req.params.projectId
-        //   }
-        //  })
+      .then(async () => {
+        await currWageMonth.update({ shift_roster_status: true })
         res.status(200).json(empWiseRosters);
       })
       .catch(err => {
@@ -80,13 +86,23 @@ router.route("/shift").get(async (req, res) => {
 });
 
 router.route("/general").get(async (req, res) => {
-  fromDate = new Date(req.query.from_date);
-  toDate = new Date(req.query.to_date);
-
-  if (!fromDate || !toDate)
-    return res.status(200).json({ message: "Incorrect date format" });
-
   try {
+    fromDate = new Date(req.query.from_date);
+    toDate = new Date(req.query.to_date);
+
+    const currWageMonth = await wageMonthModel.findOne({
+      where: {
+        from_date: fromDate,
+        to_date: toDate,
+        project_id: req.params.projectId
+      }
+    })
+
+    if(!currWageMonth) {
+      res.status(200).json({ message: "Wage month does not exist for that period"})
+      return;
+    }
+
     const empGroups = await employeeGroup.findAll({
       include: [
         {
@@ -111,7 +127,7 @@ router.route("/general").get(async (req, res) => {
     });
 
     empWiseRosters = [];
-    wagePeriod = enumerateDaysBetweenDates(fromDate, toDate);
+    wagePeriod = enumerateDaysBetweenDates(currWageMonth.from_date, currWageMonth.to_date);
 
     empGroups.forEach(empGroup => {
       const roster = genRosters.find(
@@ -133,8 +149,8 @@ router.route("/general").get(async (req, res) => {
       .bulkCreate(empWiseRosters, {
         updateOnDuplicate: ["emp_code", "day", "shift_id"]
       })
-      .then(() => {
-        console.log("Length", empWiseRosters.length);
+      .then(async () => {
+        await currWageMonth.update({ gen_roster_status: true })
         res.status(200).json(empWiseRosters);
       })
       .catch(err => {
