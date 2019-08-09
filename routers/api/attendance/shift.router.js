@@ -1,5 +1,5 @@
 const router = require('express').Router({mergeParams: true})
-const db = require('../../../config/db')
+
 const shifts = require('../../../model/attendance/shift.model')
 
 router.route('/')

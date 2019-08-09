@@ -1,10 +1,8 @@
 const router = require("express").Router({ mergeParams: true });
 const empWiseRosterModel = require("../../../model/attendance/employeeWiseRoster.model");
-const holidayModel = require("../../../model/shared/holiday.model");
 const shiftModel = require("../../../model/attendance/shift.model");
 const punchRecModel = require("../../../model/attendance/punchingRec.model");
 const wageMonthModel = require("../../../model/attendance/wageMonth.model");
-const groupModel = require("../../../model/attendance/group.model");
 const Op = require("sequelize").Op;
 const moment = require("moment");
 
@@ -44,7 +42,7 @@ router.route("/").get(async (req, res) => {
     });
     
 
-    // Array of employee_code of those employee who are doing night shift
+   // Array of employee_code of those employee who are doing night shift
     const nightShiftEmployees = empWiseRosters
       .filter(roster => roster.shift.is_night_shift)
       .map(roster => roster.emp_code);

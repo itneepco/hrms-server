@@ -28,7 +28,7 @@ const empWiseRoster = db.define(
       type: Sequelize.TIME
     },
     attendance_status: {
-      type: Sequelize.INTEGER
+      type: Sequelize.STRING
     },
     modified_status: {
       type: Sequelize.INTEGER

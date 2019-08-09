@@ -62,5 +62,6 @@ module.exports = {
     ATTENDANCE_ABSENT: '02',
     ATTENDANCE_HALF_DAY: '03',
     ATTENDANCE_LATE: '04',
+    ATTENDANCE_OFF_DAY: '05'
 
 }
