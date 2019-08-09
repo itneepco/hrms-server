@@ -7,7 +7,8 @@ const Op = require("sequelize").Op;
 const moment = require("moment");
 const dateTimeHelper = require("./functions/dateTimeHelper");
 const attendanceTimingHelper = require("./functions/attendanceTimingHelper");
-const codes = require('../../../global/codes');
+const codes = require("../../../global/codes");
+const db = require("../../../config/db");
 
 router.route("/").get(async (req, res) => {
   try {
@@ -108,8 +109,8 @@ router.route("/").get(async (req, res) => {
 
       //Calculate working hours as per roster
       const shift_working_hour = dateTimeHelper.getTimeInterval(
-        out_time_start,
-        in_time_start
+        in_time_start,
+        out_time_start
       );
 
       // Variable to store punching Reocrds of the employee for the currentDate
@@ -146,11 +147,11 @@ router.route("/").get(async (req, res) => {
         emp_out_time = dateTimeHelper.getMaxTime(empPunchDataNextDay);
         if (emp_out_time === "") {
           return attendanceArray.push({
-            emp_code: empRoster.emp_code,           
-            day: currentDate,           
+            emp_code: empRoster.emp_code,
+            day: currentDate,
             in_time: emp_in_time,
-            out_time:"",
-            attendance_status: codes.ATTENDANCE_ABSENT         
+            out_time: "",
+            attendance_status: codes.ATTENDANCE_ABSENT
           });
         }
       } else {
@@ -158,10 +159,10 @@ router.route("/").get(async (req, res) => {
         emp_out_time = dateTimeHelper.getMaxTime(empPunchData);
         if (emp_out_time === "") {
           return attendanceArray.push({
-            emp_code: empRoster.emp_code,           
-            day: currentDate,           
+            emp_code: empRoster.emp_code,
+            day: currentDate,
             in_time: emp_in_time,
-            out_time:"",            
+            out_time: "",
             attendance_status: codes.ATTENDANCE_ABSENT
           });
         }
@@ -176,9 +177,12 @@ router.route("/").get(async (req, res) => {
 
       // Calculate employee working hours
       const emp_working_hour = dateTimeHelper.getTimeInterval(
-        emp_out_time,
-        emp_in_time
+        emp_in_time,
+        emp_out_time
       );
+
+      console.log('ewo '+emp_working_hour)
+      console.log('so '+shift_working_hour)
 
       // if worked less than half  of shift time
       if (emp_working_hour < shift_working_hour / 2) {
@@ -295,7 +299,7 @@ router.route("/").get(async (req, res) => {
               // shift: shift.name,
               in_time: emp_in_time,
               out_time: emp_out_time,
-              attendance_status:codes.ATTENDANCE_PRESENT
+              attendance_status: codes.ATTENDANCE_PRESENT
             });
           }
           return attendanceArray.push({
@@ -310,17 +314,18 @@ router.route("/").get(async (req, res) => {
       }
     }); //End of forEach loop
 
-    console.log(attendanceArray);
-     
-    //attendanceArray.forEach()
+    console.log("ATtendance",attendanceArray);
 
-    // const result = await empWiseRosterModel.bulkCreate(attendanceArray,{
-    //   updateOnDuplicate: ["in_time", "out_time", "attendance_status"]
-    // })   
-
-    res.status(200)
-      .json({ message: "SUCCESS", error: false, data: result });
-
+    if (attendanceArray.length > 0) {
+      try {
+        insertEmpWiseRoster(attendanceArray);
+        res
+          .status(200)
+          .json({ message: "SUCCESS", error: false, data: attendanceArray });
+      } catch (err) {
+        throw err;
+      }
+    }
   } catch (error) {
     console.log(error);
     res
@@ -329,8 +334,37 @@ router.route("/").get(async (req, res) => {
   }
 });
 
-function insertEmpWiseRoster(dataArray){
-  
+async function insertEmpWiseRoster(dataArray) {
+  let transaction;
+  try {
+    transaction = await db.transaction();
+    promiseArray = [];
+    await dataArray.forEach(async data => {
+      promiseArray.push(
+        empWiseRosterModel.update(
+          {
+            in_time: data.in_time,
+            out_time: data.out_time,
+            attendance_status: data.attendance_status
+          },
+          { where: { emp_code: data.emp_code, day: data.day } },
+          transaction
+        )
+      );
+    });
+
+    Promise.all(promiseArray)
+      .then(() => {
+        transaction.commit();
+        return { message: "SUCCESS" };
+      })
+      .catch(err => {
+        if (error) transaction.rollback();
+        throw error;
+      });
+  } catch (error) {
+    throw error;
+  }
 }
 
 module.exports = router;

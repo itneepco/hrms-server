@@ -36,7 +36,7 @@ async function countUploadedFile(a_directory, a_file_prefix, a_filename_length, 
         file_extension   = a_file_extension;
         
         fs.readdir(directory, 'utf-8', (error, files) => {
-          console.log('Count uploaded files : ' + directory);
+          
           if (!error) {
             let attendance_file = [];
             let machine_ids     = [];

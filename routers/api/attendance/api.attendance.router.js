@@ -11,5 +11,6 @@ router.use('/project/:projectId/emp-wise-roster', require('./empWiseRoster.route
 // router.use('/project/:projectId/attendance-data/process', require('./processAttendanceData.router'))
 router.use('/project/:projectId/attendance-data/process', require('./processAttendanceRecords.router'))
 router.use('/project/:projectId/wage-month', require('./wageMonth.router'))
+router.use('/project/:projectId/attendance-status/', require('./displayAttendanceData.router'))
 
 module.exports = router

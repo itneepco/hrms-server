@@ -74,7 +74,7 @@ router.route("/status").get(async (req, res) => {
   const toDate = req.query.to_date;
 
   let dates = enumerateBetweenDates(fromDate, toDate);
-  console.log(dates);
+  //console.log(dates);
   let upload_status = [];
 
   try {
@@ -87,21 +87,19 @@ router.route("/status").get(async (req, res) => {
       month = month < 10 ? '0' + month.toString() : month.toString();
       year_number = (year.toString()).substring(2, 4);
       file_prefix = day + month + year_number;
-      console.log(date);
-      console.log(file_prefix);
-      let result = await countUploadedFile("C:\\Users\\it neepco\\hrms-server\\uploads", file_prefix, 13, '.DAT');
-      console.log(result);
+      //To do change ---location make dynamic
+      let result = await countUploadedFile("./uploads/", file_prefix, 13, '.DAT');
       if (result.status !== false) {
         if (result.result.length > 0) {
           upload_status.push({
             'punch_day': year.toString() + '-' + month + '-' + day,
-            machine_ids: result.result
+            'machine_ids': result.result
           });
         }
       }
     }
-    res.status(200).json({ status: upload_status });
-  } catch (e) {
+    res.status(200).json(upload_status);
+  } catch (err) {
     console.log(err);
     return res
       .status(500)

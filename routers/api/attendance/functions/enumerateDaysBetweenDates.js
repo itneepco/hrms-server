@@ -9,7 +9,6 @@ function enumerateDaysBetweenDates(startDate, endDate) {
   dates.push(currDate.clone().toDate());
 
   while (currDate.add(1, "days").diff(lastDate) <= 0) {
-    console.log(currDate.toDate());
     dates.push(currDate.clone().toDate());
   }
 

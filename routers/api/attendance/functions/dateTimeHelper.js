@@ -2,8 +2,8 @@ const moment = require("moment");
 
 function getTimeInterval(startTime, endTime) {
 
-  const start = moment.utc(startTime, "HH:mm");
-  const end = moment.utc(endTime, "HH:mm");
+  const start = moment(startTime, "HH:mm");
+  const end = moment(endTime, "HH:mm");
   const interval = moment.duration(end.diff(start));
   const hours =
     interval.asHours() >= 0 ? interval.asHours() : interval.asHours() + 24;
