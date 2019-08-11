@@ -5,7 +5,8 @@ const validateItAdmin = require('../../middlewares/validateItAdmin');
 
 //Routes Validation for Admin
 router.use('/leave/ledger', validateAdmin)
-// router.use('/projects/:id/holidays', validateAdmin)
+
+router.use('/leave-types',require('./shared/leaveTypes.router'));
 
 //Routes Validation for Super Admin
 router.use('/rolemapper', validateSuperAdmin, require('./leave/role_mapper.router'))

@@ -3,12 +3,12 @@ const empWiseRosterModel = require("../../../model/attendance/employeeWiseRoster
 const shiftModel = require("../../../model/attendance/shift.model");
 const punchRecModel = require("../../../model/attendance/punchingRec.model");
 const wageMonthModel = require("../../../model/attendance/wageMonth.model");
-const Op = require("sequelize").Op;
-const moment = require("moment");
 const dateTimeHelper = require("./functions/dateTimeHelper");
 const attendanceTimingHelper = require("./functions/attendanceTimingHelper");
 const codes = require("../../../global/codes");
 const db = require("../../../config/db");
+const Op = require("sequelize").Op;
+const moment = require("moment");
 
 router.route("/").get(async (req, res) => {
   try {
@@ -22,6 +22,11 @@ router.route("/").get(async (req, res) => {
       }
     });
 
+    const shiftTimings = await shiftModel.findAll({
+      project_id: req.params.projectId,
+      is_general: false
+    })
+
     if (!currWageMonth) {
       return res.status(200).json({
         message: "Wage month corresponding to day does not exist",
@@ -30,10 +35,18 @@ router.route("/").get(async (req, res) => {
       });
     }
 
-    if (
-      !currWageMonth.shift_roster_status ||
-      !currWageMonth.gen_roster_status
-    ) {
+
+    // Check if general roster is generated
+    if (!currWageMonth.gen_roster_status) {
+      return res.status(200).json({
+        message: "Employee wise roster not generated for the period",
+        error: false,
+        data: null
+      });
+    }
+
+    // Check if there are any shift duty. if present check if shift roster is generated
+    if (shiftTimings.length > 0 && !currWageMonth.shift_roster_status) {
       return res.status(200).json({
         message: "Employee wise roster not generated for the period",
         error: false,
@@ -49,6 +62,8 @@ router.route("/").get(async (req, res) => {
       }
     });
 
+    console.log("Punching records length", punchingRecords.length);
+
     // Get employee wise rosters for the currentDate
     const empWiseRosters = await empWiseRosterModel.findAll({
       where: {
@@ -57,6 +72,8 @@ router.route("/").get(async (req, res) => {
       },
       include: [{ model: shiftModel }]
     });
+
+    console.log("Employee roster length", empWiseRosters.length);
 
     // Get array of emp_code having night shift on the currentDate
     const nightShiftEmployees = empWiseRosters
@@ -77,6 +94,8 @@ router.route("/").get(async (req, res) => {
       }
     });
 
+    console.log("Next day punching records length", PunchRecsNextDay.length);
+
     // array to store the attendance objects for the currentDate
     let attendanceArray = [];
 
@@ -87,7 +106,7 @@ router.route("/").get(async (req, res) => {
       // Get the  scheduled times for shift
       const in_time_start = shift.in_time_start;
       const in_time_end = shift.in_time_end;
-      const in_time_late = shift.int_time_late;
+      const in_time_late = shift.late_time;
       const out_time_start = shift.out_time_start;
       const out_time_end = shift.out_time_end;
 
@@ -168,11 +187,19 @@ router.route("/").get(async (req, res) => {
         }
       }
 
+      // Calculate in time flag
       const emp_punch_in_flag = attendanceTimingHelper.check_in_time(
         emp_in_time,
         in_time_start,
         in_time_end,
         in_time_late
+      );
+
+      // Calculate out time flag
+      const emp_punch_out_flag = attendanceTimingHelper.check_out_time(
+        emp_out_time,
+        out_time_start,
+        out_time_end
       );
 
       // Calculate employee working hours
@@ -181,8 +208,15 @@ router.route("/").get(async (req, res) => {
         emp_out_time
       );
 
-      console.log('ewo '+emp_working_hour)
-      console.log('so '+shift_working_hour)
+      // if(empRoster.emp_code === '006019') {
+      //   console.log(emp_in_time,
+      //     in_time_start,
+      //     in_time_end,
+      //     in_time_late)
+
+      //   console.log("IN FLAG", emp_punch_in_flag)
+      //   console.log("OUT FLAG", emp_punch_out_flag)
+      // }
 
       // if worked less than half  of shift time
       if (emp_working_hour < shift_working_hour / 2) {
@@ -208,12 +242,6 @@ router.route("/").get(async (req, res) => {
         });
       }
 
-      const emp_punch_out_flag = attendanceTimingHelper.check_in_time(
-        emp_out_time,
-        out_time_start,
-        out_time_end
-      );
-
       // if punched after roster out time window closes
       if (emp_punch_out_flag === 2) {
         return attendanceArray.push({
@@ -227,6 +255,7 @@ router.route("/").get(async (req, res) => {
       }
 
       if (emp_punch_in_flag > 1) {
+        
         // if punched before shift late in time
         if (emp_punch_in_flag === 3) {
           // If punched out before shift out time start
@@ -314,7 +343,7 @@ router.route("/").get(async (req, res) => {
       }
     }); //End of forEach loop
 
-    console.log("ATtendance",attendanceArray);
+    console.log("Attendance", attendanceArray);
 
     if (attendanceArray.length > 0) {
       try {
@@ -323,6 +352,7 @@ router.route("/").get(async (req, res) => {
           .status(200)
           .json({ message: "SUCCESS", error: false, data: attendanceArray });
       } catch (err) {
+        console.log(err);
         throw err;
       }
     }
@@ -360,9 +390,11 @@ async function insertEmpWiseRoster(dataArray) {
       })
       .catch(err => {
         if (error) transaction.rollback();
+        console.log(err);
         throw error;
       });
   } catch (error) {
+    console.log(err);
     throw error;
   }
 }

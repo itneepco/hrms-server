@@ -1,7 +1,9 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
 
-const absentDtl = db.define('absentDtl',{
+const leaveTypes= require('../leave/leaveType.model');
+
+const absentDetail = db.define('absentDetail',{
   emp_code: {
     type: Sequelize.INTEGER,
     allowNull: false
@@ -28,4 +30,7 @@ const absentDtl = db.define('absentDtl',{
 
 );
 
-module.exports = absentDtl;
+
+absentDetail.belongsTo(leaveTypes, { as: "leave_type", foreignKey: "leave_type_id" });
+
+module.exports = absentDetail;

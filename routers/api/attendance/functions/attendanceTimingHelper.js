@@ -17,10 +17,10 @@ function check_out_time(punch_time, start_time, end_time) {
            2 => AFTER LATE WINDOW CLOSES, 3 => BETWEEN LATE WINDOW 
 */
 
-function check_in_time(punch_time, start_time, end_time, grace_time) {
+function check_in_time(punch_time, start_time, end_time, late_time) {
   if (punch_time < start_time) return 1;
   if (punch_time > end_time) {
-    if (punch_time <= grace_time) return 3;
+    if (punch_time <= late_time) return 3;
     return 2;
   }
   return 0;

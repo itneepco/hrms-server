@@ -8,7 +8,7 @@ const enumerateBetweenDates = require('./functions/enumerateDaysBetweenDates');
 const multer = require("multer");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./uploads/");
+    cb(null, `./uploads/${req.user.project_id}`);
   },
   filename: function (req, file, cb) {
     let name = file.originalname;
@@ -88,7 +88,7 @@ router.route("/status").get(async (req, res) => {
       year_number = (year.toString()).substring(2, 4);
       file_prefix = day + month + year_number;
       //To do change ---location make dynamic
-      let result = await countUploadedFile("./uploads/", file_prefix, 13, '.DAT');
+      let result = await countUploadedFile(`./uploads/${req.user.project_id}`, file_prefix, 13, '.DAT');
       if (result.status !== false) {
         if (result.result.length > 0) {
           upload_status.push({
