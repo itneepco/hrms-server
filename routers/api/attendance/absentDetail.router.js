@@ -1,5 +1,4 @@
 const router = require("express").Router({ mergeParams: true });
-//const db = require("../../../config/db")
 const absentDetailModel = require("../../../model/attendance/absentDetail.model");
 const leaveTypeModel = require("../../../model/leave/leaveType.model");
 
@@ -9,6 +8,7 @@ router
     let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0;
     let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50;
     let offset = pageIndex * limit;
+    
     absentDetailModel
       .findAndCountAll({
         where: { emp_code: req.params.empCode },
@@ -32,7 +32,8 @@ router
         emp_code: req.params.empCode,
         from_date: req.body.from_date,
         to_date: req.body.to_date,
-        leave_type_id: req.body.leave_type_id
+        leave_type_id: req.body.leave_type_id,
+        project_id: req.params.projectId
       })
       .save()
       .then(result => {
@@ -76,7 +77,8 @@ router
           emp_code: req.params.empCode,
           from_date: req.body.from_date,
           to_date: req.body.to_date,
-          leave_type_id: req.body.leave_type_id
+          leave_type_id: req.body.leave_type_id,
+          project_id: req.params.projectId
         },
         { where: { id: req.params.id } }
       )

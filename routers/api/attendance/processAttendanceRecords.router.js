@@ -18,7 +18,8 @@ router.route("/").get(async (req, res) => {
     const currWageMonth = await wageMonthModel.findOne({
       where: {
         from_date: { [Op.lte]: currentDate },
-        to_date: { [Op.gte]: currentDate }
+        to_date: { [Op.gte]: currentDate },
+        status: codes.WAGE_MONTH_ACTIVE
       }
     });
 

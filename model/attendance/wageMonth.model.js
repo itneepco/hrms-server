@@ -16,8 +16,8 @@ const wageMon = db.define(
       type: Sequelize.DATEONLY,
       allowNull: false
     },
-    is_active: {
-      type: Sequelize.BOOLEAN
+    status: {
+      type: Sequelize.INTEGER
     },
     shift_roster_status: {
       type: Sequelize.BOOLEAN

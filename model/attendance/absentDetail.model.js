@@ -21,7 +21,11 @@ const absentDetail = db.define('absentDetail',{
   leave_type_id:{
     type: Sequelize.INTEGER,
     allowNull: false
-  }
+  },
+  project_id:{
+    type: Sequelize.INTEGER,
+    allowNull: false
+  },
 },
 {
   underscored: true,
