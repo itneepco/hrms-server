@@ -26,8 +26,10 @@ router.route("/employee/:empCode").get(async (req, res) => {
 
     // Get list of general working days
     const genWorkDays = await genWorkDayModel.findAll({
-      day: { [Op.between]: [fromDate, toDate] },
-      project_id: req.params.projectId
+      where: {
+        day: { [Op.between]: [fromDate, toDate] },
+        project_id: req.params.projectId
+      }
     });
 
     // Get absent details
@@ -51,7 +53,7 @@ router.route("/employee/:empCode").get(async (req, res) => {
       include: [{ model: leaveTypeModel }]
     });
 
-    console.log(absentDetails)
+    console.log(absentDetails);
 
     // Get employee wise attendance status between fromDate and toDate
     const empWiseRosters = await empWiseRosterModel
@@ -69,6 +71,8 @@ router.route("/employee/:empCode").get(async (req, res) => {
         const in_time = empRoster.in_time;
         const out_time = empRoster.out_time;
 
+        console.log(empRoster.day);
+
         if (empRoster.shift.is_general) {
           if (holidaysArray.find(holiday => holiday.day === empRoster.day)) {
             remarks = holiday.name;
@@ -77,10 +81,13 @@ router.route("/employee/:empCode").get(async (req, res) => {
           // Check if saturday and sunday is working day
           else if (
             dtHelper.isSundaySaturday(empRoster.day) &&
-            genWorkDays.find(workDay => workDay.day === empRoster.day)
+            !genWorkDays.find(workDay => workDay.day === empRoster.day)
           ) {
             remarks = dtHelper.isSunday(empRoster.day) ? "SUNDAY" : "SATURDAY";
             attendance_status = codes.ATTENDANCE_HOLIDAY;
+            console.log(
+              "Date: " + empRoster.day + " | Sun Sat  Day ? : " + remarks
+            );
           } else {
             remarks = "";
             attendance_status = empRoster.attendance_status;
@@ -93,7 +100,7 @@ router.route("/employee/:empCode").get(async (req, res) => {
             remarks = "";
             attendance_status = empRoster.attendance_status;
           } else {
-            remarks = "";
+            remarks = empRoster.remarks;
             attendance_status = empRoster.attendance_status;
           }
         }
