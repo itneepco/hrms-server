@@ -1,8 +1,13 @@
 const router = require("express").Router({ mergeParams: true });
 const empWiseRosterModel = require("../../../model/attendance/employeeWiseRoster.model");
 const shiftModel = require("../../../model/attendance/shift.model");
-const holidayModel = require('../../../model/shared/holiday.model');
+const holidayModel = require("../../../model/shared/holiday.model");
+const genWorkDayModel = require("../../../model/attendance/generalWorkingDay.model");
+const absentDetailModel = require("../../../model/attendance/absentDetail.model");
+const leaveTypeModel = require("../../../model/shared/leaveType.model");
+const dtHelper = require("./functions/dateTimeHelper");
 const Op = require("sequelize").Op;
+const codes = require("../../../global/codes");
 
 router.route("/employee/:empCode").get(async (req, res) => {
   try {
@@ -14,61 +19,118 @@ router.route("/employee/:empCode").get(async (req, res) => {
     const holidaysArray = await holidayModel.findAll({
       where: {
         day: { [Op.between]: [fromDate, toDate] },
-        type: {[Op.eq]: 'CH'}
+        type: { [Op.eq]: "CH" },
+        project_id: req.params.projectId
       }
-    })
-  
-    console.log(holidaysArray);
-
-    const empWiseRosters = await empWiseRosterModel.findAll({
-      include: [
-        {
-          model: shiftModel
-        }
-      ],
-      where: {
-        emp_code: empCode,
-        project_id: req.params.projectId,
-        day: { [Op.between]: [fromDate, toDate] },
-        attendance_status: { [Op.ne]: null }
-      }
-    }).map(emp => {
-      return Object.assign(
-        {},
-        {
-          id: emp.id,
-          day:emp.day,
-          emp_code: emp.emp_code,
-          shift: {id:emp.shift.id,name:emp.shift.name,is_general: emp.shift.is_general},          
-          in_time: emp.in_time,
-          out_time: emp.out_time,
-          attendance_status: emp.attendance_status,
-          modified_status: emp.modified_status,
-          remarks: emp.remarks
-        }
-      )
     });
 
-    // const empAttendData = empWiseRosters.map(emp => {
-    //   return Object.assign(
-    //     {},
-    //     {
-    //       id: emp.id,
-    //       day:emp.day,
-    //       emp_code: emp.emp_code,
-    //       shift_id: emp.shift.id,
-    //       shift_name: emp.shift.name,
-    //       is_general: emp.shift.is_general,
-    //       in_time: emp.in_time,
-    //       out_time: emp.out_time,
-    //       attendance_status: emp.attendance_status,
-    //       modified_status: emp.modified_status,
-    //       remarks: emp.remarks
-    //     }
-    //   );
-    // });
+    // Get list of general working days
+    const genWorkDays = await genWorkDayModel.findAll({
+      day: { [Op.between]: [fromDate, toDate] },
+      project_id: req.params.projectId
+    });
 
-    console.log(empWiseRosters);
+    // Get absent details
+    // Fetch absent details
+    const absentDetails = await absentDetailModel.findAll({
+      where: {
+        [Op.or]: [
+          {
+            from_date: {
+              [Op.between]: [fromDate, toDate]
+            }
+          },
+          {
+            to_date: {
+              [Op.between]: [fromDate, toDate]
+            }
+          }
+        ],
+        project_id: req.params.projectId
+      },
+      include: [{ model: leaveTypeModel }]
+    });
+
+    console.log(absentDetails)
+
+    // Get employee wise attendance status between fromDate and toDate
+    const empWiseRosters = await empWiseRosterModel
+      .findAll({
+        include: [{ model: shiftModel }],
+        where: {
+          emp_code: empCode,
+          project_id: req.params.projectId,
+          day: { [Op.between]: [fromDate, toDate] }
+          // attendance_status: { [Op.ne]: null }
+        }
+      })
+      .map(empRoster => {
+        let remarks, attendance_status;
+        const in_time = empRoster.in_time;
+        const out_time = empRoster.out_time;
+
+        if (empRoster.shift.is_general) {
+          if (holidaysArray.find(holiday => holiday.day === empRoster.day)) {
+            remarks = holiday.name;
+            attendance_status = codes.ATTENDANCE_HOLIDAY;
+          }
+          // Check if saturday and sunday is working day
+          else if (
+            dtHelper.isSundaySaturday(empRoster.day) &&
+            genWorkDays.find(workDay => workDay.day === empRoster.day)
+          ) {
+            remarks = dtHelper.isSunday(empRoster.day) ? "SUNDAY" : "SATURDAY";
+            attendance_status = codes.ATTENDANCE_HOLIDAY;
+          } else {
+            remarks = "";
+            attendance_status = empRoster.attendance_status;
+          }
+        }
+
+        if (!empRoster.shift.is_general) {
+          // Check for off day
+          if (codes.ATTENDANCE_OFF_DAY === empRoster.attendance_status) {
+            remarks = "";
+            attendance_status = empRoster.attendance_status;
+          } else {
+            remarks = "";
+            attendance_status = empRoster.attendance_status;
+          }
+        }
+
+        // Check for applied leaves
+        const absentDtl = absentDetails.find(absentDetail => {
+          return (
+            absentDetail.emp_code === empRoster.emp_code &&
+            dtHelper.compareDate(empRoster.day, absentDetail.from_date) >= 0 &&
+            dtHelper.compareDate(empRoster.day, absentDetail.to_date) <= 0
+          );
+        });
+
+        if (absentDtl) {
+          remarks = absentDtl.leave_type.description;
+          attendance_status = codes.ATTENDANCE_ON_LEAVE;
+        }
+
+        return Object.assign(
+          {},
+          {
+            id: empRoster.id,
+            day: empRoster.day,
+            emp_code: empRoster.emp_code,
+            shift: {
+              id: empRoster.shift.id,
+              name: empRoster.shift.name,
+              is_general: empRoster.shift.is_general
+            },
+            in_time: in_time,
+            out_time: out_time,
+            attendance_status: attendance_status,
+            modified_status: empRoster.modified_status,
+            remarks: remarks
+          }
+        );
+      });
 
     res.status(200).json(empWiseRosters);
   } catch (err) {

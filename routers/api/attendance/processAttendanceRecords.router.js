@@ -10,7 +10,7 @@ const db = require("../../../config/db");
 const Op = require("sequelize").Op;
 const moment = require("moment");
 
-router.route("/").get(async (req, res) => {
+router.route("/process").get(async (req, res) => {
   try {
     const currentDate = new Date(req.query.day);
 
@@ -121,8 +121,8 @@ router.route("/").get(async (req, res) => {
           day: currentDate,
           emp_code: empRoster.emp_code,
           // shift: shift.name,
-          in_time: "",
-          out_time: "",
+          in_time: null,
+          out_time: null,
           attendance_status: codes.ATTENDANCE_OFF_DAY
         });
       }
@@ -148,8 +148,8 @@ router.route("/").get(async (req, res) => {
           day: currentDate,
           emp_code: empRoster.emp_code,
           // shift: shift.name,
-          in_time: "",
-          out_time: "",
+          in_time: null,
+          out_time: null,
           attendance_status: codes.ATTENDANCE_ABSENT
         });
       }
@@ -170,7 +170,7 @@ router.route("/").get(async (req, res) => {
             emp_code: empRoster.emp_code,
             day: currentDate,
             in_time: emp_in_time,
-            out_time: "",
+            out_time: null,
             attendance_status: codes.ATTENDANCE_ABSENT
           });
         }
@@ -182,7 +182,7 @@ router.route("/").get(async (req, res) => {
             emp_code: empRoster.emp_code,
             day: currentDate,
             in_time: emp_in_time,
-            out_time: "",
+            out_time: null,
             attendance_status: codes.ATTENDANCE_ABSENT
           });
         }
@@ -399,5 +399,48 @@ async function insertEmpWiseRoster(dataArray) {
     throw error;
   }
 }
+
+router.route("/modify/shift/").post(async (req, res) => {
+  try {
+    const roster_id = req.body.id;
+    const shift_id  = req.body.shift_id;
+    const empRoster = empWiseRosterModel.findById(rester_id, {
+      include: [{ model: shiftModel }]
+    });
+    
+    if (!empRoster) {
+      return res
+      .status(2000)
+      .json({ message: `No data found corresponding to emp_roster_id ${roster_id}`});
+    }
+
+    if(empRoster.shift.id == shift_id) {
+      return res
+      .status(2000)
+      .json({ message: 'No changes made'});
+    }
+
+    empRoster.update({ shift_id: shift_id });
+
+    
+
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: `Error:: ${error.name}`, error: true, data: null });
+  }
+});
+
+router.route("/modify/status/").post(async (req, res) => {
+  try {
+
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: `Error:: ${error.name}`, error: true, data: null });
+  }
+});
 
 module.exports = router;
