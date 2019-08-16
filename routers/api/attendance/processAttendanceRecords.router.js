@@ -16,6 +16,7 @@ router.route("/process").get(async (req, res) => {
     //Get the wage month for the currentdate
     const currWageMonth = await wageMonthModel.findOne({
       where: {
+        project_id: req.params.projectId,
         from_date: { [Op.lte]: currentDate },
         to_date: { [Op.gte]: currentDate },
         status: codes.WAGE_MONTH_ACTIVE
@@ -113,7 +114,7 @@ router.route("/process").get(async (req, res) => {
       );
     }); //End of forEach loop
 
-    console.log("Attendance", attendanceArray);
+    // console.log("Attendance", attendanceArray);
 
     if (attendanceArray.length > 0) {
       try {

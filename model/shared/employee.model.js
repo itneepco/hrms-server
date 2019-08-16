@@ -1,7 +1,8 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
-const projectModel = require('./project.model')
-const designationModel = require('./designation.model')
+const projectModel = require('./project.model');
+const designationModel = require('./designation.model');
+const departmentModel = require('./department.model');
 const gradeModel = require('./grade.model')
 
 const Employee = db.define('employee', {
@@ -20,6 +21,9 @@ const Employee = db.define('employee', {
 	designation_id: {
 		type: Sequelize.INTEGER
 	},
+	department_id:{
+		type: Sequelize.INTEGER
+	},
 	project_id: {
 		type: Sequelize.INTEGER
   },
@@ -35,8 +39,9 @@ const Employee = db.define('employee', {
 	}
 )
 
-Employee.belongsTo(projectModel)
-Employee.belongsTo(designationModel)
-Employee.belongsTo(gradeModel)
+Employee.belongsTo(projectModel);
+Employee.belongsTo(departmentModel);
+Employee.belongsTo(designationModel);
+Employee.belongsTo(gradeModel);
 
 module.exports = Employee

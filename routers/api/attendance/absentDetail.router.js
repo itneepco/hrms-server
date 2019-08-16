@@ -1,6 +1,6 @@
 const router = require("express").Router({ mergeParams: true });
 const absentDetailModel = require("../../../model/attendance/absentDetail.model");
-const leaveTypeModel = require("../../../model/leave/leaveType.model");
+const leaveTypeModel = require("../../../model/shared/leaveType.model");
 
 router
   .route("/")
@@ -16,8 +16,7 @@ router
         limit: limit,
         offset: offset,
         include: [{ 
-          model: leaveTypeModel,
-          as: 'leave_type' 
+          model: leaveTypeModel
         }]
       })
       .then(result => res.status(200).json(result))

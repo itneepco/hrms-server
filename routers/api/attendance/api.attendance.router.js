@@ -12,6 +12,8 @@ router.use('/project/:projectId/employee/:empCode/absent-detail', require('./abs
 router.use('/project/:projectId/attendance-data/', require('./processAttendanceRecords.router'))
 router.use('/project/:projectId/wage-month', require('./wageMonth.router'))
 router.use('/project/:projectId/attendance-status/', require('./displayAttendanceData.router'))
-router.use('/project/:projectId/process_month_end/', require('./processMonthEnd.router'))
+router.use('/project/:projectId/month-end/', require('./processMonthEnd.router'))
+router.use('/project/:projectId/todays-attendance', require('./todaysAttendance.router'))
+router.use('/project/:projectId/employee-dashboard', require('./employeeDashboard.router'));
 
 module.exports = router

@@ -24,8 +24,8 @@ const Shift = db.define('shift',{
   late_time:{
     type: Sequelize.TIME
   },
-  half_time:{
-    type: Sequelize.TIME
+  working_hours:{
+    type: Sequelize.INTEGER
   },
   created_by: {
     type: Sequelize.STRING,

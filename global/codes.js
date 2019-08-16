@@ -63,8 +63,11 @@ module.exports = {
     ATTENDANCE_HALF_DAY: '03',
     ATTENDANCE_LATE: '04',
     ATTENDANCE_OFF_DAY: '05',
+    // Dynamic | Not considered at the time of processing
     ATTENDANCE_HOLIDAY: '06',
-    ATTENDANCE_ON_LEAVE: '07',
+    // Dynamic | Not considered at the time of processing
+    ATTENDANCE_ABSENT_OFFICIALLY: '07',
+    
 
     // WAGE MONTH STATUS
     WAGE_MONTH_ACTIVE: 1,

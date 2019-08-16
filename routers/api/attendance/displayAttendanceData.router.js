@@ -68,8 +68,8 @@ router.route("/employee/:empCode").get(async (req, res) => {
       })
       .map(empRoster => {
         let remarks, attendance_status;
-        const in_time = empRoster.in_time;
-        const out_time = empRoster.out_time;
+        const in_time = empRoster.in_time ? empRoster.in_time : '--';
+        const out_time = empRoster.out_time ? empRoster.out_time : '--';
 
         console.log(empRoster.day);
 
@@ -116,7 +116,7 @@ router.route("/employee/:empCode").get(async (req, res) => {
 
         if (absentDtl) {
           remarks = absentDtl.leave_type.description;
-          attendance_status = codes.ATTENDANCE_ON_LEAVE;
+          attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
         }
 
         return Object.assign(
@@ -142,9 +142,7 @@ router.route("/employee/:empCode").get(async (req, res) => {
     res.status(200).json(empWiseRosters);
   } catch (err) {
     console.log("Error : " + err);
-  } finally {
-    // Code will be added later
-  }
+  } 
 });
 
 router.route("/employee").get(async (req, res) => {});

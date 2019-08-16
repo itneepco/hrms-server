@@ -1,6 +1,7 @@
 const Sequelize = require("sequelize");
 const db = require("../../config/db");
 const shiftModel = require('./shift.model');
+const employeeModel = require('../shared/employee.model');
 
 const empWiseRoster = db.define(
   "empWiseRoster",
@@ -51,5 +52,6 @@ const empWiseRoster = db.define(
 );
 
 empWiseRoster.belongsTo(shiftModel);
+empWiseRoster.belongsTo(employeeModel, {as: 'employee', foreignKey: 'emp_code', targetKey: 'emp_code' });
 
 module.exports = empWiseRoster;

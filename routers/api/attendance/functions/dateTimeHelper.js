@@ -1,5 +1,9 @@
 const moment = require("moment");
 
+function getTodaysDate() {
+  return moment(new Date()).format('YYYY-MM-DD');
+}
+
 function getTimeInterval(startTime, endTime) {
   const start = moment(startTime, "HH:mm");
   const end = moment(endTime, "HH:mm");
@@ -79,5 +83,6 @@ module.exports = {
   compareDate,
   isSundaySaturday,
   isSunday,
-  isSaturday
+  isSaturday,
+  getTodaysDate
 };

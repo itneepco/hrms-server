@@ -1,15 +1,37 @@
-const router             = require("express").Router({ mergeParams: true });
+const router = require("express").Router({ mergeParams: true });
 const empWiseRosterModel = require("../../../model/attendance/employeeWiseRoster.model");
-const wageMonthModel     = require("../../../model/attendance/wageMonth.model");
-const holidayModel       = require("../../../model/shared/holiday.model");
-const absentDetailModel  = require("../../../model/attendance/absentDetail.model");
-const shiftModel         = require("../../../model/attendance/shift.model");
-const dateTimeHelper     = require("./functions/dateTimeHelper");
-const codes              = require("../../../global/codes");
-const Op                 = require("sequelize").Op;
+const wageMonthModel = require("../../../model/attendance/wageMonth.model");
+const holidayModel = require("../../../model/shared/holiday.model");
+const absentDetailModel = require("../../../model/attendance/absentDetail.model");
+const genWorkDayModel = require("../../../model/attendance/generalWorkingDay.model");
+const shiftModel = require("../../../model/attendance/shift.model");
+const projectModel = require('../../../model/shared/project.model');
+const departmentModel = require('../../../model/shared/department.model');
+const designationModel = require('../../../model/shared/designation.model');
+const gradeModel = require('../../../model/shared/grade.model');
+const dateTimeHelper = require("./functions/dateTimeHelper");
+const calculateAbsenteeStatement = require("./functions/calculateAbsenteeStatement");
+const codes = require("../../../global/codes");
+const Op = require("sequelize").Op;
 
-router.route("/").get(async (req, res) => {
+router.route("/absentee-statement").get(async (req, res) => {
   try {
+    let records_array = await calculateAbsenteeStatement(req)
+    records_array = records_array.filter(record => record.absent_days_count > 0)
+    res.status(200).json({ message: `Success`, error: false, data: records_array });
+  }
+  catch(error) {
+    console.error("Error : " + error);
+    res
+      .status(500)
+      .json({ message: `Error:: ${error}`, error: true, data: null });
+  }
+});
+
+router.route("/absentee-statement-old").get(async (req, res) => {
+  try {
+    console.log("HIHIH");
+
     // Fetch the current wage month
     const currWageMonth = await wageMonthModel.findOne({
       where: {
@@ -27,15 +49,42 @@ router.route("/").get(async (req, res) => {
       });
     }
 
+    // Get list of general working days
+    const genWorkDays = await genWorkDayModel.findAll({
+      where: {
+        day: { [Op.between]: [currWageMonth.from_date, currWageMonth.to_date] },
+        project_id: req.params.projectId
+      }
+    });
+
     // To do: Check whether punching records for the employess have been processed for each day
     // in the current wage month
 
     // Fetch data from employee_wise_roster between start date and end date of the current wage month
     const empWiseRosters = await empWiseRosterModel.findAll({
       where: {
-        day: { [Op.between]: [currWageMonth.from_date, currWageMonth.to_date] },
+        day: {
+          [Op.between]: [currWageMonth.from_date, currWageMonth.to_date]
+        },
         project_id: req.params.projectId
-      }
+      },
+
+      include: [
+        {
+          model: employeeModel,
+          as: 'employee',  
+          attributes: ["first_name", "middle_name", "last_name"],
+          include: [
+            { model: projectModel },
+            {
+              model: departmentModel
+            },
+            { model: designationModel },
+            { model: gradeModel }
+          ]
+        },
+        { model: shiftModel }
+      ]
     });
 
     // Fetch holiday details for the current wage  month
@@ -43,7 +92,7 @@ router.route("/").get(async (req, res) => {
       where: {
         day: { [Op.between]: [currWageMonth.from_date, currWageMonth.to_date] },
         project_id: req.params.projectId,
-        type: {[Op.eq]: 'CH'}
+        type: { [Op.eq]: "CH" }
       }
     });
 
@@ -66,57 +115,168 @@ router.route("/").get(async (req, res) => {
       }
     });
 
-    let records = {};
+    let records       = {};
+    let records_array = [];
 
     empWiseRosters.forEach(empRoster => {
 
       if (records[empRoster.emp_code] === undefined) {
         records[empRoster.emp_code] = {
-          absent_days: [],
-          holiday: []
+          emp_code         : empRoster.emp_code,
+          name             : `${empRoster.employee.first_name} ${empRoster.employee.middle_name} ${empRoster.employee.last_name}`,
+          department_id    : empRoster.employee.department.id,
+          department       : `${empRoster.employee.department.name}`,
+          designation      : `${empRoster.employee.designation.name}`,
+          present_days     : [],
+          absent_days      : [],
+          holidays         : [],
+          sunday_saturdays : [],
+          leave_days       : [],
+          half_days        : [],
+          late_present     : [],
+          off_days         : [],
+          absent_days_count: 0
         };
       }
 
       let attendance_status = empRoster.attendance_status;
 
-      if (attendance_status === codes.ATTENDANCE_ABSENT || !attendance_status) {
+      /*
+      records[empRoster.emp_code] = calculateAbsenteeStatement(
+        attendance_status,
+        records[empRoster.emp_code],
+        empRoster,
+        genWorkDays,
+        holidays,
+        absentDetails
+      );
+      */
+
+      //*************************************************************************** */
+      //*************************************************************************** */
+      
+      //---------------------------------------------------------------------------
+      // If modified status is 1 | Conclusion present
+      if (empRoster.modified_status === 1) {
+        records[empRoster.emp_code].present_days.push(empRoster.day);
+        return;
+      }
+      //---------------------------------------------------------------------------
+
+      //---------------------------------------------------------------------------
+      // Employee is absent on a holiday | Conclusion holiday
+      if (
+        holidays.find(holiday => holiday.day === empRoster.day) &&
+        empRoster.shift.is_general
+      ) {
+        records[empRoster.emp_code].holidays.push(empRoster.day);
         
-        // Employee is absent in a holiday
-        if (holidays.find(holiday => holiday.day === empRoster.day)) {
+        return;
+      }
+      //---------------------------------------------------------------------------
+
+      //---------------------------------------------------------------------------
+      // Check for leave
+      const absentDtl = absentDetails.find(absentDetail => {
+        return (
+          absentDetail.emp_code === empRoster.emp_code &&
+          dateTimeHelper.compareDate(empRoster.day, absentDetail.from_date) >=
+            0 &&
+          dateTimeHelper.compareDate(empRoster.day, absentDetail.to_date) <= 0
+        );
+      });
+
+      if (absentDtl) {
+        // Employee has applied leave
+        records[empRoster.emp_code].leave_days.push(empRoster.day);
+        
+        return;
+      }
+      //---------------------------------------------------------------------------
+
+      //---------------------------------------------------------------------------
+      // Sunday or Saturday and not declared as working day
+      if (
+        dateTimeHelper.isSundaySaturday(empRoster.day) &&
+        empRoster.shift.is_general
+      ) {
+        if (!genWorkDays.find(work_day => work_day.day === empRoster.day)) {
+          records[empRoster.emp_code].sunday_saturdays.push(empRoster.day);
+          
           return;
         }
-
-        if (dateTimeHelper.isSundaySaturday(empRoster.day))  return;
-
-        // Employess is absent with leave applied
-        const absentDtl = absentDetails.find(absentDetail => {
-
-          return (
-            absentDetail.emp_code === empRoster.emp_code &&
-            dateTimeHelper.compareDate(empRoster.day, absentDetail.from_date) >= 0 &&
-            dateTimeHelper.compareDate(empRoster.day, absentDetail.to_date) <= 0
-          );
-        });
-
-        if(!absentDtl) {
-          records[empRoster.emp_code].absent_days.push(empRoster.day);
-          
-        } else {
-          console.log('Employee '+empRoster.emp_code + ' has leave on ' + empRoster.day+ '\n');
-        }
       }
+      //---------------------------------------------------------------------------
+
+      //---------------------------------------------------------------------------
+      if (attendance_status === codes.ATTENDANCE_ABSENT) {
+        records[empRoster.emp_code].absent_days.push(empRoster.day);
+        records[empRoster.emp_code].absent_days_count += 1;
+        
+        return;
+      }
+      //---------------------------------------------------------------------------
+
+      //---------------------------------------------------------------------------
+      if (attendance_status === codes.ATTENDANCE_LATE) {
+        records[empRoster.emp_code].late_present.push(empRoster.day);
+        
+        return;
+      }
+      //---------------------------------------------------------------------------
+
+      //---------------------------------------------------------------------------
+      if (attendance_status === codes.ATTENDANCE_PRESENT) {
+        records[empRoster.emp_code].present_days.push(empRoster.day);
+        
+        return;
+      }
+      //---------------------------------------------------------------------------
+
+      //---------------------------------------------------------------------------
+      if (attendance_status === codes.ATTENDANCE_HALF_DAY) {
+        records[empRoster.emp_code].half_days.push(empRoster.day);
+        records[empRoster.emp_code].absent_days_count += 0.5;
+        
+        return;
+      }
+      //---------------------------------------------------------------------------
+
+      //---------------------------------------------------------------------------
+      if (attendance_status === codes.ATTENDANCE_OFF_DAY) {
+        records[empRoster.emp_code].off_days.push(empRoster.day);
+        records[empRoster.emp_code].absent_days_count += 0.5;
+        
+        return;
+      }
+      //---------------------------------------------------------------------------
+      
+      //*************************************************************************** */
+      //*************************************************************************** */
     });
 
-    console.log(records);
+    for (let key in records) {
+      if (key === records[key].emp_code) {
+        records_array.push(records[key]);
+      }
+    }
 
-    res.status(200).json(records['006368']);
+    //res.status(200).json(records_array.filter(e => e.department_id == '1'));
+    res.status(200).json(records_array);
   } catch (error) {
     console.error("Error : " + error);
     res
       .status(500)
-      .json({ message: `Error:: ${error.name}`, error: true, data: null });
-  } finally {
-  }
+      .json({ message: `Error:: ${error}`, error: true, data: null });
+  } 
 });
+
+router.route("/close").get(async (req, res) => {
+
+})
+
+router.route("/absentee-statement-download").get(async (req, res) => {
+
+})
 
 module.exports = router;

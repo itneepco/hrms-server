@@ -24,7 +24,7 @@ router.route('/')
     out_time_start: req.body.out_time_start,
     out_time_end:req.body.out_time_end,
     late_time: req.body.late_time,
-    half_time: req.body.half_time,
+    working_hours: req.body.working_hours,
     is_night_shift: req.body.is_night_shift,
     is_general: req.body.is_general,
     created_by: req.user.emp_code
@@ -58,7 +58,7 @@ router.route('/:id')
       out_time_start: req.body.out_time_start,
       out_time_end: req.body.out_time_end,
       late_time: req.body.late_time,
-      half_time: req.body.half_time,
+      working_hours: req.body.working_hours,
       is_night_shift: req.body.is_night_shift,
       is_general: req.body.is_general,
       created_by: req.body.created_by,

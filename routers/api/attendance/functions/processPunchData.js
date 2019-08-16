@@ -12,13 +12,15 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
   const in_time_late = shift.late_time;
   const out_time_start = shift.out_time_start;
   const out_time_end = shift.out_time_end;
+  //Retrieve shift working hours as per roster
+  const shift_working_hour = shift.working_hours;
 
   // Variable to employee punching time
   let emp_in_time;
   let emp_out_time;
 
   // If off day for shift duty employee
-  if (shift.in_time_start === shift.out_time_start) {
+  if (shift_working_hour == 0) {
     return {
       day: currentDate,
       emp_code: empRoster.emp_code,
@@ -28,12 +30,6 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
       attendance_status: codes.ATTENDANCE_OFF_DAY
     };
   }
-
-  //Calculate working hours as per roster
-  const shift_working_hour = dateTimeHelper.getTimeInterval(
-    in_time_start,
-    out_time_start
-  );
 
   // Variable to store punching Reocrds of the employee for the currentDate
   let empPunchData;
@@ -111,11 +107,15 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
     emp_out_time
   );
 
-  if(empRoster.emp_code === '006366') {
-    console.log(emp_in_time,
+  if(empRoster.emp_code === '005383') {
+    console.log(
+      '005383',
+      emp_in_time,
       in_time_start,
       in_time_end,
-      in_time_late)
+      in_time_late,
+      emp_working_hour,
+      shift_working_hour)
 
     console.log("IN FLAG", emp_punch_in_flag)
     console.log("OUT FLAG", emp_punch_out_flag)
