@@ -57,18 +57,16 @@ router.use(
   require("./processAttendanceRecords.router")
 );
 router.use(
-  "/project/:projectId/todays-attendance",
-  validateTimeOfficer,
-  require("./todaysAttendance.router")
-);
-router.use(
   "/project/:projectId/month-end/",
   validateTimeOfficer,
   require("./processMonthEnd.router")
 );
 
-//test
-router.use('/project/:projectId/month-close/', validateTimeOfficer, require('./monthEnd.router'));
+router.use(
+  "/project/:projectId/graph-dashboard/",
+  validateTimeOfficer,
+  require("./graphDashboard.router")
+);
 
 // For Employee
 router.use(

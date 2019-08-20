@@ -102,11 +102,6 @@ router.route("/status").get(async (req, res) => {
       let year_number = "";
 
       const is_processed = processedDays.find(row => {
-        // console.log('day : ')
-        // console.log(row.day);
-        // console.log('date : ')
-        // console.log(date);
-        console.log(dateTimeHelper.equalDate(row.day, date));
         return dateTimeHelper.equalDate(row.day, date);
       });
 

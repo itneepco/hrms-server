@@ -160,11 +160,11 @@ async function insertEmpWiseRoster(dataArray) {
 
     Promise.all(promiseArray)
     .then(() => {
-      await transaction.commit();
+      transaction.commit();
       return { message: "SUCCESS" };
     })
     .catch(err => {
-      await transaction.rollback();
+      transaction.rollback();
       console.log(err);
       throw error;
     });

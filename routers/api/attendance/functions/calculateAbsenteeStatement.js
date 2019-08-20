@@ -13,9 +13,12 @@ const codes = require("../../../../global/codes");
 const Op = require("sequelize").Op;
 
 
-async function calculateAbsenteeStatement(projectId) {
+async function calculateAbsenteeStatement(projectId, from_date = null, to_date = null) {
   return new Promise(async (resolve, reject) => {
     try {
+
+      let fromDate, toDate;
+
       // Fetch the current wage month
       const currWageMonth = await wageMonthModel.findOne({
         where: {
@@ -32,11 +35,19 @@ async function calculateAbsenteeStatement(projectId) {
           data: null
         });
       }
+
+      if (from_date !== null && to_date !== null) {
+        fromDate = from_date;
+        toDate   = to_date;
+      } else {
+        fromDate = currWageMonth.from_date;
+        toDate   = currWageMonth.to_date;
+      }
   
       // Get list of general working days
       const genWorkDays = await genWorkDayModel.findAll({
         where: {
-          day: { [Op.between]: [currWageMonth.from_date, currWageMonth.to_date] },
+          day: { [Op.between]: [fromDate, toDate] },
           project_id: projectId
         }
       });
@@ -48,7 +59,7 @@ async function calculateAbsenteeStatement(projectId) {
       const empWiseRosters = await empWiseRosterModel.findAll({
         where: {
           day: {
-            [Op.between]: [currWageMonth.from_date, currWageMonth.to_date]
+            [Op.between]: [fromDate, toDate]
           },
           project_id: projectId
         },
@@ -74,7 +85,7 @@ async function calculateAbsenteeStatement(projectId) {
       // Fetch holiday details for the current wage  month
       const holidays = await holidayModel.findAll({
         where: {
-          day: { [Op.between]: [currWageMonth.from_date, currWageMonth.to_date] },
+          day: { [Op.between]: [fromDate, toDate] },
           project_id: projectId,
           type: { [Op.eq]: "CH" }
         }
@@ -86,12 +97,12 @@ async function calculateAbsenteeStatement(projectId) {
           [Op.or]: [
             {
               from_date: {
-                [Op.between]: [currWageMonth.from_date, currWageMonth.to_date]
+                [Op.between]: [fromDate, toDate]
               }
             },
             {
               to_date: {
-                [Op.between]: [currWageMonth.from_date, currWageMonth.to_date]
+                [Op.between]: [fromDate, toDate]
               }
             }
           ],
@@ -125,42 +136,28 @@ async function calculateAbsenteeStatement(projectId) {
         }
   
         let attendance_status = empRoster.attendance_status;
-  
-        /*
-        records[empRoster.emp_code] = calculateAbsenteeStatement(
-          attendance_status,
-          records[empRoster.emp_code],
-          empRoster,
-          genWorkDays,
-          holidays,
-          absentDetails
-        );
-        */
-  
-        //*************************************************************************** */
-        //*************************************************************************** */
         
         //---------------------------------------------------------------------------
+        
         // If modified status is 1 | Conclusion present
         if (empRoster.modified_status === 1) {
           records[empRoster.emp_code].present_days.push(empRoster.day);
           return;
         }
-        //---------------------------------------------------------------------------
   
         //---------------------------------------------------------------------------
+
         // Employee is absent on a holiday | Conclusion holiday
         if (
           holidays.find(holiday => holiday.day === empRoster.day) &&
           empRoster.shift.is_general
         ) {
           records[empRoster.emp_code].holidays.push(empRoster.day);
-          
           return;
         }
+
         //---------------------------------------------------------------------------
-  
-        //---------------------------------------------------------------------------
+
         // Check for leave
         const absentDtl = absentDetails.find(absentDetail => {
           return (
@@ -171,15 +168,14 @@ async function calculateAbsenteeStatement(projectId) {
           );
         });
   
+        // Employee has applied leave
         if (absentDtl) {
-          // Employee has applied leave
           records[empRoster.emp_code].leave_days.push(empRoster.day);
-          
           return;
         }
+
         //---------------------------------------------------------------------------
   
-        //---------------------------------------------------------------------------
         // Sunday or Saturday and not declared as working day
         if (
           dateTimeHelper.isSundaySaturday(empRoster.day) &&
@@ -187,55 +183,48 @@ async function calculateAbsenteeStatement(projectId) {
         ) {
           if (!genWorkDays.find(work_day => work_day.day === empRoster.day)) {
             records[empRoster.emp_code].sunday_saturdays.push(empRoster.day);
-            
             return;
           }
         }
-        //---------------------------------------------------------------------------
   
         //---------------------------------------------------------------------------
+
         if (attendance_status === codes.ATTENDANCE_ABSENT) {
           records[empRoster.emp_code].absent_days.push(empRoster.day);
           records[empRoster.emp_code].absent_days_count += 1;
-          
           return;
         }
+
         //---------------------------------------------------------------------------
-  
-        //---------------------------------------------------------------------------
+
         if (attendance_status === codes.ATTENDANCE_LATE) {
           records[empRoster.emp_code].late_days.push(empRoster.day);
-          
           return;
         }
+
         //---------------------------------------------------------------------------
   
-        //---------------------------------------------------------------------------
         if (attendance_status === codes.ATTENDANCE_PRESENT) {
           records[empRoster.emp_code].present_days.push(empRoster.day);
-          
           return;
         }
+
         //---------------------------------------------------------------------------
   
-        //---------------------------------------------------------------------------
         if (attendance_status === codes.ATTENDANCE_HALF_DAY) {
           records[empRoster.emp_code].half_days.push(empRoster.day);
           records[empRoster.emp_code].absent_days_count += 0.5;
-          
           return;
         }
+
         //---------------------------------------------------------------------------
   
-        //---------------------------------------------------------------------------
         if (attendance_status === codes.ATTENDANCE_OFF_DAY) {
           records[empRoster.emp_code].off_days.push(empRoster.day);
           return;
         }
+
         //---------------------------------------------------------------------------
-        
-        //*************************************************************************** */
-        //*************************************************************************** */
       });
   
       for (let key in records) {

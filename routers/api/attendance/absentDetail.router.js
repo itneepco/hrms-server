@@ -15,7 +15,7 @@ router
         order: [["from_date", "DESC"]],
         limit: limit,
         offset: offset,
-        include: [{ model: leaveTypeModel }]
+        include: [{ model: leaveTypeModel, as: "leaveType" }]
       })
       .then(result => res.status(200).json(result))
       .catch(err => {
@@ -38,7 +38,7 @@ router
         absentDetailModel
           .findOne({
             id: req.params.id,
-            include: [{ model: leaveTypeModel }]
+            include: [{ model: leaveTypeModel, as: "leaveType" }]
           })
           .then(result => res.status(200).json(result))
           .catch(err => {
@@ -80,7 +80,7 @@ router
         absentDetailModel
           .findOne({
             id: req.params.id,
-            include: [{ model: leaveTypeModel }]
+            include: [{ model: leaveTypeModel, as: "leaveType" }]
           })
           .then(result => res.status(200).json(result))
           .catch(err => {

@@ -11,9 +11,9 @@ const codes = require("../../../global/codes");
 
 router.route("/employee/:empCode").get(async (req, res) => {
   try {
-    const empCode = req.params.empCode;
+    const empCode  = req.params.empCode;
     const fromDate = new Date(req.query.from_date);
-    const toDate = new Date(req.query.to_date);
+    const toDate   = new Date(req.query.to_date);
 
     // Get holidays for the wagemonth
     const holidaysArray = await holidayModel.findAll({
@@ -50,10 +50,8 @@ router.route("/employee/:empCode").get(async (req, res) => {
         ],
         project_id: req.params.projectId
       },
-      include: [{ model: leaveTypeModel }]
+      include: [{ model: leaveTypeModel, as: "leaveType" }]
     });
-
-    console.log(absentDetails);
 
     // Get employee wise attendance status between fromDate and toDate
     const empWiseRosters = await empWiseRosterModel
@@ -67,14 +65,14 @@ router.route("/employee/:empCode").get(async (req, res) => {
         }
       })
       .map(empRoster => {
+        
         let remarks, attendance_status;
         const in_time = empRoster.in_time ? empRoster.in_time : '--';
         const out_time = empRoster.out_time ? empRoster.out_time : '--';
 
-        console.log(empRoster.day);
-
         if (empRoster.shift.is_general) {
-          if (holidaysArray.find(holiday => holiday.day === empRoster.day)) {
+          const holiday = holidaysArray.find(holiday => holiday.day === empRoster.day)
+          if (holiday) {
             remarks = holiday.name;
             attendance_status = codes.ATTENDANCE_HOLIDAY;
           }
@@ -85,9 +83,6 @@ router.route("/employee/:empCode").get(async (req, res) => {
           ) {
             remarks = dtHelper.isSunday(empRoster.day) ? "SUNDAY" : "SATURDAY";
             attendance_status = codes.ATTENDANCE_HOLIDAY;
-            console.log(
-              "Date: " + empRoster.day + " | Sun Sat  Day ? : " + remarks
-            );
           } else {
             remarks = "";
             attendance_status = empRoster.attendance_status;
@@ -115,7 +110,7 @@ router.route("/employee/:empCode").get(async (req, res) => {
         });
 
         if (absentDtl) {
-          remarks = absentDtl.leave_type.description;
+          remarks = absentDtl.leaveType.description;
           attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
         }
 

@@ -34,6 +34,6 @@ const absentDetail = db.define('absentDetail', {
 );
 
 
-absentDetail.belongsTo(leaveTypeModel, { as: "leaveType", foreignKey: "leave_code" });
+absentDetail.belongsTo(leaveTypeModel, { as: "leaveType", foreignKey: "leave_code", targetKey: "code" });
 
 module.exports = absentDetail;

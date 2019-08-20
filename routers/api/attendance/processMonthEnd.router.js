@@ -19,7 +19,11 @@ const moment = require("moment");
 
 router.route("/absentee-statement").get(async (req, res) => {
   try {
-    let records_array = await calculateAbsenteeStatement(req.params.projectId);
+    const fromDate = new Date(req.query.from_date);
+    const toDate = new Date(req.query.to_date);
+    const projectId = req.params.projectId
+
+    let records_array = await calculateAbsenteeStatement(projectId, fromDate, toDate);
     records_array = records_array.filter(
       record => record.absent_days_count > 0
     );
@@ -36,6 +40,7 @@ router.route("/absentee-statement").get(async (req, res) => {
 
 router.route("/close").get(async (req, res) => {
   let transaction;
+  const projectId = req.params.projectId
 
   try {
     const today = dateTimeHelper.getTodaysDate();
@@ -44,7 +49,14 @@ router.route("/close").get(async (req, res) => {
     const wageMonths = await wageMonthModel.findAll({
       where: {
         project_id: req.params.projectId,
-        status: { [Op.lt]: 3 }
+        status: { [Op.lt]: 3 },
+      }
+    });
+
+    const shiftTimings = await shiftModel.findAll({
+      where: {
+        project_id: req.params.projectId,
+        is_general: false
       }
     });
 
@@ -52,6 +64,32 @@ router.route("/close").get(async (req, res) => {
     if (wageMonths.length > 1) {
       currWageMonth = wageMonths.find(val => val.status === codes.WAGE_MONTH_ACTIVE);
       nextWageMonth = wageMonths.find(val => val.status === codes.WAGE_MONTH_NEXT);
+    }
+
+    if (!currWageMonth) {
+      return res.status(200).json({
+        message: "Wage month corresponding to day does not exist",
+        error: false,
+        data: null
+      });
+    }
+
+    // Check if general roster is generated
+    if (!currWageMonth.gen_roster_status) {
+      return res.status(200).json({
+        message: "Employee wise general roster not generated for the period",
+        error: false,
+        data: null
+      });
+    }
+
+    // Check if there are any shift duty. if present check if shift roster is generated
+    if (shiftTimings.length > 0 && !currWageMonth.shift_roster_status) {
+      return res.status(200).json({
+        message: "Employee wise shift roster not generated for the period",
+        error: false,
+        data: null
+      });
     }
 
     // Review later
@@ -63,7 +101,7 @@ router.route("/close").get(async (req, res) => {
       });
     }
 
-    let records_array = await calculateAbsenteeStatement(req.params.projectId);
+    let records_array = await calculateAbsenteeStatement(projectId);
 
     records_array = records_array.map(item => {
       return {
@@ -109,13 +147,13 @@ router.route("/close").get(async (req, res) => {
 
     await transaction.commit();
     
-    res.status(200).json({ message: `Success`, error: false, data: null });
+    res.status(200).json({ message: `Month end completed succesfully`, error: false, data: null });
   } 
   
   catch (error) {
     console.error("Error : " + error);
     transaction.rollback();
-    res.status(500).json({ message: `Error:: ${error}`, error: true, data: null });
+    res.status(500).json({ message: 'An error occured', error: true, data: null });
   }
 });
 
