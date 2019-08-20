@@ -267,9 +267,10 @@ function leaveApprove(req, res) {
         //Update leave application status
         return leaveAppModel.update(
           { status: Codes.LEAVE_APPROVED, addressee: null }, 
-          { where: { id: req.params.leaveAppId }
-        }, 
-        { transaction: t })
+          { 
+            where: { id: req.params.leaveAppId },
+            transaction: t
+          })
       })
     })
     .then(function () {
@@ -308,8 +309,9 @@ function leaveCancel(req, res) {
         if(!el_hpl) return Promise.resolve() 
   
         return joiningReportModel.destroy({
-          where: { leave_application_id: req.params.leaveAppId }
-        }, { transaction: t })
+          where: { leave_application_id: req.params.leaveAppId },
+          transaction: t
+        })
       })
       .then(() => {
         let no_of_cl = result.leaveDetails.filter(leaveDetail => leaveDetail.leave_type === Codes.CL_CODE).length
@@ -346,9 +348,10 @@ function leaveCancel(req, res) {
       .then(() => {
         return leaveAppModel.update(
           { status: Codes.LEAVE_CANCELLED, addressee: null }, 
-          { where: { id: req.params.leaveAppId }
-        }, 
-        { transaction: t })
+          { 
+            where: { id: req.params.leaveAppId },
+            transaction: t
+          })
       })
     })
     .then(function () {
@@ -410,8 +413,10 @@ function processCallbackAction(req, res, status) {
             status: status, 
             addressee: (user && user.emp_code == result.emp_code) ? null : req.body.officer_emp_code
           }, 
-          { where: { id: req.params.leaveAppId }}, 
-          { transaction: t }
+          { 
+            where: { id: req.params.leaveAppId },
+            transaction: t
+          }
         );
       })
     })
@@ -442,8 +447,11 @@ function processLeaveWorkflowAction(req, res, status, addressee) {
           status: status, 
           addressee: addressee
         }, 
-        { where: { id: req.params.leaveAppId }
-      }, { transaction: t });
+        { 
+          where: { id: req.params.leaveAppId },
+          transaction: t
+        }
+      );
     })
     .then(function () {
       res.status(200).json({message: "Leave request processed successful"})
