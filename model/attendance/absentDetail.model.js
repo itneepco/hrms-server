@@ -1,9 +1,9 @@
 const Sequelize = require('sequelize');
 const db = require('../../config/db');
 
-const leaveTypeModel= require('../shared/leaveType.model');
+const leaveTypeModel = require('../shared/leaveType.model');
 
-const absentDetail = db.define('absentDetail',{
+const absentDetail = db.define('absentDetail', {
   emp_code: {
     type: Sequelize.INTEGER,
     allowNull: false
@@ -18,23 +18,22 @@ const absentDetail = db.define('absentDetail',{
     unique: true,
     allowNull: false
   },
-  leave_type_id:{
+  leave_code: {
     type: Sequelize.INTEGER,
     allowNull: false
   },
-  project_id:{
+  project_id: {
     type: Sequelize.INTEGER,
     allowNull: false
   },
 },
-{
-  underscored: true,
-  tableName: "absent_dtl"
-}
-
+  {
+    underscored: true,
+    tableName: "absent_dtl"
+  }
 );
 
 
-absentDetail.belongsTo(leaveTypeModel);
+absentDetail.belongsTo(leaveTypeModel, { as: "leaveType", foreignKey: "leave_code" });
 
 module.exports = absentDetail;

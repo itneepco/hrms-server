@@ -140,7 +140,7 @@ router.route("/process").get(async (req, res) => {
 async function insertEmpWiseRoster(dataArray) {
   let transaction;
   try {
-    transaction = await db.transaction();
+    transaction = await db.transaction({autocommit: false});
     promiseArray = [];
     await dataArray.forEach(async data => {
       promiseArray.push(
@@ -159,16 +159,17 @@ async function insertEmpWiseRoster(dataArray) {
     });
 
     Promise.all(promiseArray)
-      .then(() => {
-        transaction.commit();
-        return { message: "SUCCESS" };
-      })
-      .catch(err => {
-        transaction.rollback();
-        console.log(err);
-        throw error;
-      });
-  } catch (error) {
+    .then(() => {
+      await transaction.commit();
+      return { message: "SUCCESS" };
+    })
+    .catch(err => {
+      await transaction.rollback();
+      console.log(err);
+      throw error;
+    });
+  } 
+  catch (error) {
     console.log(err);
     throw error;
   }

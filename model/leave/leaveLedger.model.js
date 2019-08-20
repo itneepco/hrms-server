@@ -20,11 +20,10 @@ const leaveLedger = db.define('leaveLedger', {
 	},
 	remarks: {
 		type: Sequelize.STRING
-  },
-  is_manually_added: {
-    type: Sequelize.BOOLEAN // if added by HR admin from leave ledger screen manually
-  }
-
+	},
+	is_manually_added: {
+		type: Sequelize.BOOLEAN // if added by HR admin from leave ledger screen manually
+	}
 }, {
 		underscored: true,
 		tableName: 'leave_ledger'

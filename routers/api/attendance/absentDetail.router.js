@@ -8,16 +8,14 @@ router
     let pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0;
     let limit = req.query.pageSize ? parseInt(req.query.pageSize) : 50;
     let offset = pageIndex * limit;
-    
+
     absentDetailModel
       .findAndCountAll({
         where: { emp_code: req.params.empCode },
         order: [["from_date", "DESC"]],
         limit: limit,
         offset: offset,
-        include: [{ 
-          model: leaveTypeModel
-        }]
+        include: [{ model: leaveTypeModel }]
       })
       .then(result => res.status(200).json(result))
       .catch(err => {
@@ -31,7 +29,7 @@ router
         emp_code: req.params.empCode,
         from_date: req.body.from_date,
         to_date: req.body.to_date,
-        leave_type_id: req.body.leave_type_id,
+        leave_code: req.body.leave_code,
         project_id: req.params.projectId
       })
       .save()
@@ -40,10 +38,7 @@ router
         absentDetailModel
           .findOne({
             id: req.params.id,
-            include: [{ 
-              model: leaveTypeModel,
-              as: 'leave_type' 
-            }] 
+            include: [{ model: leaveTypeModel }]
           })
           .then(result => res.status(200).json(result))
           .catch(err => {
@@ -76,7 +71,7 @@ router
           emp_code: req.params.empCode,
           from_date: req.body.from_date,
           to_date: req.body.to_date,
-          leave_type_id: req.body.leave_type_id,
+          leave_code: req.body.leave_code,
           project_id: req.params.projectId
         },
         { where: { id: req.params.id } }
@@ -85,10 +80,7 @@ router
         absentDetailModel
           .findOne({
             id: req.params.id,
-            include: [{ 
-              model: leaveTypeModel,
-              as: 'leave_type' 
-            }] 
+            include: [{ model: leaveTypeModel }]
           })
           .then(result => res.status(200).json(result))
           .catch(err => {
