@@ -1,7 +1,7 @@
 const router = require("express").Router({ mergeParams: true });
 const wageMonthModel = require("../../../model/attendance/wageMonth.model");
 const moment = require("moment");
-const awaitErrorHandler = require("../../../middlewares/errorHandler");
+const validateTimeOfficer = require("../../../middlewares/validateTimeOfficer");
 const codes = require("../../../global/codes");
 
 router.route("/active").get((req, res) => {
@@ -21,7 +21,7 @@ router.route("/active").get((req, res) => {
     });
 });
 
-router.route("/init").post(async (req, res) => {
+router.route("/init", validateTimeOfficer).post(async (req, res) => {
   const { from_date, to_date } = req.body;
   wageMonths = [
     {

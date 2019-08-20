@@ -13,13 +13,13 @@ const codes = require("../../../../global/codes");
 const Op = require("sequelize").Op;
 
 
-async function calculateAbsenteeStatement(req) {
-  return new Promise(async (resolve, error) => {
+async function calculateAbsenteeStatement(projectId) {
+  return new Promise(async (resolve, reject) => {
     try {
       // Fetch the current wage month
       const currWageMonth = await wageMonthModel.findOne({
         where: {
-          project_id: req.params.projectId,
+          project_id: projectId,
           status: codes.WAGE_MONTH_ACTIVE
         }
       });
@@ -37,7 +37,7 @@ async function calculateAbsenteeStatement(req) {
       const genWorkDays = await genWorkDayModel.findAll({
         where: {
           day: { [Op.between]: [currWageMonth.from_date, currWageMonth.to_date] },
-          project_id: req.params.projectId
+          project_id: projectId
         }
       });
   
@@ -50,7 +50,7 @@ async function calculateAbsenteeStatement(req) {
           day: {
             [Op.between]: [currWageMonth.from_date, currWageMonth.to_date]
           },
-          project_id: req.params.projectId
+          project_id: projectId
         },
   
         include: [
@@ -75,7 +75,7 @@ async function calculateAbsenteeStatement(req) {
       const holidays = await holidayModel.findAll({
         where: {
           day: { [Op.between]: [currWageMonth.from_date, currWageMonth.to_date] },
-          project_id: req.params.projectId,
+          project_id: projectId,
           type: { [Op.eq]: "CH" }
         }
       });
@@ -95,7 +95,7 @@ async function calculateAbsenteeStatement(req) {
               }
             }
           ],
-          project_id: req.params.projectId
+          project_id: projectId
         }
       });
   
@@ -119,7 +119,8 @@ async function calculateAbsenteeStatement(req) {
             half_days        : [],
             late_days        : [],
             off_days         : [],
-            absent_days_count: 0
+            absent_days_count: 0,
+            project_id       : projectId
           };
         }
   
@@ -229,8 +230,6 @@ async function calculateAbsenteeStatement(req) {
         //---------------------------------------------------------------------------
         if (attendance_status === codes.ATTENDANCE_OFF_DAY) {
           records[empRoster.emp_code].off_days.push(empRoster.day);
-          records[empRoster.emp_code].absent_days_count += 0.5;
-          
           return;
         }
         //---------------------------------------------------------------------------

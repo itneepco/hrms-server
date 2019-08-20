@@ -13,6 +13,10 @@ function getTimeInterval(startTime, endTime) {
   return hours;
 }
 
+function substractHours(time, hour) {
+  return moment(time, "HH:mm").subtract(hour, 'hours').format("HH:mm:ss")
+}
+
 function getMinTime(punchRecArray) {
   if (punchRecArray.length < 1) return "";
 
@@ -60,6 +64,12 @@ function compareDate(date1, date2) {
   return moment(date1).diff(moment(date2), "days");
 }
 
+function equalDate(date1, date2) {
+  date1 = new Date(date1)
+  date2 = new Date(date2)
+  return moment(date1, 'yyyy-mm-dd').isSame(moment(date2, 'yyyy-mm-dd'), "days");
+}
+
 function isSundaySaturday(date) {
   const day = moment(date).day();
   return day === 0 || day === 6;
@@ -84,5 +94,7 @@ module.exports = {
   isSundaySaturday,
   isSunday,
   isSaturday,
-  getTodaysDate
+  getTodaysDate,
+  substractHours,
+  equalDate
 };

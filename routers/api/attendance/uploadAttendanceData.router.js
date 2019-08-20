@@ -1,16 +1,20 @@
 const router = require("express").Router({ mergeParams: true });
 const path = require("path");
 const insertIntoPunchingRec = require("./functions/insertIntoPunchingRec");
-const PunchingRecModel = require('../../../model/attendance/punchingRec.model')
-const countUploadedFile = require('./functions/countUploadedFiles');
-const enumerateBetweenDates = require('./functions/enumerateDaysBetweenDates');
+const PunchingRecModel = require("../../../model/attendance/punchingRec.model");
+const countUploadedFile = require("./functions/countUploadedFiles");
+const enumerateBetweenDates = require("./functions/enumerateDaysBetweenDates");
+const empWiseRosterModel = require("../../../model/attendance/employeeWiseRoster.model");
+const dateTimeHelper = require("./functions/dateTimeHelper");
+const Op = require("sequelize").Op;
+const sequelize = require("sequelize");
 
 const multer = require("multer");
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function(req, file, cb) {
     cb(null, `./uploads/${req.user.project_id}`);
   },
-  filename: function (req, file, cb) {
+  filename: function(req, file, cb) {
     let name = file.originalname;
     cb(null, name);
   }
@@ -18,7 +22,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  fileFilter: function (req, file, cb) {
+  fileFilter: function(req, file, cb) {
     if (
       !(
         path.extname(file.originalname) === ".dat" ||
@@ -44,7 +48,9 @@ router.route("/").post((req, res) => {
 
     req.files.forEach(file => {
       console.log(file);
-      promiseArr.push(insertIntoPunchingRec(file, req.user.emp_code, req.params.projectId));
+      promiseArr.push(
+        insertIntoPunchingRec(file, req.user.emp_code, req.params.projectId)
+      );
     });
 
     Promise.all(promiseArr)
@@ -55,10 +61,11 @@ router.route("/").post((req, res) => {
         });
         return PunchingRecModel.bulkCreate(resultArr, {
           updateOnDuplicate: ["punching_date", "emp_code", "punching_time"]
-        })
-          .then(() => {
-            res.status(200).json({ message: "Successfully uploaded the dat file" });
-          })
+        }).then(() => {
+          res
+            .status(200)
+            .json({ message: "Successfully uploaded the dat file" });
+        });
       })
       .catch(err => {
         console.log(err);
@@ -78,22 +85,48 @@ router.route("/status").get(async (req, res) => {
   let upload_status = [];
 
   try {
+    const processedDays = await empWiseRosterModel.findAll({
+      attributes: [[sequelize.fn("DISTINCT", sequelize.col("day")), "day"]],
+      where: {
+        project_id: req.params.projectId, 
+        attendance_status: { [Op.ne]: null } 
+      }
+    });
+
+    console.log("Processed Days", processedDays.length);
+
     for (let date of dates) {
       let day = date.getDate();
       let month = date.getMonth() + 1;
       let year = date.getFullYear();
-      let year_number = '';
-      day = day < 10 ? '0' + day.toString() : day.toString();
-      month = month < 10 ? '0' + month.toString() : month.toString();
-      year_number = (year.toString()).substring(2, 4);
+      let year_number = "";
+
+      const is_processed = processedDays.find(row => {
+        // console.log('day : ')
+        // console.log(row.day);
+        // console.log('date : ')
+        // console.log(date);
+        console.log(dateTimeHelper.equalDate(row.day, date));
+        return dateTimeHelper.equalDate(row.day, date);
+      });
+
+      day = day < 10 ? "0" + day.toString() : day.toString();
+      month = month < 10 ? "0" + month.toString() : month.toString();
+      year_number = year.toString().substring(2, 4);
       file_prefix = day + month + year_number;
       //To do change ---location make dynamic
-      let result = await countUploadedFile(`./uploads/${req.user.project_id}`, file_prefix, 13, '.DAT');
+      let result = await countUploadedFile(
+        `./uploads/${req.user.project_id}`,
+        file_prefix,
+        13,
+        ".DAT"
+      );
       if (result.status !== false) {
         if (result.result.length > 0) {
           upload_status.push({
-            'punch_day': year.toString() + '-' + month + '-' + day,
-            'machine_ids': result.result
+            punch_day: year.toString() + "-" + month + "-" + day,
+            machine_ids: result.result,
+            is_processed: is_processed ? true : false
           });
         }
       }
@@ -101,9 +134,7 @@ router.route("/status").get(async (req, res) => {
     res.status(200).json(upload_status);
   } catch (err) {
     console.log(err);
-    return res
-      .status(500)
-      .json({ message: "oops error occured", error: err });
+    return res.status(500).json({ message: "oops error occured", error: err });
   }
 });
 

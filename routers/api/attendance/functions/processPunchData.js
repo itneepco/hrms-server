@@ -39,6 +39,14 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
     return punchRec.emp_code === empRoster.emp_code;
   });
 
+  // Filter out punching data for Night Shift
+  if (shift.is_night_shift) {
+    empPunchData = empPunchData.filter(punchData => {
+      const punchStartTime = dateTimeHelper.substractHours(shift.in_time_start, codes.SUBSTRACT_HOURS_FOR_NIGHT_SHIFT)
+      return punchData.punching_time >= punchStartTime
+    })
+  }
+
   // Calculate in time
   emp_in_time = dateTimeHelper.getMinTime(empPunchData);
   if (emp_in_time === "") {
@@ -107,19 +115,19 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
     emp_out_time
   );
 
-  if(empRoster.emp_code === '005383') {
-    console.log(
-      '005383',
-      emp_in_time,
-      in_time_start,
-      in_time_end,
-      in_time_late,
-      emp_working_hour,
-      shift_working_hour)
+  // if(empRoster.emp_code === '005383') {
+  //   console.log(
+  //     '005383',
+  //     emp_in_time,
+  //     in_time_start,
+  //     in_time_end,
+  //     in_time_late,
+  //     emp_working_hour,
+  //     shift_working_hour)
 
-    console.log("IN FLAG", emp_punch_in_flag)
-    console.log("OUT FLAG", emp_punch_out_flag)
-  }
+  //   console.log("IN FLAG", emp_punch_in_flag)
+  //   console.log("OUT FLAG", emp_punch_out_flag)
+  // }
 
   // if worked less than half  of shift time
   if (emp_working_hour < shift_working_hour / 2) {

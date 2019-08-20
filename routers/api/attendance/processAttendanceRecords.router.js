@@ -119,13 +119,11 @@ router.route("/process").get(async (req, res) => {
     if (attendanceArray.length > 0) {
       try {
         insertEmpWiseRoster(attendanceArray);
-        res
-          .status(200)
-          .json({
-            message: "Attendance Data Processed Successfully.",
-            error: false,
-            data: attendanceArray
-          });
+        res.status(200).json({
+          message: "Attendance Data Processed Successfully.",
+          error: false,
+          data: attendanceArray
+        });
       } catch (err) {
         console.log(err);
         throw err;
@@ -152,8 +150,10 @@ async function insertEmpWiseRoster(dataArray) {
             out_time: data.out_time,
             attendance_status: data.attendance_status
           },
-          { where: { emp_code: data.emp_code, day: data.day } },
-          transaction
+          { 
+            where: { emp_code: data.emp_code, day: data.day },
+            transaction
+          },
         )
       );
     });
@@ -164,7 +164,7 @@ async function insertEmpWiseRoster(dataArray) {
         return { message: "SUCCESS" };
       })
       .catch(err => {
-        if (error) transaction.rollback();
+        transaction.rollback();
         console.log(err);
         throw error;
       });
