@@ -284,11 +284,10 @@ async function leaveApproveCancel(req, res, db_cr_flag) {
     // Calculate Remarks
     let remarks, status;
     if (db_cr_flag == "D") {
-      remarks = "Leave Approved for leave application " + req.leaveApp.id;
+      remarks = "Leave Approved for leave application " + leaveApp.id;
       status = Codes.LEAVE_APPROVED;
-    }
-    else {
-      remarks = "Leave Cancelled for leave application " + req.leaveApp.id;
+    } else {
+      remarks = "Leave Cancelled for leave application " + leaveApp.id;
       status = Codes.LEAVE_CANCELLED;
     }
 
@@ -391,7 +390,8 @@ async function leaveApproveCancel(req, res, db_cr_flag) {
         from_date: element.from_date,
         to_date: element.to_date,
         leave_code: Codes.CL_CODE,
-        project_id: project_id
+        project_id: project_id,
+        leave_application_id: leaveApp.id
       });
     });
 
@@ -401,7 +401,8 @@ async function leaveApproveCancel(req, res, db_cr_flag) {
         from_date: element.from_date,
         to_date: element.to_date,
         leave_code: Codes.RH_CODE,
-        project_id: project_id
+        project_id: project_id,
+        leave_application_id: leaveApp.id
       });
     });
 
@@ -411,17 +412,21 @@ async function leaveApproveCancel(req, res, db_cr_flag) {
         from_date: element.from_date,
         to_date: element.to_date,
         leave_code: Codes.HD_CL_CODE,
-        project_id: project_id
+        project_id: project_id,
+        leave_application_id: leaveApp.id
       });
     });
 
-    // Insert/Delete in to absent detail
+    // Insert/Delete in to absent detail table
     if (db_cr_flag == "D") {
-      absentDetailModel.bulkCreate(absentDtl, { transaction });
+      await absentDetailModel.bulkCreate(absentDtl, { transaction });
     }
 
     if (db_cr_flag == "C") {
-      absentDetailModel.destroy({
+      await absentDetailModel.destroy({
+        where: {
+          leave_application_id: leaveApp.id
+        },
         transaction
       });
     }
@@ -429,14 +434,14 @@ async function leaveApproveCancel(req, res, db_cr_flag) {
     /*******************************************************************************
      *** Commit transaction ***
      *******************************************************************************/
-    transaction.commit();
+    await transaction.commit();
 
     res.status(200).json({ message: "Leave request processed successful" });
   } catch (error) {
-    console.log(err);
+    console.log(error);
     res.status(500).json({ message: "Leave request processed unsuccessful" });
 
-    return transaction.rollback();
+    await transaction.rollback();
   }
 }
 
