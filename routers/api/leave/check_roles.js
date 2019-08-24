@@ -3,7 +3,7 @@ const Codes = require('../../../global/codes')
 
 var exports = module.exports = {};
 
-exports.checkElHplRole = function(req, res) {
+exports.checkElHplRole = function(req) {
   return roleMapperModel.findOne({
     where: {
       emp_code: req.params.empCode,
@@ -21,7 +21,7 @@ exports.checkElHplRole = function(req, res) {
   })
 }
 
-exports.checkLeaveSuperAdminRole = function(req, res) {
+exports.checkLeaveSuperAdminRole = function(req) {
   return roleMapperModel.findOne({
     where: {
       emp_code: req.params.empCode,
