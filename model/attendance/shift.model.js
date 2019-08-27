@@ -1,7 +1,7 @@
 const Sequelize = require("sequelize")
 const db = require("../../config/db")
 const projectModel = require('../shared/project.model')
-const Shift = db.define('shift',{
+const Shift = db.define('shift', {
   name: {
     type: Sequelize.STRING,
     allowNull: false
@@ -9,22 +9,22 @@ const Shift = db.define('shift',{
   project_id: {
     type: Sequelize.INTEGER
   },
-  in_time_start:{
-    type: Sequelize.TIME    
-  },
-  in_time_end:{
-    type: Sequelize.TIME    
-  },
-  out_time_start:{
+  in_time_start: {
     type: Sequelize.TIME
   },
-  out_time_end:{
+  in_time_end: {
     type: Sequelize.TIME
   },
-  late_time:{
+  out_time_start: {
     type: Sequelize.TIME
   },
-  working_hours:{
+  out_time_end: {
+    type: Sequelize.TIME
+  },
+  late_time: {
+    type: Sequelize.TIME
+  },
+  working_hours: {
     type: Sequelize.INTEGER
   },
   created_by: {
@@ -39,14 +39,14 @@ const Shift = db.define('shift',{
   is_night_shift: {
     type: Sequelize.TINYINT
   },
-  is_general:{
+  is_general: {
     type: Sequelize.TINYINT
   }
 },
-{
-  underscored: true,
-  tableName: "shifts"
-}
+  {
+    underscored: true,
+    tableName: "shifts"
+  }
 )
 
 Shift.belongsTo(projectModel)
