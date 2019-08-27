@@ -1,14 +1,6 @@
 const router = require("express").Router({ mergeParams: true });
-const empWiseRosterModel = require("../../../model/attendance/employeeWiseRoster.model");
 const wageMonthModel = require("../../../model/attendance/wageMonth.model");
-const holidayModel = require("../../../model/shared/holiday.model");
-const absentDetailModel = require("../../../model/attendance/absentDetail.model");
-const genWorkDayModel = require("../../../model/attendance/generalWorkingDay.model");
 const shiftModel = require("../../../model/attendance/shift.model");
-const projectModel = require("../../../model/shared/project.model");
-const departmentModel = require("../../../model/shared/department.model");
-const designationModel = require("../../../model/shared/designation.model");
-const gradeModel = require("../../../model/shared/grade.model");
 const monthEndModel = require("../../../model/attendance/monthEnd.model");
 const dateTimeHelper = require("./functions/dateTimeHelper");
 const calculateAbsenteeStatement = require("./functions/calculateAbsenteeStatement");
@@ -130,7 +122,7 @@ router.route("/close").get(async (req, res) => {
       gen_roster_status: false
     };
 
-    transaction = await db.transaction({ autocommit: false});
+    transaction = await db.transaction({ autocommit: false });
     await monthEndModel.bulkCreate(records_array, {
       updateOnDuplicate: ["project_id", "wage_month_id", "emp_code"],
       transaction
@@ -146,10 +138,10 @@ router.route("/close").get(async (req, res) => {
     await nextWageMonth.update({ status: codes.WAGE_MONTH_ACTIVE }, { transaction });
 
     await transaction.commit();
-    
+
     res.status(200).json({ message: `Month end completed succesfully`, error: false, data: null });
-  } 
-  
+  }
+
   catch (error) {
     console.error("Error : " + error);
     transaction.rollback();
@@ -157,6 +149,6 @@ router.route("/close").get(async (req, res) => {
   }
 });
 
-router.route("/absentee-statement-download").get(async (req, res) => {});
+router.route("/absentee-statement-download").get(async (req, res) => { });
 
 module.exports = router;

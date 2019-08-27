@@ -1,6 +1,6 @@
 const router = require("express").Router({ mergeParams: true });
 const empWiseRosterModel = require("../../../model/attendance/employeeWiseRoster.model");
-const genRosterModel = require('../../../model/attendance/generalRoster.model')
+const genRosterModel = require("../../../model/attendance/generalRoster.model");
 const shiftModel = require("../../../model/attendance/shift.model");
 const groupModel = require("../../../model/attendance/group.model");
 const punchingRecordModel = require("../../../model/attendance/punchingRec.model");
@@ -14,27 +14,28 @@ router.route("/:empCode/punch-timings").get(async (req, res) => {
   try {
     const employeeGroupDetails = await employeeGroupModel.findOne({
       where: { emp_code: req.params.empCode },
-      include: [
-        {model: groupModel, as: 'group'},
-      ]
+      include: [{ model: groupModel, as: "group" }]
     });
 
+    if (!employeeGroupDetails) {
+      return res.status(200).json([]);
+    }
+
     const group = employeeGroupDetails.group;
-    if(group.is_general) {
+    if (group.is_general) {
       // If general group | Join general_roster table with shift
       const roster = await genRosterModel.findOne({
-        where: {group_id: group.id},
-        include: [{ model: shiftModel, as: 'shift'}]
+        where: { group_id: group.id },
+        include: [{ model: shiftModel, as: "shift" }]
       });
       res.status(200).json([roster.shift]);
-
     } else {
       const shifts = await shiftModel.findAll({
         where: {
           project_id: req.params.projectId,
           is_general: false
         }
-      })
+      });
       res.status(200).json(shifts.filter(shift => shift.working_hours > 0));
     }
   } catch (error) {
@@ -46,10 +47,8 @@ router.route("/:empCode/punch-timings").get(async (req, res) => {
 });
 
 router.route("/:empCode/todays-punching").get(async (req, res) => {
-
   try {
-
-    console.log('BODY : ' + req.body);
+    console.log("BODY : " + req.body);
 
     const punchingRecords = await punchingRecordModel.findAll({
       where: {
@@ -59,21 +58,17 @@ router.route("/:empCode/todays-punching").get(async (req, res) => {
       }
     });
 
-    res
-      .status(200)
-      .json(punchingRecords.map(record => record.punching_time));
+    res.status(200).json(punchingRecords.map(record => record.punching_time));
   } catch (error) {
     console.error("Error : " + error);
     res
       .status(500)
       .json({ message: `Error:: ${error}`, error: true, data: null });
   }
-
 });
 
 router.route("/:empCode/late-punchings").get(async (req, res) => {
   try {
-
     // Fetch the current wage month
     const currWageMonth = await wageMonthModel.findOne({
       where: {
@@ -101,13 +96,10 @@ router.route("/:empCode/late-punchings").get(async (req, res) => {
         },
         project_id: req.params.projectId,
         attendance_status: codes.ATTENDANCE_LATE
-      },
+      }
     });
 
-    res
-      .status(200)
-      .json(empWiseRosters.map(roster => roster.day));
-
+    res.status(200).json(empWiseRosters.map(roster => roster.day));
   } catch (error) {
     console.error("Error : " + error);
     res
