@@ -17,7 +17,7 @@ router.use(
   require("./shift.router")
 );
 router.use(
-  "/project/:projectId/group/:groupId/employees",
+  "/project/:projectId/emp-group",
   validateTimeOfficer,
   require("./employeeGroup.router")
 );

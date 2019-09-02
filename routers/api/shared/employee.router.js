@@ -10,12 +10,21 @@ router.route('/search/')
 		let user = req.user
 		let condition = {}
     
+    // Query based on employee code
     if(req.query.emp_code && req.query.emp_code.length > 0) {
       condition = {
 				emp_code: { [Op.like]: "%" + req.query.emp_code + "%" }
 			}
     }
 
+    // Query based on project id
+    if(req.query.project && req.query.project.length > 0) {
+      condition = {
+				project_id: req.query.project
+			}
+    }
+
+    // Query based on employee name
     if(req.query.name && req.query.name.length > 0) {
       condition = {
         [Op.or]: [{
