@@ -7,6 +7,7 @@ const empRosterModel = require("../../../model/attendance/employeeWiseRoster.mod
 router.route("/status").get(async (req, res) => {
   try {
     const shifts = await shiftModel.findAll({
+      order: [['is_general', 'desc'], ['name', 'asc']],
       where: {
         project_id: req.params.projectId,
         working_hours: { [Op.gt]: 0 }
@@ -28,7 +29,7 @@ router.route("/status").get(async (req, res) => {
     let processingDay = maxAttendDate
     
     // Check if day is sent from front end
-    if(req.query.day && req.query.day.length == 8) {
+    if(req.query.day && req.query.day.length > 0) {
       processingDay = req.query.day
     }
 
