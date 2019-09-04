@@ -34,7 +34,7 @@ router.route("/process").get(async (req, res) => {
     if (!currWageMonth) {
       return res.status(200).json({
         message: "Wage month corresponding to day does not exist",
-        error: false,
+        error: true,
         data: null
       });
     }
@@ -43,7 +43,7 @@ router.route("/process").get(async (req, res) => {
     if (!currWageMonth.gen_roster_status) {
       return res.status(200).json({
         message: "Employee wise general roster not generated for the period",
-        error: false,
+        error: true,
         data: null
       });
     }
@@ -52,7 +52,7 @@ router.route("/process").get(async (req, res) => {
     if (shiftTimings.length > 0 && !currWageMonth.shift_roster_status) {
       return res.status(200).json({
         message: "Employee wise shift roster not generated for the period",
-        error: false,
+        error: true,
         data: null
       });
     }
