@@ -2,7 +2,7 @@ const dateTimeHelper = require("./dateTimeHelper");
 const attendanceTimingHelper = require("./attendanceTimingHelper");
 const codes = require("../../../../global/codes");
 
-function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentDate) {
+function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentDate, modify_flag = false) {
   // Find the shift for the current employee
   const shift = empRoster.shift;
 
@@ -40,9 +40,9 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
   });
 
   // Filter out punching data for Night Shift
-  if (shift.is_night_shift) {
+  if (shift.is_night_shift || modify_flag) {
     empPunchData = empPunchData.filter(punchData => {
-      const punchStartTime = dateTimeHelper.substractHours(shift.in_time_start, codes.SUBSTRACT_HOURS_FOR_NIGHT_SHIFT)
+      const punchStartTime = dateTimeHelper.substractHours(shift.in_time_start, codes.SUBSTRACT_HOURS_FOR_PUNCH_DATA)
       return punchData.punching_time >= punchStartTime
     })
   }
@@ -131,7 +131,7 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
 
   // if worked less than half  of shift time
   if (emp_working_hour < shift_working_hour / 2) {
-    return{
+    return {
       day: currentDate,
       emp_code: empRoster.emp_code,
       // shift: shift.name,
@@ -166,7 +166,7 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
   }
 
   if (emp_punch_in_flag > 1) {
-    
+
     // if punched before shift late in time
     if (emp_punch_in_flag === 3) {
       // If punched out before shift out time start
