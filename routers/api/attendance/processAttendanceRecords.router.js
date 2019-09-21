@@ -19,7 +19,7 @@ router.route("/process").get(async (req, res) => {
         project_id: req.params.projectId,
         from_date: { [Op.lte]: currentDate },
         to_date: { [Op.gte]: currentDate },
-        status: codes.WAGE_MONTH_ACTIVE
+        // status: codes.WAGE_MONTH_ACTIVE
       }
     });
 
@@ -227,6 +227,11 @@ router.route("/modify/shift/").post(async (req, res) => {
 
     console.log("Punching records length", punchingRecords.length);
 
+    // Get next day based on current date
+    const nextDay = moment(empRoster.day)
+      .add(1, "day")
+      .toDate();
+      
     //Get punching records for the next Day
     let punchRecsNextDay = [];
     if (shift.is_night_shift) {
@@ -234,7 +239,7 @@ router.route("/modify/shift/").post(async (req, res) => {
         where: {
           project_id: empRoster.project_id,
           emp_code: empRoster.emp_code,
-          punching_date: { [Op.eq]: empRoster.day }
+          punching_date: { [Op.eq]: nextDay }
         }
       });
     }
