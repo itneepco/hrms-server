@@ -52,7 +52,7 @@ router.route("/officer/:empCode/processed").get((req, res) => {
 
   leaveAppModel
     .findAndCountAll({
-      order: [["updated_at", "DESC"]],
+      order: [["created_at", "DESC"]],
       distinct: true,
       limit: limit,
       offset: offset,
@@ -642,7 +642,7 @@ async function fetchLeaveApplication(req, res) {
 
   return leaveAppModel
     .findAndCountAll({
-      order: [["updated_at", "DESC"]],
+      order: [["created_at", "DESC"]],
       distinct: true,
       limit: limit,
       offset: offset,

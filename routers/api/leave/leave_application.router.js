@@ -17,7 +17,7 @@ router.get('/employee/:empCode', (req, res) => {
   leaveAppModel.findAndCountAll({
     where: { emp_code: req.params.empCode },
     distinct: true,
-    order: [['updated_at', 'DESC']],
+    order: [['created_at', 'DESC']],
     limit: limit,
     offset: offset,
     include: [

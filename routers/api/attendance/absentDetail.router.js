@@ -33,11 +33,11 @@ router
         project_id: req.params.projectId
       })
       .save()
-      .then(result => {
-        console.log(result);
+      .then(data => {
+        console.log(data);
         absentDetailModel
           .findOne({
-            id: req.params.id,
+            where: { id: data.id },
             include: [{ model: leaveTypeModel, as: "leaveType" }]
           })
           .then(result => res.status(200).json(result))
@@ -79,7 +79,7 @@ router
       .then(() => {
         absentDetailModel
           .findOne({
-            id: req.params.id,
+            where: { id: req.params.id },
             include: [{ model: leaveTypeModel, as: "leaveType" }]
           })
           .then(result => res.status(200).json(result))
