@@ -8,6 +8,8 @@ const projectModel = require('../../../../model/shared/project.model');
 const departmentModel = require('../../../../model/shared/department.model');
 const designationModel = require('../../../../model/shared/designation.model');
 const gradeModel = require('../../../../model/shared/grade.model');
+const empGroupModel = require('../../../../model/attendance/employeeGroup.model');
+const groupModel = require('../../../../model/attendance/group.model');
 const dateTimeHelper = require("./dateTimeHelper");
 const codes = require("../../../../global/codes");
 const Op = require("sequelize").Op;
@@ -26,7 +28,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           status: codes.WAGE_MONTH_ACTIVE
         }
       });
-  
+
       // If current wage month does not exist, return error
       if (!currWageMonth) {
         return res.status(200).json({
@@ -38,12 +40,12 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
 
       if (from_date !== null && to_date !== null) {
         fromDate = from_date;
-        toDate   = to_date;
+        toDate = to_date;
       } else {
         fromDate = currWageMonth.from_date;
-        toDate   = currWageMonth.to_date;
+        toDate = currWageMonth.to_date;
       }
-  
+
       // Get list of general working days
       const genWorkDays = await genWorkDayModel.findAll({
         where: {
@@ -51,10 +53,21 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           project_id: projectId
         }
       });
-  
+
+      // Get list of employees who are not exempted from punching
+      const employeeGroups = await empGroupModel.findAll({
+        include: [{
+          model: groupModel,
+          as: 'group',
+          where: {
+            project_id: projectId
+          }
+        }]
+      })
+
       // To do: Check whether punching records for the employess have been processed for each day
       // in the current wage month
-  
+
       // Fetch data from employee_wise_roster between start date and end date of the current wage month
       const empWiseRosters = await empWiseRosterModel.findAll({
         where: {
@@ -63,11 +76,11 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           },
           project_id: projectId
         },
-  
+
         include: [
           {
             model: employeeModel,
-            as: 'employee',  
+            as: 'employee',
             attributes: ["first_name", "middle_name", "last_name"],
             include: [
               { model: projectModel },
@@ -81,7 +94,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           { model: shiftModel }
         ]
       });
-  
+
       // Fetch holiday details for the current wage  month
       const holidays = await holidayModel.findAll({
         where: {
@@ -90,7 +103,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           type: { [Op.eq]: "CH" }
         }
       });
-  
+
       // Fetch absent details
       const absentDetails = await absentDetailModel.findAll({
         where: {
@@ -109,42 +122,48 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           project_id: projectId
         }
       });
-  
-      let records       = {};
+
+      let records = {};
       let records_array = [];
-  
+
       empWiseRosters.forEach(empRoster => {
-  
+
         if (records[empRoster.emp_code] === undefined) {
           records[empRoster.emp_code] = {
-            emp_code         : empRoster.emp_code,
-            name             : `${empRoster.employee.first_name} ${empRoster.employee.middle_name} ${empRoster.employee.last_name}`,
-            department_id    : empRoster.employee.department.id,
-            department       : `${empRoster.employee.department.name}`,
-            designation      : `${empRoster.employee.designation.name}`,
-            present_days     : [],
-            absent_days      : [],
-            holidays         : [],
-            sunday_saturdays : [],
-            leave_days       : [],
-            half_days        : [],
-            late_days        : [],
-            off_days         : [],
+            emp_code: empRoster.emp_code,
+            name: `${empRoster.employee.first_name} ${empRoster.employee.middle_name} ${empRoster.employee.last_name}`,
+            department_id: empRoster.employee.department.id,
+            department: `${empRoster.employee.department.name}`,
+            designation: `${empRoster.employee.designation.name}`,
+            present_days: [],
+            absent_days: [],
+            holidays: [],
+            sunday_saturdays: [],
+            leave_days: [],
+            half_days: [],
+            late_days: [],
+            off_days: [],
             absent_days_count: 0,
-            project_id       : projectId
+            project_id: projectId
           };
         }
-  
+
         let attendance_status = empRoster.attendance_status;
-        
+
         //---------------------------------------------------------------------------
-        
+
+        // Check if employee has been moved to exempted list after roster generation
+        isExempted = !employeeGroups.find(empGroup => empGroup.emp_code === empRoster.emp_code)
+        if (isExempted) return; // Skip if exempted
+
+        //---------------------------------------------------------------------------
+
         // If modified status is 1 | Conclusion present
         if (empRoster.modified_status === 1) {
           records[empRoster.emp_code].present_days.push(empRoster.day);
           return;
         }
-  
+
         //---------------------------------------------------------------------------
 
         // Employee is absent on a holiday | Conclusion holiday
@@ -163,11 +182,11 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           return (
             absentDetail.emp_code === empRoster.emp_code &&
             dateTimeHelper.compareDate(empRoster.day, absentDetail.from_date) >=
-              0 &&
+            0 &&
             dateTimeHelper.compareDate(empRoster.day, absentDetail.to_date) <= 0
           );
         });
-  
+
         // Employee has applied leave
         if (absentDtl) {
           records[empRoster.emp_code].leave_days.push(empRoster.day);
@@ -175,7 +194,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         }
 
         //---------------------------------------------------------------------------
-  
+
         // Sunday or Saturday and not declared as working day
         if (
           dateTimeHelper.isSundaySaturday(empRoster.day) &&
@@ -186,7 +205,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
             return;
           }
         }
-  
+
         //---------------------------------------------------------------------------
 
         if (attendance_status === codes.ATTENDANCE_ABSENT) {
@@ -203,14 +222,14 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         }
 
         //---------------------------------------------------------------------------
-  
+
         if (attendance_status === codes.ATTENDANCE_PRESENT) {
           records[empRoster.emp_code].present_days.push(empRoster.day);
           return;
         }
 
         //---------------------------------------------------------------------------
-  
+
         if (attendance_status === codes.ATTENDANCE_HALF_DAY) {
           records[empRoster.emp_code].half_days.push(empRoster.day);
           records[empRoster.emp_code].absent_days_count += 0.5;
@@ -218,7 +237,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         }
 
         //---------------------------------------------------------------------------
-  
+
         if (attendance_status === codes.ATTENDANCE_OFF_DAY) {
           records[empRoster.emp_code].off_days.push(empRoster.day);
           return;
@@ -226,7 +245,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
 
         //---------------------------------------------------------------------------
       });
-  
+
       for (let key in records) {
         if (key === records[key].emp_code) {
           records_array.push(records[key]);
@@ -234,11 +253,11 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
       }
 
       resolve(records_array)
-  
+
     } catch (error) {
       console.error("Error : " + error);
       reject(error)
-    } 
+    }
   })
 }
 

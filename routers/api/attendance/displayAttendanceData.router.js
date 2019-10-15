@@ -5,15 +5,16 @@ const holidayModel = require("../../../model/shared/holiday.model");
 const genWorkDayModel = require("../../../model/attendance/generalWorkingDay.model");
 const absentDetailModel = require("../../../model/attendance/absentDetail.model");
 const leaveTypeModel = require("../../../model/shared/leaveType.model");
+const empGroupModel = require('../../../model/attendance/employeeGroup.model');
 const dtHelper = require("./functions/dateTimeHelper");
 const Op = require("sequelize").Op;
 const codes = require("../../../global/codes");
 
 router.route("/employee/:empCode").get(async (req, res) => {
   try {
-    const empCode  = req.params.empCode;
+    const empCode = req.params.empCode;
     const fromDate = new Date(req.query.from_date);
-    const toDate   = new Date(req.query.to_date);
+    const toDate = new Date(req.query.to_date);
 
     // Get holidays for the wagemonth
     const holidaysArray = await holidayModel.findAll({
@@ -53,6 +54,11 @@ router.route("/employee/:empCode").get(async (req, res) => {
       include: [{ model: leaveTypeModel, as: "leaveType" }]
     });
 
+    // For checking if current employee is exempted from punching
+    const employeeGroup = await empGroupModel.findOne({
+      where: { emp_code: empCode }
+    })
+
     // Get employee wise attendance status between fromDate and toDate
     const empWiseRosters = await empWiseRosterModel
       .findAll({
@@ -65,57 +71,65 @@ router.route("/employee/:empCode").get(async (req, res) => {
         }
       })
       .map(empRoster => {
-        
+
         let remarks, attendance_status;
         const in_time = empRoster.in_time ? empRoster.in_time : '--';
         const out_time = empRoster.out_time ? empRoster.out_time : '--';
 
-        if (empRoster.shift.is_general) {
-          const holiday = holidaysArray.find(holiday => holiday.day === empRoster.day)
-          if (holiday) {
-            remarks = holiday.name;
-            attendance_status = codes.ATTENDANCE_HOLIDAY;
+        // if current employee is not exempted from punching
+        if (employeeGroup) {
+          if (empRoster.shift.is_general) {
+            const holiday = holidaysArray.find(holiday => holiday.day === empRoster.day)
+            if (holiday) {
+              remarks = holiday.name;
+              attendance_status = codes.ATTENDANCE_HOLIDAY;
+            }
+            // Check if saturday and sunday is working day
+            else if (
+              dtHelper.isSundaySaturday(empRoster.day) &&
+              !genWorkDays.find(workDay => workDay.day === empRoster.day)
+            ) {
+              remarks = dtHelper.isSunday(empRoster.day) ? "SUNDAY" : "SATURDAY";
+              attendance_status = codes.ATTENDANCE_HOLIDAY;
+            } else {
+              remarks = "";
+              attendance_status = empRoster.attendance_status;
+            }
           }
-          // Check if saturday and sunday is working day
-          else if (
-            dtHelper.isSundaySaturday(empRoster.day) &&
-            !genWorkDays.find(workDay => workDay.day === empRoster.day)
-          ) {
-            remarks = dtHelper.isSunday(empRoster.day) ? "SUNDAY" : "SATURDAY";
-            attendance_status = codes.ATTENDANCE_HOLIDAY;
-          } else {
-            remarks = "";
-            attendance_status = empRoster.attendance_status;
+
+          if (!empRoster.shift.is_general) {
+            // Check for off day
+            if (codes.ATTENDANCE_OFF_DAY === empRoster.attendance_status) {
+              remarks = "";
+              attendance_status = empRoster.attendance_status;
+            } else {
+              remarks = empRoster.remarks;
+              attendance_status = empRoster.attendance_status;
+            }
+          }
+
+          // Check for applied leaves
+          const absentDtl = absentDetails.find(absentDetail => {
+            return (
+              absentDetail.emp_code === empRoster.emp_code &&
+              dtHelper.compareDate(empRoster.day, absentDetail.from_date) >= 0 &&
+              dtHelper.compareDate(empRoster.day, absentDetail.to_date) <= 0
+            );
+          });
+
+          if (absentDtl) {
+            remarks = absentDtl.leaveType.description;
+
+            // Change attendance status to absent for all absent types except half day CL
+            if (absentDtl.leave_code != codes.HD_CL_CODE) {
+              attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
+            }
           }
         }
-
-        if (!empRoster.shift.is_general) {
-          // Check for off day
-          if (codes.ATTENDANCE_OFF_DAY === empRoster.attendance_status) {
-            remarks = "";
-            attendance_status = empRoster.attendance_status;
-          } else {
-            remarks = empRoster.remarks;
-            attendance_status = empRoster.attendance_status;
-          }
-        }
-
-        // Check for applied leaves
-        const absentDtl = absentDetails.find(absentDetail => {
-          return (
-            absentDetail.emp_code === empRoster.emp_code &&
-            dtHelper.compareDate(empRoster.day, absentDetail.from_date) >= 0 &&
-            dtHelper.compareDate(empRoster.day, absentDetail.to_date) <= 0
-          );
-        });
-
-        if (absentDtl) {
-          remarks = absentDtl.leaveType.description;
-          
-          // Change attendance status to absent for all absent types except half day CL
-          if(absentDtl.leave_code != codes.HD_CL_CODE) {
-            attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
-          }
+        // if employee is exempted from punching
+        else {
+          remarks = 'EXEMPTED'
+          attendance_status = codes.ATTENDANCE_EXEMPTED
         }
 
         return Object.assign(
@@ -141,9 +155,9 @@ router.route("/employee/:empCode").get(async (req, res) => {
     res.status(200).json(empWiseRosters);
   } catch (err) {
     console.log("Error : " + err);
-  } 
+  }
 });
 
-router.route("/employee").get(async (req, res) => {});
+router.route("/employee").get(async (req, res) => { });
 
 module.exports = router;

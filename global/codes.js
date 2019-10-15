@@ -67,6 +67,7 @@ module.exports = {
     ATTENDANCE_HOLIDAY: '06',
     // Dynamic | Not considered at the time of processing
     ATTENDANCE_ABSENT_OFFICIALLY: '07',
+    ATTENDANCE_EXEMPTED: '08',
     
 
     // WAGE MONTH STATUS
