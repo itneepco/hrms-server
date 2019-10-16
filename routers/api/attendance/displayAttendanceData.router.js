@@ -55,7 +55,7 @@ router.route("/employee/:empCode").get(async (req, res) => {
     });
 
     // For checking if current employee is exempted from punching
-    const employeeGroup = await empGroupModel.findOne({
+    const empPunchGroup = await empGroupModel.findOne({
       where: { emp_code: empCode }
     })
 
@@ -77,7 +77,11 @@ router.route("/employee/:empCode").get(async (req, res) => {
         const out_time = empRoster.out_time ? empRoster.out_time : '--';
 
         // if current employee is not exempted from punching
-        if (employeeGroup) {
+        if (empPunchGroup) {
+          // Remarks and status according to processed attendance data
+          remarks = empRoster.remarks;
+          attendance_status = empRoster.attendance_status;
+
           if (empRoster.shift.is_general) {
             const holiday = holidaysArray.find(holiday => holiday.day === empRoster.day)
             if (holiday) {
@@ -85,25 +89,18 @@ router.route("/employee/:empCode").get(async (req, res) => {
               attendance_status = codes.ATTENDANCE_HOLIDAY;
             }
             // Check if saturday and sunday is working day
-            else if (
+            if (
               dtHelper.isSundaySaturday(empRoster.day) &&
               !genWorkDays.find(workDay => workDay.day === empRoster.day)
             ) {
               remarks = dtHelper.isSunday(empRoster.day) ? "SUNDAY" : "SATURDAY";
               attendance_status = codes.ATTENDANCE_HOLIDAY;
-            } else {
-              remarks = "";
-              attendance_status = empRoster.attendance_status;
             }
           }
-
-          if (!empRoster.shift.is_general) {
+          else {
             // Check for off day
             if (codes.ATTENDANCE_OFF_DAY === empRoster.attendance_status) {
               remarks = "";
-              attendance_status = empRoster.attendance_status;
-            } else {
-              remarks = empRoster.remarks;
               attendance_status = empRoster.attendance_status;
             }
           }
