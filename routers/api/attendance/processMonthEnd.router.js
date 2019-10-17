@@ -94,6 +94,7 @@ router.route("/close").get(async (req, res) => {
     }
 
     let records_array = await calculateAbsenteeStatement(projectId);
+    records_array = records_array.filter(item => item.absent_days.length > 0)
 
     records_array = records_array.map(item => {
       return {

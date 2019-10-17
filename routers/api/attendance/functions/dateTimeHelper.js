@@ -85,6 +85,10 @@ function isSaturday(date) {
   return day === 6;
 }
 
+function decreaseDay(date, no_day) {
+  return moment(date).subtract(no_day, 'day').toDate()
+}
+
 module.exports = {
   getTimeInterval,
   getMaxTime,
@@ -96,5 +100,6 @@ module.exports = {
   isSaturday,
   getTodaysDate,
   substractHours,
-  equalDate
+  equalDate,
+  decreaseDay
 };
