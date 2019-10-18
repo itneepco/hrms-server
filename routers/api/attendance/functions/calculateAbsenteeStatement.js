@@ -27,6 +27,8 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         }
       });
 
+      //---------------------------------------------------------------------------
+
       // If current wage month does not exist, return error
       if (!currWageMonth) {
         return res.status(200).json({
@@ -45,7 +47,10 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         toDate = currWageMonth.to_date;
       }
 
+      // Take 5 days from last wage month for calculating absent status
       fromDate = dateTimeHelper.decreaseDay(actualFromDate, 5)
+
+      //---------------------------------------------------------------------------
 
       // Get list of general working days
       const genWorkDays = await genWorkDayModel.findAll({
@@ -107,9 +112,12 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         }
       });
 
+      //---------------------------------------------------------------------------
+
       let records = {};
       let records_array = [];
 
+      // Iterate for each empWiseRoster record and process the attendance data
       empWiseRosters.forEach(empRoster => {
         if (records[empRoster.emp_code] === undefined) {
           let employee = empRoster.employee
@@ -133,8 +141,12 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           };
         }
 
+        //---------------------------------------------------------------------------
+
         // Assign attendance status to the variable
         let attendance_status = empRoster.attendance_status;
+
+        // Date difference between current day in the iteration and current wage month actualFromDate
         let date_diff = dateTimeHelper.compareDate(empRoster.day, actualFromDate)
 
         //---------------------------------------------------------------------------
@@ -161,8 +173,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         const absentDtl = absentDetails.find(absentDetail => {
           return (
             absentDetail.emp_code === empRoster.emp_code &&
-            dateTimeHelper.compareDate(empRoster.day, absentDetail.from_date) >=
-            0 &&
+            dateTimeHelper.compareDate(empRoster.day, absentDetail.from_date) >= 0 &&
             dateTimeHelper.compareDate(empRoster.day, absentDetail.to_date) <= 0
           );
         });
@@ -198,26 +209,6 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
 
         //---------------------------------------------------------------------------
 
-        // If current day is either Saturday or Sunday and is general roster
-        if (dateTimeHelper.isSundaySaturday(empRoster.day) &&
-          empRoster.shift.is_general) {
-
-          isWorkingDay = !genWorkDays.find(work_day => work_day.day === empRoster.day)
-          if (isWorkingDay) {
-            if (date_diff >= 0) {
-              // If employee is absent on previous day, add to buffer_days array
-              if (records[empRoster.emp_code].prev_day_absent) {
-                return records[empRoster.emp_code].buffer_days.push(empRoster.day);
-              }
-              else {
-                return records[empRoster.emp_code].off_days.push(empRoster.day);
-              }
-            }
-          }
-        }
-
-        //---------------------------------------------------------------------------
-
         // For shift duty employees
         if (attendance_status === codes.ATTENDANCE_OFF_DAY) {
           if (date_diff >= 0) {
@@ -230,6 +221,25 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
             }
           }
           return;
+        }
+
+        //---------------------------------------------------------------------------
+
+        // If current day is either Saturday or Sunday and is general roster
+        if (dateTimeHelper.isSundaySaturday(empRoster.day) &&
+          empRoster.shift.is_general) {
+
+          isWorkDay = genWorkDays.find(wd => wd.day === empRoster.day) ? true : false
+          // If current day (weekend) is not a working day
+          if (!isWorkDay && date_diff >= 0) {
+            // If employee is absent on previous day, add to buffer_days array
+            if (records[empRoster.emp_code].prev_day_absent) {
+              return records[empRoster.emp_code].buffer_days.push(empRoster.day);
+            }
+            else {
+              return records[empRoster.emp_code].off_days.push(empRoster.day);
+            }
+          }
         }
 
         //---------------------------------------------------------------------------
