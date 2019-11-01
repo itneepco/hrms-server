@@ -157,10 +157,10 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         let to_date_diff = dateTimeHelper.compareDate(empRoster.day, actualToDate)
 
 
-        if (records[empRoster.emp_code].emp_code == '005018') {
-          console.log(empRoster.day)
-          console.log("FROM DATE AND TO DATE DIFF", empRoster.day, from_date_diff, to_date_diff)
-        }
+        // if (records[empRoster.emp_code].emp_code == '005018') {
+        //   console.log(empRoster.day)
+        //   console.log("FROM DATE AND TO DATE DIFF", empRoster.day, from_date_diff, to_date_diff)
+        // }
 
         //---------------------------------------------------------------------------
 
@@ -253,6 +253,8 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
               return records[empRoster.emp_code].off_days.push(empRoster.day);
             }
           }
+
+          // if current day is working, then continue processing
         }
 
         //---------------------------------------------------------------------------
@@ -269,6 +271,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           records[empRoster.emp_code].prev_day_absent = true
 
           if (from_date_diff >= 0) {
+            // Accept only those days which are less or equal to actualToDate
             if (to_date_diff <= 0) {
               records[empRoster.emp_code].absent_days.push(empRoster.day);
               records[empRoster.emp_code].absent_days_count += 1;
@@ -297,27 +300,35 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           // Mark 'prev_day_absent' to be used in the next iteration
           records[empRoster.emp_code].prev_day_absent = false
 
-          if (from_date_diff >= 0 && to_date_diff <= 0) {
+          if (from_date_diff >= 0) {
+            // Accept only those days which are less or equal to actualToDate
+            if (to_date_diff <= 0) {
+              if (attendance_status === codes.ATTENDANCE_LATE) {
+                records[empRoster.emp_code].late_days.push(empRoster.day);
+                return;
+              }
+
+              if (attendance_status === codes.ATTENDANCE_PRESENT) {
+                records[empRoster.emp_code].present_days.push(empRoster.day);
+                return;
+              }
+
+              if (attendance_status === codes.ATTENDANCE_HALF_DAY) {
+                records[empRoster.emp_code].half_days.push(empRoster.day);
+                records[empRoster.emp_code].absent_days_count += 0.5;
+                return;
+              }
+            }
+
             // If previous_day_absent flag is true and buffer array is not empty
             if (prev_day_absent && buffer_days.length > 0) {
-              records[empRoster.emp_code].off_days = records[empRoster.emp_code].off_days.concat(buffer_days)
+              off_days = records[empRoster.emp_code].off_days.concat(buffer_days)
+
+              // Accept only those buffer days which are less or equal to actualToDate
+              off_days = off_days.filter(day => dateTimeHelper.compareDate(day, actualToDate) <= 0)
+
+              records[empRoster.emp_code].off_days = off_days
               buffer_days = records[empRoster.emp_code].buffer_days = []
-            }
-
-            if (attendance_status === codes.ATTENDANCE_LATE) {
-              records[empRoster.emp_code].late_days.push(empRoster.day);
-              return;
-            }
-
-            if (attendance_status === codes.ATTENDANCE_PRESENT) {
-              records[empRoster.emp_code].present_days.push(empRoster.day);
-              return;
-            }
-
-            if (attendance_status === codes.ATTENDANCE_HALF_DAY) {
-              records[empRoster.emp_code].half_days.push(empRoster.day);
-              records[empRoster.emp_code].absent_days_count += 0.5;
-              return;
             }
           }
         }
@@ -330,7 +341,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         records_array.push(records[key]);
       }
 
-      console.log(records['005018'])
+      // console.log(records['005018'])
 
       resolve(records_array)
 
