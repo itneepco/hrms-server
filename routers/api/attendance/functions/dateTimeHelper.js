@@ -20,10 +20,10 @@ function substractHours(time, hour) {
 function getMinTime(in_time_start, in_time_late, punchRecArray) {
   if (punchRecArray.length < 1) return "";
 
-  in_time_window = punchRecArray.filter(data => 
+  in_time_window = punchRecArray.filter(data =>
     data.punching_time >= in_time_start && data.punching_time <= in_time_late)
 
-  if(in_time_window.length > 0) {
+  if (in_time_window.length > 0) {
     console.log("IN TIME WINDOW", in_time_window.length)
     return getMinimum(in_time_window)
   }
@@ -43,7 +43,7 @@ function getMinimum(punchArray) {
     let prev_moment = moment.utc(prev.punching_time, "HH:mm")
     let curr_moment = moment.utc(current.punching_time, "HH:mm")
 
-    return prev_moment < curr_moment ? prev: current;
+    return prev_moment < curr_moment ? prev : current;
   }).punching_time;
 
   return min;
@@ -61,13 +61,15 @@ function getMaximum(punchArray) {
 }
 
 function compareDate(date1, date2) {
-  return moment(date1).diff(moment(date2), "days");
+  date1 = moment.utc(date1)
+  date2 = moment.utc(date2)
+  return date1.diff(date2, "days");
 }
 
 function equalDate(date1, date2) {
   date1 = new Date(date1)
   date2 = new Date(date2)
-  return moment(date1, 'yyyy-mm-dd').isSame(moment(date2, 'yyyy-mm-dd'), "days");
+  return moment(date1, 'YYYY-MM-DD').isSame(moment(date2, 'YYYY-MM-DD'), "days");
 }
 
 function isSundaySaturday(date) {
@@ -89,6 +91,10 @@ function decreaseDay(date, no_day) {
   return moment(date).subtract(no_day, 'day').toDate()
 }
 
+function increaseDay(date, no_day) {
+  return moment(date).add(no_day, 'day').toDate()
+}
+
 module.exports = {
   getTimeInterval,
   getMaxTime,
@@ -100,5 +106,6 @@ module.exports = {
   getTodaysDate,
   substractHours,
   equalDate,
-  decreaseDay
+  decreaseDay,
+  increaseDay
 };

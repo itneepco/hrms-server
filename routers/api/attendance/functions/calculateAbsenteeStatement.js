@@ -17,7 +17,7 @@ const Op = require("sequelize").Op;
 async function calculateAbsenteeStatement(projectId, from_date = null, to_date = null) {
   return new Promise(async (resolve, reject) => {
     try {
-      let fromDate, toDate, actualFromDate;
+      let fromDate, toDate, actualFromDate, actualToDate;
 
       // Fetch the current wage month
       const currWageMonth = await wageMonthModel.findOne({
@@ -38,18 +38,24 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         });
       }
 
+      //---------------------------------------------------------------------------
       if (from_date !== null && to_date !== null) {
         actualFromDate = from_date;
-        toDate = to_date;
+        actualToDate = to_date;
       }
       else {
         actualFromDate = currWageMonth.from_date;
-        toDate = currWageMonth.to_date;
+        actualToDate = currWageMonth.to_date;
       }
 
       // Take 5 days from last wage month for calculating absent status
       fromDate = dateTimeHelper.decreaseDay(actualFromDate, 5)
 
+      // Take 5 days from next wage month for calculating absent status
+      toDate = dateTimeHelper.increaseDay(actualToDate, 5)
+
+      console.log("FROM DATE AND TO DATE", fromDate, toDate)
+      console.log("ACTUAL FROM DATE AND ACTUAL TO DATE", actualFromDate, actualToDate)
       //---------------------------------------------------------------------------
 
       // Get list of general working days
@@ -147,7 +153,14 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         let attendance_status = empRoster.attendance_status;
 
         // Date difference between current day in the iteration and current wage month actualFromDate
-        let date_diff = dateTimeHelper.compareDate(empRoster.day, actualFromDate)
+        let from_date_diff = dateTimeHelper.compareDate(empRoster.day, actualFromDate)
+        let to_date_diff = dateTimeHelper.compareDate(empRoster.day, actualToDate)
+
+
+        if (records[empRoster.emp_code].emp_code == '005018') {
+          console.log(empRoster.day)
+          console.log("FROM DATE AND TO DATE DIFF", empRoster.day, from_date_diff, to_date_diff)
+        }
 
         //---------------------------------------------------------------------------
 
@@ -159,7 +172,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
 
         // If modified status is 1 | Conclusion present
         if (empRoster.modified_status === 1) {
-          if (date_diff >= 0) {
+          if (from_date_diff >= 0 && to_date_diff <= 0) {
             records[empRoster.emp_code].present_days.push(empRoster.day);
           }
           // If employee has applied for leave, set prev_day_absent flag to FALSE
@@ -180,7 +193,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
 
         // Employee has applied leave, tour etc
         if (absentDtl) {
-          if (date_diff >= 0) {
+          if (from_date_diff >= 0 && to_date_diff <= 0) {
             records[empRoster.emp_code].leave_days.push(empRoster.day);
           }
           // If employee has applied for leave, set prev_day_absent flag to FALSE
@@ -195,7 +208,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           holidays.find(holiday => holiday.day === empRoster.day) &&
           empRoster.shift.is_general
         ) {
-          if (date_diff >= 0) {
+          if (from_date_diff >= 0 && to_date_diff <= 0) {
             // If employee is absent on previous day, add to buffer_days array
             if (records[empRoster.emp_code].prev_day_absent) {
               records[empRoster.emp_code].buffer_days.push(empRoster.day);
@@ -211,7 +224,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
 
         // For shift duty employees
         if (attendance_status === codes.ATTENDANCE_OFF_DAY) {
-          if (date_diff >= 0) {
+          if (from_date_diff >= 0 && to_date_diff <= 0) {
             // If employee is absent on previous day, add to buffer_days array
             if (records[empRoster.emp_code].prev_day_absent) {
               records[empRoster.emp_code].buffer_days.push(empRoster.day);
@@ -231,7 +244,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
 
           isWorkDay = genWorkDays.find(wd => wd.day === empRoster.day) ? true : false
           // If current day (weekend) is not a working day
-          if (!isWorkDay && date_diff >= 0) {
+          if (!isWorkDay && from_date_diff >= 0 && to_date_diff <= 0) {
             // If employee is absent on previous day, add to buffer_days array
             if (records[empRoster.emp_code].prev_day_absent) {
               return records[empRoster.emp_code].buffer_days.push(empRoster.day);
@@ -255,18 +268,22 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           // Mark 'prev_day_absent' to be used in the next iteration
           records[empRoster.emp_code].prev_day_absent = true
 
-          if (date_diff >= 0) {
+          if (from_date_diff >= 0) {
+            if (to_date_diff <= 0) {
+              records[empRoster.emp_code].absent_days.push(empRoster.day);
+              records[empRoster.emp_code].absent_days_count += 1;
+            }
+
             // If previous_day_absent flag is true and buffer array is not empty
             if (prev_day_absent && buffer_days.length > 0) {
+              // Accept only those buffer days which are less or equal to actualToDate
+              buffer_days = buffer_days.filter(day => dateTimeHelper.compareDate(day, actualToDate) <= 0)
 
               records[empRoster.emp_code].absent_days = records[empRoster.emp_code].absent_days.concat(buffer_days)
               records[empRoster.emp_code].absent_days_count += buffer_days.length;
 
               buffer_days = records[empRoster.emp_code].buffer_days = []
             }
-
-            records[empRoster.emp_code].absent_days.push(empRoster.day);
-            records[empRoster.emp_code].absent_days_count += 1;
           }
 
           return;
@@ -280,7 +297,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           // Mark 'prev_day_absent' to be used in the next iteration
           records[empRoster.emp_code].prev_day_absent = false
 
-          if (date_diff >= 0) {
+          if (from_date_diff >= 0 && to_date_diff <= 0) {
             // If previous_day_absent flag is true and buffer array is not empty
             if (prev_day_absent && buffer_days.length > 0) {
               records[empRoster.emp_code].off_days = records[empRoster.emp_code].off_days.concat(buffer_days)
@@ -313,7 +330,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         records_array.push(records[key]);
       }
 
-      // console.log(records['004789'])
+      console.log(records['005018'])
 
       resolve(records_array)
 
