@@ -2,7 +2,7 @@ const dateTimeHelper = require("./dateTimeHelper");
 const attendanceTimingHelper = require("./attendanceTimingHelper");
 const codes = require("../../../../global/codes");
 
-function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentDate, modify_flag = false) {
+function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentDate) {
   // Find the shift for the current employee
   const shift = empRoster.shift;
 
@@ -31,7 +31,7 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
     };
   }
 
-  // Variable to store punching Reocrds of the employee for the currentDate
+  // Variable to store punching Records of the employee for the currentDate
   let empPunchData;
 
   // Filter out emp Punching data for the current employee from punchingRecords
@@ -40,7 +40,7 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
   });
 
   // Filter out punching data for Night Shift
-  if (shift.is_night_shift || modify_flag) {
+  if (shift.is_night_shift) {
     empPunchData = empPunchData.filter(punchData => {
       const punchStartTime = dateTimeHelper.substractHours(shift.in_time_start, codes.SUBSTRACT_HOURS_FOR_PUNCH_DATA)
       return punchData.punching_time >= punchStartTime
@@ -48,7 +48,7 @@ function processPunchData(empRoster, punchingRecords, punchRecsNextDay, currentD
   }
 
   // Calculate in time
-  emp_in_time = dateTimeHelper.getMinTime(empPunchData);
+  emp_in_time = dateTimeHelper.getMinTime(in_time_start, in_time_late, empPunchData);
   if (emp_in_time === "") {
     return {
       day: currentDate,

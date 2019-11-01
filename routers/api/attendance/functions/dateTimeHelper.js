@@ -17,47 +17,47 @@ function substractHours(time, hour) {
   return moment(time, "HH:mm").subtract(hour, 'hours').format("HH:mm:ss")
 }
 
-function getMinTime(punchRecArray) {
+function getMinTime(in_time_start, in_time_late, punchRecArray) {
   if (punchRecArray.length < 1) return "";
 
-  const min = punchRecArray.reduce(function(prev, current) {
-    return moment.utc(prev.punching_time, "HH:mm") <
-      moment.utc(current.punching_time, "HH:mm")
-      ? prev
-      : current;
-  }).punching_time;
+  in_time_window = punchRecArray.filter(data => 
+    data.punching_time >= in_time_start && data.punching_time <= in_time_late)
 
-  return min;
+  if(in_time_window.length > 0) {
+    console.log("IN TIME WINDOW", in_time_window.length)
+    return getMinimum(in_time_window)
+  }
+  else {
+    return getMinimum(punchRecArray)
+  }
 }
 
 function getMaxTime(punchRecArray) {
   if (punchRecArray.length < 1) return "";
 
-  const max = punchRecArray.reduce(function(prev, current) {
-    return moment.utc(prev.punching_time, "HH:mm") >
-      moment.utc(current.punching_time, "HH:mm")
-      ? prev
-      : current;
-  }).punching_time;
-  return max;
+  return getMaximum(punchRecArray)
 }
 
-function getMinMaxTime(punchRecArray) {
-  const min = punchRecArray.reduce(function(prev, current) {
-    return moment.utc(prev.punching_time, "HH:mm") <
-      moment.utc(current.punching_time, "HH:mm")
-      ? prev
-      : current;
+function getMinimum(punchArray) {
+  const min = punchArray.reduce(function (prev, current) {
+    let prev_moment = moment.utc(prev.punching_time, "HH:mm")
+    let curr_moment = moment.utc(current.punching_time, "HH:mm")
+
+    return prev_moment < curr_moment ? prev: current;
   }).punching_time;
 
-  const max = punchRecArray.reduce(function(prev, current) {
-    return moment.utc(prev.punching_time, "HH:mm") >
-      moment.utc(current.punching_time, "HH:mm")
-      ? prev
-      : current;
+  return min;
+}
+
+function getMaximum(punchArray) {
+  const max = punchArray.reduce(function (prev, current) {
+    const prev_moment = moment.utc(prev.punching_time, "HH:mm")
+    const curr_moment = moment.utc(current.punching_time, "HH:mm")
+
+    return prev_moment > curr_moment ? prev : current;
   }).punching_time;
 
-  return { min, max };
+  return max;
 }
 
 function compareDate(date1, date2) {
@@ -93,7 +93,6 @@ module.exports = {
   getTimeInterval,
   getMaxTime,
   getMinTime,
-  getMinMaxTime,
   compareDate,
   isSundaySaturday,
   isSunday,

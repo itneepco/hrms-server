@@ -251,8 +251,7 @@ router.route("/modify/shift/").post(async (req, res) => {
       empRoster,
       punchingRecords,
       punchRecsNextDay,
-      empRoster.day,
-      true
+      empRoster.day
     );
 
     await empWiseRosterModel.update(
