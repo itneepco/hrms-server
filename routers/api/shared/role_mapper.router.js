@@ -58,6 +58,8 @@ router.route('/')
     roleMapperModel.findAndCountAll({
       limit: limit,
       offset: offset,
+      distinct: true,
+      order: ['project_id', 'role'],
       include : [
         {
           model: EmployeeModel,
@@ -73,7 +75,7 @@ router.route('/')
     .then(results => {     
       if(!results) return res.status(200).json(null)
 
-      console.log("RESULT", results)
+      // console.log("RESULT", results)
       let roles = results.rows.map(result => {
         return Object.assign({},{
           id : result.id,
