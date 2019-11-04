@@ -24,7 +24,7 @@ AuthRouter.route('/login')
           roleMapper.findAll({where: { emp_code: user.emp_code }})
           .then(async (results) => {
             let employee = await Employee.findOne({
-              attributes: ['emp_code'],
+              attributes: ['emp_code', 'project_id'],
               include: { model: Grade },
               where: { emp_code: user.emp_code }
             })
@@ -33,12 +33,12 @@ AuthRouter.route('/login')
               emp_code: user.emp_code,
               name: user.user_name,
               role: user.role,
-              project: user.project_id,
+              project: employee.project_id,
               grade: employee.grade.name,
               roleMapper: results
             };
             
-            const token = jwt.sign(data, secret, { expiresIn: '3000000s' })
+            const token = jwt.sign(data, secret, { expiresIn: '3000s' })
             console.log("Login successful")
             res.status(200).json({ token, message: "Success" })
           })
