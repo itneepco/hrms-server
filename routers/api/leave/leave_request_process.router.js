@@ -208,6 +208,16 @@ async function leaveApproveCancel(req, res, db_cr_flag) {
       return;
     }
 
+    if(leaveApp.status === Codes.LEAVE_APPROVED) {
+      res.status(200).json({ message: "Leave already approved" });
+      return;
+    }
+
+    if(leaveApp.status === Codes.LEAVE_CANCELLED) {
+      res.status(200).json({ message: "Leave already cancelled" });
+      return;
+    }
+
     const cl_arr = leaveApp.leaveDetails.filter(
       leaveDetail => leaveDetail.leave_type === Codes.CL_CODE
     );
