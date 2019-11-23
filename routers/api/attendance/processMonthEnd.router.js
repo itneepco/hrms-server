@@ -86,8 +86,8 @@ router.route("/close").get(async (req, res) => {
 
     // Review later
     if (dateTimeHelper.compareDate(today, currWageMonth.to_date) <= 0) {
-      res.status(200).json({
-        message: `Month end is not possible at this moment`,
+      return res.status(200).json({
+        message: `Month end is not possible at this moment!! Please try after wagemonth to_date`,
         error: false,
         data: null
       });

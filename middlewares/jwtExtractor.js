@@ -42,7 +42,7 @@ module.exports = (req, res, next) => {
         roleMapper: roles
       };
 
-      console.log("User Detail", data)
+      // console.log("User Detail", data)
 
       req.user = data
       next()
