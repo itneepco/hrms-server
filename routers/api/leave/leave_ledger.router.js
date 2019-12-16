@@ -93,9 +93,33 @@ router.route('/ledger/:id', validateAdmin)
     })
   })
 
-router.route('/status/:emp_code')
+router.route('/balance/:emp_code')
   .get((req, res) => {
     let curr_year = (new Date()).getFullYear()
+    getTotalDebitCredit(req.params.emp_code, curr_year)
+      .then(result => {
+        res.status(200).json(result)
+      })
+      .catch(error => {
+        console.log(error)
+      })
+  })
+
+router.route('/prev-year/balance/:emp_code')
+  .get((req, res) => {
+    let curr_year = (new Date()).getFullYear() - 1
+    getTotalDebitCredit(req.params.emp_code, curr_year)
+      .then(result => {
+        res.status(200).json(result)
+      })
+      .catch(error => {
+        console.log(error)
+      })
+  })
+  
+router.route('/next-year/balance/:emp_code')
+  .get((req, res) => {
+    let curr_year = (new Date()).getFullYear() + 1
     getTotalDebitCredit(req.params.emp_code, curr_year)
       .then(result => {
         res.status(200).json(result)
@@ -203,7 +227,10 @@ function getTotalDebitCredit(emp_codee, cal_year) {
       }
     ];
 
-    return leaveRegister
+    return {
+      year: cal_year,
+      status: leaveRegister
+    }
   })
   .catch(err => {
     console.log(err)

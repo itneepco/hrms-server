@@ -6,37 +6,40 @@ const departmentModel = require('./department.model');
 const gradeModel = require('./grade.model')
 
 const Employee = db.define('employee', {
-	emp_code: {
-		type: Sequelize.STRING
-	},
-	first_name: {
-		type: Sequelize.STRING
-	},
-	middle_name: {
-		type: Sequelize.STRING
-	},
-	last_name: {
-		type: Sequelize.STRING
-	},
-	designation_id: {
-		type: Sequelize.INTEGER
-	},
-	department_id:{
-		type: Sequelize.INTEGER
-	},
-	project_id: {
-		type: Sequelize.INTEGER
+  emp_code: {
+    type: Sequelize.STRING
+  },
+  first_name: {
+    type: Sequelize.STRING
+  },
+  middle_name: {
+    type: Sequelize.STRING
+  },
+  last_name: {
+    type: Sequelize.STRING
+  },
+  designation_id: {
+    type: Sequelize.INTEGER
+  },
+  department_id: {
+    type: Sequelize.INTEGER
+  },
+  project_id: {
+    type: Sequelize.INTEGER
   },
   grade_id: {
-		type: Sequelize.INTEGER
+    type: Sequelize.INTEGER
   },
   dos: {
-		type: Sequelize.STRING
-	}
+    type: Sequelize.STRING
+  },
+  pwd: {
+    type: Sequelize.BOOLEAN
+  }
 }, {
-		underscored: true,
-		tableName: 'personal_infos'
-	}
+  underscored: true,
+  tableName: 'personal_infos'
+}
 )
 
 Employee.belongsTo(projectModel);

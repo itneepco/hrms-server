@@ -91,16 +91,22 @@ async function annualClRhCredit(req, res, leave_type) {
         let no_of_days = leave_type == codes.CL_CODE ? 12 : 2
         let retirement_date = new Date(employee.dos)
         let retirement_year = retirement_date.getFullYear()
-        
+
         //if retirement age is current calendar year
-        if(retirement_year == curr_year) {
-          if(leave_type == codes.CL_CODE) {
-            //no of CL should be equal to retirement month value
-            no_of_days = retirement_date.getMonth() + 1
-          }
-          if(leave_type == codes.RH_CODE) {
-            no_of_days = (retirement_date.getMonth() + 1) > 6 ? 2 : 1
-          }
+        // if(retirement_year == curr_year) {
+        //   if(leave_type == codes.CL_CODE) {
+        //     //no of CL should be equal to retirement month value
+        //     no_of_days = retirement_date.getMonth() + 1
+        //   }
+        //   if(leave_type == codes.RH_CODE) {
+        //     no_of_days = (retirement_date.getMonth() + 1) > 6 ? 2 : 1
+        //   }
+        // }
+
+        // If the employee is PWD category, add 4 days to Casual Leave
+        if(employee.pwd && leave_type == codes.CL_CODE) {
+          //no of CL should be equal to retirement month value
+          no_of_days = no_of_days + 4
         }
 
         ledgers.push({
