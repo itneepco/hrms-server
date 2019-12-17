@@ -208,12 +208,12 @@ async function leaveApproveCancel(req, res, db_cr_flag) {
       return;
     }
 
-    if(leaveApp.status === Codes.LEAVE_APPROVED) {
+    if (leaveApp.status === Codes.LEAVE_APPROVED) {
       res.status(200).json({ message: "Leave already approved" });
       return;
     }
 
-    if(leaveApp.status === Codes.LEAVE_CANCELLED) {
+    if (leaveApp.status === Codes.LEAVE_CANCELLED) {
       res.status(200).json({ message: "Leave already cancelled" });
       return;
     }
@@ -262,7 +262,12 @@ async function leaveApproveCancel(req, res, db_cr_flag) {
     }
 
     // Get current year
-    const curr_year = new Date().getFullYear();
+    let curr_year = new Date().getFullYear();
+
+    //For CL or RH or HD CL
+    if (no_of_cl >= 1 || no_of_rh >= 1 || no_of_hd_cl >= 0.5) {
+      curr_year = (new Date(leaveApp.leaveDetails[0].from_date)).getFullYear()
+    }
 
     /**************************************************************************************
      * Transaction starts
