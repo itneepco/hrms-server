@@ -17,7 +17,7 @@ router.route("/absentee-statement").get(async (req, res) => {
 
     let records_array = await calculateAbsenteeStatement(projectId, fromDate, toDate);
     records_array = records_array.filter(
-      record => record.absent_days_count > 0
+      record => record.absent_days_count > 0 || record.late_days.length > 4
     );
     res
       .status(200)
