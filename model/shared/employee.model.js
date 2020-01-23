@@ -31,7 +31,7 @@ const Employee = db.define('employee', {
     type: Sequelize.INTEGER
   },
   dos: {
-    type: Sequelize.STRING
+    type: Sequelize.DATEONLY
   },
   pwd: {
     type: Sequelize.BOOLEAN

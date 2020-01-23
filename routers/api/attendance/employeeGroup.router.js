@@ -23,13 +23,17 @@ router.route('/exempted-list')
       })
       const empCodes = empGroups.map(empGroup => empGroup.emp_code)
 
+      const today = new Date()
       const employees = await employeeModel.findAll({
         attributes: ['emp_code', 'first_name', 'middle_name', 'last_name'],
         where: {
           emp_code: {
             [Op.notIn]: empCodes
           },
-          project_id: req.params.projectId
+          project_id: req.params.projectId,
+          dos: {
+            [Op.gte]: today
+          }
         },
         order: [['first_name', 'ASC']], 
         include: [{ model: designation }]

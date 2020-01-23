@@ -82,12 +82,16 @@ router.route("/employee/:empCode").get(async (req, res) => {
           remarks = empRoster.remarks;
           attendance_status = empRoster.attendance_status;
 
-          if (empRoster.shift.is_general) {
-            const holiday = holidaysArray.find(holiday => holiday.day === empRoster.day)
-            if (holiday) {
-              remarks = holiday.name;
+          // If it is a holiday
+          const holiday = holidaysArray.find(holiday => holiday.day === empRoster.day)
+          if (holiday) {
+            remarks = remarks ? remarks : holiday.name;
+            if(empRoster.shift.is_general) {
               attendance_status = codes.ATTENDANCE_HOLIDAY;
             }
+          }
+
+          if (empRoster.shift.is_general) {
             // Check if saturday and sunday is working day
             if (
               dtHelper.isSundaySaturday(empRoster.day) &&
