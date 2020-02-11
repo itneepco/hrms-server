@@ -120,11 +120,11 @@ router.route("/employee/:empCode").get(async (req, res) => {
 
           if (absentDtl) {
             remarks = absentDtl.leaveType.description;
-
+            attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
             // Change attendance status to absent for all absent types except half day CL
-            if (absentDtl.leave_code != codes.HD_CL_CODE) {
-              attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
-            }
+            // if (absentDtl.leave_code != codes.HD_CL_CODE) {
+            //   attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
+            // }
           }
         }
         // if employee is exempted from punching

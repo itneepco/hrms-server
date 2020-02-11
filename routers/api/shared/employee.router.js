@@ -5,6 +5,7 @@ const designationModel = require('../../../model/shared/designation.model')
 const gradeModel = require('../../../model/shared/grade.model')
 const Op = require('sequelize').Op
 
+// Query employee details based on the name or emp_code or project_id
 router.route('/search/')
 	.get((req, res) => {
 		let user = req.user
@@ -84,6 +85,8 @@ router.route('/search/')
 		})
 	})
 
+
+// Fetch employee details based on the emp_code provided  
 router.route('/:empCode')
 	.get((req, res) => {
 		let user = req.user
