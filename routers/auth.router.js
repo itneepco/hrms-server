@@ -122,7 +122,7 @@ AuthRouter.route('/reset-password')
     }
     catch (error) {
       console.log(error)
-      res.status(500).json({ message: 'An internal error occured! Please try again later!' })
+      res.status(500).json({ message: 'An error occured! Please try again later!', error: error })
     }
   })
 

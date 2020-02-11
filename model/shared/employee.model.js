@@ -18,6 +18,9 @@ const Employee = db.define('employee', {
   last_name: {
     type: Sequelize.STRING
   },
+  email: {
+    type: Sequelize.STRING
+  },
   designation_id: {
     type: Sequelize.INTEGER
   },

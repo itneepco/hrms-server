@@ -15,7 +15,7 @@ function sendEmail(employee, new_passwd) {
   const mailOptions = {
     // from: '"NEEPCO HRMS." <noreply@neepcohrms.com>',
     from: 'nrms4neepco@gmail.com',
-    to: "nepuni04@gmail.com",
+    to: employee.email.toLowerCase(),
     subject: `Password reset for your NEEPCO HRMS account`,
     html: `
       <p>Hello <strong>${name}</strong>,</p>
@@ -24,7 +24,7 @@ function sendEmail(employee, new_passwd) {
 		`
   };
 
-  console.log("Name: ", name)
+  console.log("Name: ", name, " Email: ", employee.email.toLowerCase())
 
   return mailTransport.sendMail(mailOptions)
 }
