@@ -126,18 +126,22 @@ router.route("/employee/:empCode").get(async (req, res) => {
           if (absentDtl) {
             remarks = absentDtl.leaveType.description;
             attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
-            // Change attendance status to absent for all absent types except half day CL
-            // if (absentDtl.leave_code != codes.HD_CL_CODE) {
-            //   attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
-            // }
+
+            // Set the late_count to 0 if employee has applied for any 
+            // leave (except Half Day CL) on the 5th day the employee is late
+            if (empRoster.attendance_status == codes.ATTENDANCE_LATE &&
+              late_count == 4 && absentDtl.leave_code != codes.HD_CL_CODE) {
+              late_count = 0
+            }
           }
 
-          // Check for 5 days late
+          // Check for 5 days late and set the status accordingly
           if (empRoster.attendance_status == codes.ATTENDANCE_LATE && !empRoster.modified_status) {
             late_count++
 
+            // If absent for 5 days set attendance status to 5D_LATE and late_count to 0
             if (late_count == 5) {
-              remarks = "5 days late"
+              remarks = remarks ? remarks : "5 days late"
               attendance_status = codes.ATTENDANCE_5D_LATE
               late_count = 0
             }

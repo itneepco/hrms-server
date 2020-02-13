@@ -180,7 +180,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           }
           // If employee has applied for leave, set prev_day_absent flag to FALSE
           records[empRoster.emp_code].prev_day_absent = false
-          return;
+          return; // End the current iteration without executing the remaining code
         }
 
         //---------------------------------------------------------------------------
@@ -198,10 +198,21 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         if (absentDtl) {
           if (from_date_diff >= 0 && to_date_diff <= 0) {
             records[empRoster.emp_code].leave_days.push(empRoster.day);
+            
+            // If the employee is late on current day and 
+            // late_days_count is already 4 (i.e he is late for the fifth time)
+            // and he has applied for leave other than Half Day CL
+            // then set the late_days_count counter to 0
+            if (attendance_status === codes.ATTENDANCE_LATE &&
+                records[empRoster.emp_code].late_days_count == 4 &&
+                absentDtl.leave_code != codes.HD_CL_CODE) {
+
+              records[empRoster.emp_code].late_days_count = 0
+            }
           }
           // If employee has applied for leave, set prev_day_absent flag to FALSE
           records[empRoster.emp_code].prev_day_absent = false
-          return;
+          return; // End the current iteration without executing the remaining code
         }
 
         //---------------------------------------------------------------------------
@@ -220,7 +231,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
               records[empRoster.emp_code].off_days.push(empRoster.day);
             }
           }
-          return;
+          return; // End the current iteration without executing the remaining code
         }
 
         //---------------------------------------------------------------------------
@@ -236,7 +247,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
               records[empRoster.emp_code].off_days.push(empRoster.day);
             }
           }
-          return;
+          return; // End the current iteration without executing the remaining code
         }
 
         //---------------------------------------------------------------------------
@@ -250,10 +261,12 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           if (!isWorkDay && from_date_diff >= 0 && to_date_diff <= 0) {
             // If employee is absent on previous day, add to buffer_days array
             if (records[empRoster.emp_code].prev_day_absent) {
-              return records[empRoster.emp_code].buffer_days.push(empRoster.day);
+              records[empRoster.emp_code].buffer_days.push(empRoster.day);
+              return; // End the current iteration without executing the remaining code
             }
             else {
-              return records[empRoster.emp_code].off_days.push(empRoster.day);
+              records[empRoster.emp_code].off_days.push(empRoster.day);
+              return; // End the current iteration without executing the remaining code
             }
           }
 
@@ -291,7 +304,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
 
           // Mark 'prev_day_absent' to be used in the next iteration
           records[empRoster.emp_code].prev_day_absent = true
-          return;
+          return; // End the current iteration without executing the remaining code
         }
 
         //---------------------------------------------------------------------------
@@ -341,7 +354,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
 
           // Mark 'prev_day_absent' to be used in the next iteration
           records[empRoster.emp_code].prev_day_absent = false
-          return;
+          return; // End the current iteration without executing the remaining code
         }
       });
 
