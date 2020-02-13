@@ -124,6 +124,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
       let records_array = [];
 
       // Iterate for each empWiseRoster record and process the attendance data
+      // Employww wise roster already sorted according to emp_code and day in ascending order
       empWiseRosters.forEach(empRoster => {
         if (records[empRoster.emp_code] === undefined) {
           let employee = empRoster.employee
@@ -139,9 +140,10 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
             leave_days: [],
             half_days: [],
             late_days: [],
+            late_days_count: 0,
             off_days: [],
             buffer_days: [],
-            absent_days_count: 0,
+            total_absent_days_count: 0,
             project_id: projectId,
             prev_day_absent: false // For checking if on the previous day the employee was absent
           };
@@ -272,7 +274,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
             // Accept only those days which are less or equal to actualToDate
             if (to_date_diff <= 0) {
               records[empRoster.emp_code].absent_days.push(empRoster.day);
-              records[empRoster.emp_code].absent_days_count += 1;
+              records[empRoster.emp_code].total_absent_days_count += 1;
             }
 
             // If previous_day_absent flag is true and buffer array is not empty
@@ -281,7 +283,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
               buffer_days = buffer_days.filter(day => dateTimeHelper.compareDate(day, actualToDate) <= 0)
 
               records[empRoster.emp_code].absent_days = records[empRoster.emp_code].absent_days.concat(buffer_days)
-              records[empRoster.emp_code].absent_days_count += buffer_days.length;
+              records[empRoster.emp_code].total_absent_days_count += buffer_days.length;
 
               buffer_days = records[empRoster.emp_code].buffer_days = []
             }
@@ -300,17 +302,28 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
           if (from_date_diff >= 0) {
             // Accept only those days which are less or equal to actualToDate
             if (to_date_diff <= 0) {
+              // Processing for late days
               if (attendance_status === codes.ATTENDANCE_LATE) {
                 records[empRoster.emp_code].late_days.push(empRoster.day);
+                records[empRoster.emp_code].late_days_count += 1
+
+                // If late for the fifth day, then that particular day will be marked 5days late
+                // and then set the late_days_count to 0 
+                if(records[empRoster.emp_code].late_days_count == 5) {
+                  records[empRoster.emp_code].total_absent_days_count += 1
+                  records[empRoster.emp_code].late_days_count = 0
+                }
               }
 
+              // Processing for present days
               if (attendance_status === codes.ATTENDANCE_PRESENT) {
                 records[empRoster.emp_code].present_days.push(empRoster.day);
               }
 
+              // Processing for half days
               if (attendance_status === codes.ATTENDANCE_HALF_DAY) {
                 records[empRoster.emp_code].half_days.push(empRoster.day);
-                records[empRoster.emp_code].absent_days_count += 0.5;
+                records[empRoster.emp_code].total_absent_days_count += 0.5;
               }
             }
 
@@ -339,7 +352,7 @@ async function calculateAbsenteeStatement(projectId, from_date = null, to_date =
         records_array.push(records[key]);
       }
 
-      // console.log(records['003692'])
+      // console.log(records['004990'])
 
       resolve(records_array)
 

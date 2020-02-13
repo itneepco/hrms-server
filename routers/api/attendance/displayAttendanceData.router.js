@@ -15,6 +15,7 @@ router.route("/employee/:empCode").get(async (req, res) => {
     const empCode = req.params.empCode;
     const fromDate = new Date(req.query.from_date);
     const toDate = new Date(req.query.to_date);
+    let late_count = 0;
 
     // Get holidays for the wagemonth
     const holidaysArray = await holidayModel.findAll({
@@ -68,7 +69,11 @@ router.route("/employee/:empCode").get(async (req, res) => {
           project_id: req.params.projectId,
           day: { [Op.between]: [fromDate, toDate] }
           // attendance_status: { [Op.ne]: null }
-        }
+        },
+        order: [
+          ['emp_code', 'ASC'],
+          ['day', 'ASC'],
+        ],
       })
       .map(empRoster => {
 
@@ -86,7 +91,7 @@ router.route("/employee/:empCode").get(async (req, res) => {
           const holiday = holidaysArray.find(holiday => holiday.day === empRoster.day)
           if (holiday) {
             remarks = remarks ? remarks : holiday.name;
-            if(empRoster.shift.is_general) {
+            if (empRoster.shift.is_general) {
               attendance_status = codes.ATTENDANCE_HOLIDAY;
             }
           }
@@ -102,7 +107,7 @@ router.route("/employee/:empCode").get(async (req, res) => {
             }
           }
           else {
-            // Check for off day
+            // Check for off day for shift duty employee
             if (codes.ATTENDANCE_OFF_DAY === empRoster.attendance_status) {
               remarks = "";
               attendance_status = empRoster.attendance_status;
@@ -126,7 +131,19 @@ router.route("/employee/:empCode").get(async (req, res) => {
             //   attendance_status = codes.ATTENDANCE_ABSENT_OFFICIALLY;
             // }
           }
+
+          // Check for 5 days late
+          if (empRoster.attendance_status == codes.ATTENDANCE_LATE && !empRoster.modified_status) {
+            late_count++
+
+            if (late_count == 5) {
+              remarks = "5 days late"
+              attendance_status = codes.ATTENDANCE_5D_LATE
+              late_count = 0
+            }
+          }
         }
+
         // if employee is exempted from punching
         else {
           remarks = 'EXEMPTED'

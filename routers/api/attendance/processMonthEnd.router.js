@@ -17,16 +17,21 @@ router.route("/absentee-statement").get(async (req, res) => {
 
     let records_array = await calculateAbsenteeStatement(projectId, fromDate, toDate);
     records_array = records_array.filter(
-      record => record.absent_days_count > 0 || record.late_days.length > 4
+      record => record.total_absent_days_count > 0 || record.late_days.length > 4
     );
-    res
-      .status(200)
-      .json({ message: `Success`, error: false, data: records_array });
-  } catch (error) {
+    res.status(200).json({ 
+      message: `Success`, 
+      error: false, 
+      data: records_array 
+    });
+  } 
+  catch (error) {
     console.error("Error : " + error);
-    res
-      .status(500)
-      .json({ message: `Error:: ${error}`, error: true, data: null });
+    res.status(500).json({ 
+      message: `Error:: ${error}`, 
+      error: true, 
+      data: null 
+    });
   }
 });
 
@@ -107,7 +112,7 @@ router.route("/close").get(async (req, res) => {
         half_days_number: item.half_days.length,
         late_days: item.late_days.join(","),
         late_days_number: item.late_days.length,
-        absent_days_count: item.absent_days_count
+        total_absent_days_count: item.total_absent_days_count
       };
     });
 

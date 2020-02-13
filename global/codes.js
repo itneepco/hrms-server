@@ -68,7 +68,7 @@ module.exports = {
     // Dynamic | Not considered at the time of processing
     ATTENDANCE_ABSENT_OFFICIALLY: '07',
     ATTENDANCE_EXEMPTED: '08',
-    
+    ATTENDANCE_5D_LATE: '09',
 
     // WAGE MONTH STATUS
     WAGE_MONTH_ACTIVE: 1,

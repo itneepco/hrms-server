@@ -41,6 +41,10 @@ const monthEnd = db.define(
       type: Sequelize.INTEGER,     
       allowNull: false
     },
+    total_absent_days_count: {
+      type: Sequelize.FLOAT,
+      allowNull: false
+    }
   },
   {
     underscored: true,
