@@ -1,6 +1,7 @@
 const router = require("express").Router({ mergeParams: true });
 const wageMonthModel = require("../../../model/attendance/wageMonth.model");
 const shiftModel = require("../../../model/attendance/shift.model");
+const groupModel = require("../../../model/attendance/group.model")
 const monthEndModel = require("../../../model/attendance/monthEnd.model");
 const dateTimeHelper = require("./functions/dateTimeHelper");
 const calculateAbsenteeStatement = require("./functions/calculateAbsenteeStatement");
@@ -50,12 +51,19 @@ router.route("/close").get(async (req, res) => {
       }
     });
 
-    const shiftTimings = await shiftModel.findAll({
+    // const shiftTimings = await shiftModel.findAll({
+    //   where: {
+    //     project_id: req.params.projectId,
+    //     is_general: false
+    //   }
+    // });
+
+    const shiftGroups = await groupModel.findAll({
       where: {
         project_id: req.params.projectId,
         is_general: false
       }
-    });
+    })
 
     let currWageMonth, nextWageMonth;
     if (wageMonths.length > 1) {
@@ -80,11 +88,11 @@ router.route("/close").get(async (req, res) => {
       });
     }
 
-    // Check if there are any shift duty. if present check if shift roster is generated
-    if (shiftTimings.length > 0 && !currWageMonth.shift_roster_status) {
+    // Check if there are any shift group. if present check if shift roster is generated
+    if (shiftGroups.length > 0 && !currWageMonth.shift_roster_status) {
       return res.status(200).json({
         message: "Employee wise shift roster not generated for the period",
-        error: false,
+        error: true,
         data: null
       });
     }
@@ -99,7 +107,7 @@ router.route("/close").get(async (req, res) => {
     }
 
     let records_array = await calculateAbsenteeStatement(projectId);
-    records_array = records_array.filter(item => item.absent_days.length > 0)
+    records_array = records_array.filter(item => item.total_absent_days_count > 0)
 
     records_array = records_array.map(item => {
       return {

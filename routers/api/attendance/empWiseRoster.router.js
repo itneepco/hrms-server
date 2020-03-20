@@ -62,7 +62,8 @@ router.route("/shift").get(async (req, res) => {
             emp_code: empGroup.emp_code,
             day: roster.day,
             shift_id: roster.shift_id,
-            project_id: req.params.projectId
+            project_id: req.params.projectId,
+            created_by: req.user.emp_code
           });
         }
       });
@@ -70,7 +71,7 @@ router.route("/shift").get(async (req, res) => {
 
     empWiseRosterModel
       .bulkCreate(empWiseRosters, {
-        updateOnDuplicate: ["emp_code", "day", "shift_id"]
+        updateOnDuplicate: ["emp_code", "day", "shift_id", "project_id"]
       })
       .then(async () => {
         await currWageMonth.update({ shift_roster_status: true })
@@ -139,7 +140,8 @@ router.route("/general").get(async (req, res) => {
             emp_code: empGroup.emp_code,
             day: wageDay,
             shift_id: roster.shift_id,
-            project_id: req.params.projectId
+            project_id: req.params.projectId,
+            created_by: req.user.emp_code
           });
         });
       }
@@ -147,7 +149,7 @@ router.route("/general").get(async (req, res) => {
 
     empWiseRosterModel
       .bulkCreate(empWiseRosters, {
-        updateOnDuplicate: ["emp_code", "day", "shift_id"]
+        updateOnDuplicate: ["emp_code", "day", "shift_id", "project_id"]
       })
       .then(async () => {
         await currWageMonth.update({ gen_roster_status: true })
