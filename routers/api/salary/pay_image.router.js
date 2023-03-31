@@ -44,20 +44,35 @@ router.route('/:empCode')
         include:[{model: payCode, as: "payCode"}]
     })
     .then(results=>{
+
         if(!results) return res.status(200).json({message:'data not found'})
 
-        let payments = results.filter(result=> {
-            let pay_code = result.pay_code
-            let pay_mode = result.pay_mode
-            return ((pay_mode == 1 || pay_mode == 2) && !(pay_code == 997 || pay_code == 999))
-        })
+        let payments = results.filter(result =>  ((result.pay_mode == 1 ) && !(result.pay_code == 997 || result.pay_code == 999)));       
+
+        let arrearPayments =  results.filter(result => result.pay_mode ==2);
+        
         let pdata = payments.map(result => Object.assign({},{
             pay_code: result.pay_code,
             pay_code_desc: result.payCode.pay_code_desc,
             pay_code_srl: result. pay_code_srl,
             pay_mode: result.pay_mode,
             txn_amt: result.txn_amt
-        }))
+        }));
+
+        let arrearPaymentData = arrearPayments.map(result => Object.assign({},{
+            pay_code: result.pay_code,
+            pay_code_desc: result.payCode.pay_code_desc +" ARREAR",
+            pay_code_srl: result. pay_code_srl,
+            pay_mode: result.pay_mode,
+            txn_amt: result.txn_amt
+        }));
+
+        const arrearData = arrearPaymentData.reduce((a,b) => {           
+            let found = a.find(e => e.pay_code == b.pay_code)
+            if (found) found.txn_amt += b.txn_amt;
+            else a.push(b);
+            return a;
+         },[]);       
         
         let grossPay = results.filter(result=> result.pay_code == 997).map(result => Object.assign({},{
             pay_code: result.pay_code,
@@ -75,14 +90,29 @@ router.route('/:empCode')
             txn_amt: result.txn_amt
         }))
 
-        let deductions = results.filter(result=> ((result.pay_mode == 4 || result.pay_mode == 5) && result.pay_code != 998))     
+        let deductions = results.filter(result=> ((result.pay_mode == 4 ) && result.pay_code != 998))   
+        let arrearDeductions = results.filter(result=> (( result.pay_mode == 5) && result.pay_code != 998))       
         let ddata = deductions.map(result => Object.assign({},{
             pay_code: result.pay_code,
             pay_code_desc: result.payCode.pay_code_desc,
             pay_code_srl: result. pay_code_srl,
             pay_mode: result.pay_mode,
             txn_amt: result.txn_amt
-        }))
+        }));
+        let deductionArrears = arrearDeductions.map(result => Object.assign({},{
+            pay_code: result.pay_code,
+            pay_code_desc: result.payCode.pay_code_desc + " ARREAR",
+            pay_code_srl: result. pay_code_srl,
+            pay_mode: result.pay_mode,
+            txn_amt: result.txn_amt
+        }));
+
+        const dArrearData = deductionArrears.reduce((a,b) => {           
+            let found = a.find(e => e.pay_code == b.pay_code)
+            if (found) found.txn_amt += b.txn_amt;
+            else a.push(b);
+            return a;
+         },[]);    
 
         let grossDeduction = results.filter(result=> result.pay_code == 998).map(result => Object.assign({},{
             pay_code: result.pay_code,
@@ -94,8 +124,8 @@ router.route('/:empCode')
 
         res.status(200).json({
             employee: employee,
-            payments: pdata,
-            deductions:ddata,
+            payments: pdata.concat(arrearData),
+            deductions:ddata.concat(dArrearData),
             grossPay: grossPay[0],
             netPay: netPay[0],
             grossDeduction: grossDeduction[0],
