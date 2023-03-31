@@ -82,4 +82,9 @@ router.use(
   require("./employeeDashboard.router")
 );
 
+router.use(
+  "/project/:projectId/attend-regularize/",
+  require("./attendanceApplication.router")
+);
+
 module.exports = router;

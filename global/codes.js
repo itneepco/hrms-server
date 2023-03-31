@@ -57,6 +57,16 @@ module.exports = {
     NEEDS_INFO_RECOMMENDED: '03',
     NEEDS_INFO_RETURNED: '04',
 
+    //Attendance Application Status Codes
+    APPLIED:'01',
+    RECOMMENDED: '02',
+    APPROVED:'03',
+    NOTRECOMMENDED: '04',
+    REJECT: '05',
+    CALLBACK: '06',
+
+
+
     //ATTENDANCE STATUS
     ATTENDANCE_PRESENT: '01',
     ATTENDANCE_ABSENT: '02',

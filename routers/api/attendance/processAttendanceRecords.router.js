@@ -1,6 +1,7 @@
 const router = require("express").Router({ mergeParams: true });
 const empWiseRosterModel = require("../../../model/attendance/employeeWiseRoster.model");
 const shiftModel = require("../../../model/attendance/shift.model");
+const groupModel = require("../../../model/attendance/group.model")
 const punchRecModel = require("../../../model/attendance/punchingRec.model");
 const wageMonthModel = require("../../../model/attendance/wageMonth.model");
 const processPunchData = require("./functions/processPunchData");
@@ -22,13 +23,20 @@ router.route("/process").get(async (req, res) => {
       }
     });
 
-    const shiftTimings = await shiftModel.findAll({
+    // const shiftTimings = await shiftModel.findAll({
+    //   where: {
+    //     project_id: req.params.projectId,
+    //     is_general: false
+    //   }
+    // });
+    // console.log("Length ", shiftTimings.length);
+
+    const shiftGroups = await groupModel.findAll({
       where: {
         project_id: req.params.projectId,
         is_general: false
       }
-    });
-    console.log("Length ", shiftTimings.length);
+    })
 
     if (!currWageMonth) {
       return res.status(200).json({
@@ -48,7 +56,7 @@ router.route("/process").get(async (req, res) => {
     }
 
     // Check if there are any shift duty. if present check if shift roster is generated
-    if (shiftTimings.length > 0 && !currWageMonth.shift_roster_status) {
+    if (shiftGroups.length > 0 && !currWageMonth.shift_roster_status) {
       return res.status(200).json({
         message: "Employee wise shift roster not generated for the period",
         error: true,
@@ -260,7 +268,8 @@ router.route("/modify/shift/").post(async (req, res) => {
         shift_id: shift_id,
         remarks: req.body.remarks,
         in_time: attendance.in_time,
-        out_time: attendance.out_time
+        out_time: attendance.out_time,
+        updated_by: req.user.emp_code
       }, {
         where: { id: roster_id }
       }
@@ -300,7 +309,8 @@ router.route("/modify/status/").post(async (req, res) => {
 
     const result = await empRoster.update({
       modified_status: true,
-      remarks: req.body.remarks
+      remarks: req.body.remarks,
+      updated_by: req.user.emp_code
     });
 
     console.log(result);

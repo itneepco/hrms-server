@@ -119,7 +119,7 @@ router.route('/')
           return leaveDetailModel.bulkCreate(leaveDetails, {transaction: t})
         }, {transaction: t})
       })
-      .then(function () {
+     .then(function () {
         res.status(200).json({ message: "Created successfully" })
         return t.commit();
       })

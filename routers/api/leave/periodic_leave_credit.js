@@ -82,7 +82,7 @@ async function annualClRhCredit(req, res, leave_type) {
       order: [['emp_code', 'ASC']],
       // limit: 3,
       where: {
-        dos: { [Op.gte]: [new Date()] }
+        dos: { [Op.gte]: new Date() }
       }
     })
     .then(employees => {
